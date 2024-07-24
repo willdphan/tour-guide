@@ -37,3 +37,7 @@ next-env.d.ts
 
 # supabase
 /supabase/.temp/
+
+# local env files
+.env*.local
+.env.local
