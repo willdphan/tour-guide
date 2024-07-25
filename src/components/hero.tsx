@@ -37,7 +37,7 @@ export function Hero() {
         setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
         setIsBlurred(false);
       }, 500); // Half of the transition duration
-    }, 3000); // Change testimonial every 5 seconds
+    }, 5000); // Change testimonial every 5 seconds
 
     return () => {
       clearInterval(percentageInterval);
