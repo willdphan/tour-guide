@@ -6,6 +6,12 @@ const config: Config = {
   darkMode: ['class'],
   content: ['./src/**/*.{ts,tsx}'],
   theme: {
+    fontFamily: {
+      sans: ['var(--font-montserrat)', ...fontFamily.sans],
+      mono: ['IBM Plex Mono', ...fontFamily.mono],
+      man: ['Manrope', ...fontFamily.sans],
+      ibm: ['IBM Plex Sans'],
+    },
     container: {
       center: true,
       padding: '2rem',
