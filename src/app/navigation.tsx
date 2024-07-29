@@ -13,7 +13,7 @@ export async function Navigation() {
   const session = await getSession();
 
   return (
-    <div className='relative flex items-center gap-6 bg-[#535353]'>
+    <div className='relative flex items-center gap-6'>
     {session ? (
       <AccountMenu signOut={signOut} />
     ) : (
@@ -28,7 +28,7 @@ export async function Navigation() {
           <SheetContent className='w-full bg-black'>
             <SheetHeader>
               <Logo />
-              <SheetDescription className='py-8 bg-[#535353]'>
+              <SheetDescription className='py-8'>
                 <Button variant='sexy' className='flex-shrink-0' asChild>
                   <Link href='/signup'>Get started for free</Link>
                 </Button>

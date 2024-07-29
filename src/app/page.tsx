@@ -23,7 +23,7 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className={`flex flex-col bg-[#535353] ${styles.homePageContainer}`}>
+    <div className={`flex flex-col bg-[#E8E4DB] ${styles.homePageContainer}`}>
       <Hero />
       <HeroSpline/>
       {/* <FlowchartPage /> */}

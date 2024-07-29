@@ -54,15 +54,13 @@ const initialTree = {
   outcomes: []
 };
 
-
-
 const FlowchartPage = () => {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState(['', '']);
   const [showChart, setShowChart] = useState(false);
 
   const questions = [
-    "Set the setting",
+    "What is your initial situation?",
     "What action will you take?"
   ];
 
@@ -89,7 +87,7 @@ const FlowchartPage = () => {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden max-w-screen">
-      <div className="w-2/6 h-full  flex flex-col z-[99]">
+      <div className="w-1/4 h-full bg-gray-100 border-r-2 border-black flex flex-col z-[99]">
         <div className="flex-1 flex flex-col items-center justify-center p-4">
           <AnimatePresence mode="wait">
             {!showChart ? (
@@ -101,12 +99,12 @@ const FlowchartPage = () => {
                 transition={{ duration: 0.5 }}
                 className="w-full max-w-sm"
               >
-                <h2 className="text-lg mb-4 text-center uppercase font-mono">{questions[step]}</h2>
+                <h2 className="text-lg font-semibold mb-4 text-center">{questions[step]}</h2>
                 <input
                   type="text"
                   value={answers[step]}
                   onChange={handleInputChange}
-                  className="w-full text-center placeholder-center focus:outline-none focus:ring-0 font-man "
+                  className="w-full p-2 border border-gray-300 rounded mb-4 text-center placeholder-center focus:outline-none focus:ring-0 focus:border-gray-300"
                   placeholder="Enter your answer"
                   autoFocus
                   style={{
@@ -122,42 +120,19 @@ const FlowchartPage = () => {
                 animate={{ opacity: 1 }}
                 className="text-center"
               >
-                <h2 className="text-lg mb-2 font-mono uppercase">Possible outcomes generated</h2>
-                <p className='font-man text-gray-500'>Interact with the flowchart.</p>
+                <h2 className="text-lg font-semibold mb-4">Flowchart Generated</h2>
+                <p>You can now interact with the flowchart.</p>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
       </div>
-      <div className="w-4/6 h-full">
+      <div className="w-3/4 h-full">
         <FlowChart 
           initialSituation={answers[0]} 
           initialAction={answers[1]} 
           showChart={showChart} 
         />
-      </div>
-    </div>
-  );
-};
-
-const FullScreenPopup = ({ node, onClose }) => {
-  return (
-    <div className="fixed inset-y-0 right-0 w-4/6 bg-[#E8E4DB] shadow-lg z-50 flex flex-col p-12">
-      <div className="flex justify-between items-start">
-        <div className='flex flex-col'>
-          <h2 className="text-3xl mb-2">{node.probability}% {node.title}</h2>
-          <p className="text-3xl text-gray-500">Option {node.optionNumber}</p>
-        </div>
-        <button 
-          onClick={onClose}
-          className="text-2xl font-bold hover:text-gray-700"
-        >
-          &times;
-        </button>
-      </div>
-      <div className="flex-grow mt-16">
-        <h3 className="text-xl font-mono uppercase mb-6">WHY IS THIS?</h3>
-        <p className="text-lg font-man leading-relaxed">{node.content}</p>
       </div>
     </div>
   );
@@ -305,22 +280,14 @@ const FlowChart = ({ initialSituation, initialAction, showChart }) => {
       });
     }
   };
-  const [popupNode, setPopupNode] = useState(null);
 
-  // Modify handleExpandClick
   const handleExpandClick = (nodeId: string, event: React.MouseEvent) => {
     event.stopPropagation();
     const clickedNode = findNodeById(treeData, nodeId);
     if (clickedNode.type === 'outcome') {
-      setPopupNode(clickedNode);
+      setSelectedNodeDetail(clickedNode);
     }
   };
-
-    // Add the closePopup function
-    const closePopup = () => {
-      setPopupNode(null);
-    };
-  
 
   const getNodeByPath = (tree, path) => {
     let node = tree;
@@ -598,10 +565,10 @@ const FlowChart = ({ initialSituation, initialAction, showChart }) => {
       >
         {renderNode(treeData)}
       </div>
-      {popupNode && (
-        <FullScreenPopup 
-          node={popupNode} 
-          onClose={closePopup} 
+      {selectedNodeDetail && (
+        <DetailView 
+          node={selectedNodeDetail} 
+          onClose={() => setSelectedNodeDetail(null)} 
         />
       )}
     </div>
