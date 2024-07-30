@@ -11,6 +11,8 @@ const config: Config = {
       mono: ['IBM Plex Mono', ...fontFamily.mono],
       man: ['Manrope', ...fontFamily.sans],
       ibm: ['IBM Plex Sans'],
+      work: ['Work Sans', ...fontFamily.sans],
+      inter: ['Inter', ...fontFamily.sans],
     },
     container: {
       center: true,

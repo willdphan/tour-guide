@@ -51,7 +51,7 @@ export function Hero() {
         There's a <span className="text-[#A4BCDB]">{percentage}%</span> Chance <br/>It'll Play Out, <Link href="/flowchart" className="text-[#A4BCDB] underline decoration-4  underline-offset-8">Prolly</Link>.
         <br />
         <div className='flex flex-col gap-1'>
-          <span className={`mt-10 text-sm font-mono uppercase w-[25em] inline-block break-words whitespace-normal overflow-wrap-normal italic transition-all duration-1000 ${isBlurred ? 'blur-sm' : 'blur-none'}`}>
+          <span className={`mt-8 text-sm font-mono uppercase w-[25em] inline-block break-words whitespace-normal overflow-wrap-normal italic transition-all duration-1000 ${isBlurred ? 'blur-sm' : 'blur-none'}`}>
             "{testimonials[currentTestimonial].quote}"
           </span>
           <span className={`mt-1 text-sm font-mono uppercase w-[25em] inline-block break-words whitespace-normal overflow-wrap-normal transition-all duration-1000 ${isBlurred ? 'blur-sm' : 'blur-none'}`}>

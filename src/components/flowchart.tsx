@@ -1,5 +1,4 @@
 'use client';
-
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Pie, PieChart, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -13,38 +12,50 @@ const generateRandomPercentages = (count) => {
   return percentages.map(p => +(p / total * 100).toFixed(1));
 };
 
-export function Component() {
-  const percentages = generateRandomPercentages(5);
-  const chartData = [
-    { name: "Outcome 1", value: percentages[0] },
-    { name: "Outcome 2", value: percentages[1] },
-    { name: "Outcome 3", value: percentages[2] },
-    { name: "Outcome 4", value: percentages[3] },
-    { name: "Outcome 5", value: percentages[4] },
+interface ComponentProps {
+  probability: number;
+  index: number; // Add this to differentiate between outcomes
+}
+
+const Component: React.FC<ComponentProps> = ({ probability, index }) => {
+  const rotation = (index % 4) * 90; // Rotate by 0, 90, 180, or 270 degrees
+  const startAngle = rotation;
+  const endAngle = startAngle + 360; // Full circle
+
+  const data = [
+    { name: "Probability", value: probability },
+    { name: "Remaining", value: 100 - probability }
   ];
 
+  const nodeWidth = Math.max(20, probability.toFixed(0).length * 10); // Adjust the multiplier for desired width
+
   return (
-    <div className="w-16 h-16">
+    <div className={`relative w-${nodeWidth} h-16`}> {/* Add dynamic width based on probability */}
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
-            data={chartData}
+            data={data}
             cx="50%"
             cy="50%"
-            outerRadius="90%"
+            outerRadius="100%"
             innerRadius="0%"
             dataKey="value"
+            startAngle={startAngle}
+            endAngle={endAngle}
+            stroke="none"
           >
-            {chartData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-            ))}
+            <Cell fill="#C2BEB5" />
+            <Cell fill="none" />
           </Pie>
-          <Tooltip formatter={(value) => `${value.toFixed(1)}%`} />
         </PieChart>
       </ResponsiveContainer>
+      {/* Overlay text */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span className="text-sm text-[#3C3C3C] font-mono uppercase">{probability.toFixed(0)}%</span>
+      </div>
     </div>
   );
-}
+};
 
 const initialTree = {
   id: 'start',
@@ -106,7 +117,7 @@ const FlowchartPage = () => {
                   type="text"
                   value={answers[step]}
                   onChange={handleInputChange}
-                  className="w-full text-center placeholder-center focus:outline-none focus:ring-0 font-man "
+                  className="w-full mb-4 text-center placeholder-center focus:outline-none focus:ring-0 font-man "
                   placeholder="Enter your answer"
                   autoFocus
                   style={{
@@ -210,43 +221,46 @@ const FlowChart = ({ initialSituation, initialAction, showChart }) => {
     setTreeData(initialTree);
   };
 
-  const generateOutcomes = async (parentX, parentY, action) => {
-    try {
-      const response = await fetch('http://localhost:8000/api/generate-outcomes', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ action }),
-      });
-  
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-  
-      const data = await response.json();
-      const totalHeight = (data.outcomes.length - 1) * VERTICAL_SPACING;
-      const startY = parentY - totalHeight / 2;
-  
-      const newOutcomes = data.outcomes.map((outcome, i) => ({
-        id: `outcome-${Date.now()}-${i}`,
-        title: outcome,
-        content: outcome,
-        probability: Math.floor(100 / data.outcomes.length),
-        position: { 
-          x: parentX + HORIZONTAL_SPACING, 
-          y: startY + i * VERTICAL_SPACING
-        },
-        type: 'outcome',
-        outcomes: []
-      }));
-  
-      return newOutcomes;
-    } catch (error) {
-      console.error('Error generating outcomes:', error);
-      return [];
+
+// Update the generateOutcomes function
+const generateOutcomes = async (parentX: number, parentY: number, action: string): Promise<any[]> => {
+  try {
+    const response = await fetch('http://localhost:8000/generate-outcomes', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ query: action }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
-  };
+
+    const data = await response.json();
+    const totalHeight = (data.outcomes.length - 1) * VERTICAL_SPACING;
+    const startY = parentY - totalHeight / 2;
+
+    const newOutcomes = data.outcomes.map((outcome: Outcome, i: number) => ({
+      id: `outcome-${Date.now()}-${i}`,
+      title: outcome.title,
+      content: outcome.description,
+      probability: outcome.probability,
+      optionNumber: outcome.optionNumber,
+      position: { 
+        x: parentX + HORIZONTAL_SPACING, 
+        y: startY + i * VERTICAL_SPACING
+      },
+      type: 'outcome',
+      outcomes: []
+    }));
+
+    return newOutcomes;
+  } catch (error) {
+    console.error('Error generating outcomes:', error);
+    return [];
+  }
+};
 
   const getNodePath = (tree, nodeId, path = []) => {
     if (tree.id === nodeId) return path;
@@ -445,8 +459,8 @@ const FlowChart = ({ initialSituation, initialAction, showChart }) => {
     const isSelected = JSON.stringify(path) === JSON.stringify(selectedPath);
     const isEditing = editingNode === node.id;
     
-    const nodeBackgroundColor = node.type === 'action' ? 'bg-blue-100' : '';
-    const nodeBorderClass = isSelected ? 'border-2 border-black' : 'border-2 border-black';
+    const nodeBackgroundColor = node.type === 'action' ? 'bg-[#3C3C3C] ' : 'bg-white';
+    const nodeBorderClass = isSelected ? '' : '';
     
     if (depth === 0) {
       return (
@@ -469,7 +483,7 @@ const FlowChart = ({ initialSituation, initialAction, showChart }) => {
                       d={`M ${startX},${startY} C ${midX},${startY} ${midX},${endY} ${endX},${endY}`}
                       fill="none"
                       stroke={isOutcomeSelected ? "black" : "gray"}
-                      strokeWidth={isOutcomeSelected ? "3" : "2"}
+                      strokeWidth={isOutcomeSelected ? "2" : "1"}
                     />
                   );
                 })}
@@ -484,7 +498,7 @@ const FlowChart = ({ initialSituation, initialAction, showChart }) => {
     return (
       <div key={node.id}>
         <div 
-          className={`absolute p-2 py-2 px-4 cursor-pointer text-wrap w-[20em] h-[5em] ${nodeBackgroundColor} ${nodeBorderClass}`}
+          className={`absolute p-2 py-2 px-4 cursor-pointer text-wrap w-[20em] h-[5em] font-mono uppercase text-center font-normal ${nodeBackgroundColor} ${nodeBorderClass}`}
           style={{
             left: `${node.position.x}px`,
             top: `${node.position.y}px`,
@@ -505,18 +519,21 @@ const FlowChart = ({ initialSituation, initialAction, showChart }) => {
               <input
                 name="action"
                 defaultValue={node.content}
-                className={`w-full h-full p-1 text-center text-black ${nodeBackgroundColor} outline-none`}
+                className={`w-full h-full p-2 text-center text-white font-mono uppercase text-center text-sm text-wrap ${nodeBackgroundColor} outline-none`}
                 autoFocus
               />
             </form>
-           ) : (
+          ) : (
             <>
               <div className="w-full flex-grow flex items-center justify-between ">
-                {node.type === 'outcome' && (
-                  <div className="w-16 h-16 mr-4">
-                    <Component />
-                  </div>
-                )}
+              {node.type === 'outcome' && (
+        <div className="w-16 h-16 mr-4">
+          <Component 
+            probability={node.probability} 
+            index={path[path.length - 1]} // Use the last element of the path as the index
+          />
+        </div>
+      )}
                 <div className="flex-grow text-sm font-medium overflow-hidden text-black">
                   <div className="text-ellipsis overflow-hidden">
                     {node.type === 'action' ? node.content : node.title}
@@ -524,7 +541,7 @@ const FlowChart = ({ initialSituation, initialAction, showChart }) => {
                 </div>
                 {node.type === 'outcome' && (
                   <button 
-                    className="flex-shrink-0 text-3xl px-2 py-1 rounded hover:bg-gray-300 ml-2 text-black"
+                    className="flex-shrink-0 text-3xl px-2 rounded hover:bg-gray-300 ml-2 text-black"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleExpandClick(node.id, e);
