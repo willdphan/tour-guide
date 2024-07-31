@@ -3,6 +3,8 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Pie, PieChart, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
 import debounce from 'lodash/debounce';
+import Spline from '@splinetool/react-spline';
+
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
@@ -71,6 +73,9 @@ const FlowchartPage = () => {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState(['', '']);
   const [showChart, setShowChart] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [outcomesReady, setOutcomesReady] = useState(false);
+  const [chartFullyRendered, setChartFullyRendered] = useState(false);
 
   const questions = [
     "Set the setting",
@@ -87,9 +92,14 @@ const FlowchartPage = () => {
     if (step < questions.length - 1) {
       setStep(step + 1);
     } else {
-      setShowChart(true);
+      setIsGenerating(true);
+      // Simulate the generation process (replace this with your actual generation logic)
+      setTimeout(() => {
+        setIsGenerating(false);
+        setOutcomesReady(true);
+      }, 5000); // Adjust this timeout as needed
     }
-  }, 1000), [step, questions.length, answers]);
+  }, 1000), [step, questions.length]);
 
   useEffect(() => {
     if (answers[step].trim().length > 0) {
@@ -98,12 +108,23 @@ const FlowchartPage = () => {
     return () => progressStep.cancel();
   }, [answers, step, progressStep]);
 
+  useEffect(() => {
+    if (outcomesReady) {
+      setShowChart(true);
+    }
+  }, [outcomesReady]);
+
+  const handleChartRendered = () => {
+    // This function will be called when the flowchart is fully rendered
+    setChartFullyRendered(true);
+  };
+
   return (
     <div className="flex h-screen w-screen overflow-hidden max-w-screen">
-      <div className="w-2/6 h-full  flex flex-col z-[99]">
+      <div className={`${chartFullyRendered ? 'w-2/6' : 'w-full'} h-full flex flex-col z-[99]`}>
         <div className="flex-1 flex flex-col items-center justify-center p-4">
           <AnimatePresence mode="wait">
-            {!showChart ? (
+            {!isGenerating && !outcomesReady ? (
               <motion.div
                 key={step}
                 initial={{ opacity: 0 }}
@@ -117,7 +138,7 @@ const FlowchartPage = () => {
                   type="text"
                   value={answers[step]}
                   onChange={handleInputChange}
-                  className="w-full mb-4 text-center placeholder-center focus:outline-none focus:ring-0 font-man "
+                  className="w-full mb-4 text-center placeholder-center focus:outline-none focus:ring-0 font-man"
                   placeholder="Enter your answer"
                   autoFocus
                   style={{
@@ -126,6 +147,21 @@ const FlowchartPage = () => {
                     },
                   }}
                 />
+              </motion.div>
+            ) : isGenerating || !chartFullyRendered ? (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-center"
+              >
+                {/* <h2 className="text-lg mb-2 font-mono uppercase">Generating possible outcomes...</h2> */}
+                <div className="flex items-center justify-center min-w-screen">
+                <Spline
+        scene="https://prod.spline.design/q9u89sUBdytvk3zO/scene.splinecode" 
+        width={500}
+        height={500}
+      />
+                </div>
               </motion.div>
             ) : (
               <motion.div
@@ -140,16 +176,21 @@ const FlowchartPage = () => {
           </AnimatePresence>
         </div>
       </div>
-      <div className="w-4/6 h-full">
-        <FlowChart 
-          initialSituation={answers[0]} 
-          initialAction={answers[1]} 
-          showChart={showChart} 
-        />
-      </div>
+      {showChart && (
+        <div className="w-4/6 h-full">
+          <FlowChart 
+            initialSituation={answers[0]} 
+            initialAction={answers[1]} 
+            showChart={showChart}
+            onChartRendered={handleChartRendered}
+          />
+        </div>
+      )}
     </div>
   );
 };
+
+
 
 const FullScreenPopup = ({ node, onClose }) => {
   return (
@@ -174,7 +215,8 @@ const FullScreenPopup = ({ node, onClose }) => {
   );
 };
 
-const FlowChart = ({ initialSituation, initialAction, showChart }) => {
+const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered }) => {
+
   const [treeData, setTreeData] = useState(initialTree);
   const [isDragging, setIsDragging] = useState(false);
   const [draggedNode, setDraggedNode] = useState(null);
@@ -194,10 +236,15 @@ const FlowChart = ({ initialSituation, initialAction, showChart }) => {
   const VERTICAL_SPACING = 150;
 
   useEffect(() => {
-    if (showChart && initialSituation && initialAction) {
-      generateInitialFlowchart(initialSituation, initialAction);
+    if (showChart) {
+      // Assuming you have some async process to generate the chart
+      generateInitialFlowchart(initialSituation, initialAction).then(() => {
+        // Call onChartRendered when the chart is fully generated and rendered
+        onChartRendered();
+      });
     }
-  }, [showChart, initialSituation, initialAction]);
+  }, [showChart, initialSituation, initialAction, onChartRendered]);
+
 
   const generateInitialFlowchart = async (situation, action) => {
     const outcomes = await generateOutcomes(0, 0, action);
@@ -459,8 +506,8 @@ const generateOutcomes = async (parentX: number, parentY: number, action: string
     const isSelected = JSON.stringify(path) === JSON.stringify(selectedPath);
     const isEditing = editingNode === node.id;
     
-    const nodeBackgroundColor = node.type === 'action' ? 'bg-[#3C3C3C] ' : 'bg-white';
-    const nodeBorderClass = isSelected ? '' : '';
+    const nodeBackgroundColor = node.type === 'action' ? 'bg-[#3C3C3C] ' : 'bg-none';
+    const nodeBorderClass = isSelected ? 'border-2 border-black' : 'border-2 border-[#C2BEB5]';
     
     if (depth === 0) {
       return (
@@ -571,7 +618,7 @@ const generateOutcomes = async (parentX: number, parentY: number, action: string
                 key={outcome.id}
                 d={`M ${startX},${startY} C ${midX},${startY} ${midX},${endY} ${endX},${endY}`}
                 fill="none"
-                stroke={isOutcomeSelected ? "black" : "gray"}
+                stroke={isOutcomeSelected ? "black" : "#C2BEB5"}
                 strokeWidth={isOutcomeSelected ? "3" : "2"}
               />
             );
