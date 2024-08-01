@@ -69,6 +69,7 @@ const initialTree = {
 
 
 
+
 const FlowchartPage = () => {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState(['', '']);
@@ -76,6 +77,8 @@ const FlowchartPage = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [outcomesReady, setOutcomesReady] = useState(false);
   const [chartFullyRendered, setChartFullyRendered] = useState(false);
+  const [showSpline, setShowSpline] = useState(false);
+  const [numberOfOutcomes, setNumberOfOutcomes] = useState(0);
 
   const questions = [
     "Set the setting",
@@ -93,13 +96,53 @@ const FlowchartPage = () => {
       setStep(step + 1);
     } else {
       setIsGenerating(true);
-      // Simulate the generation process (replace this with your actual generation logic)
-      setTimeout(() => {
-        setIsGenerating(false);
+      setShowSpline(true);
+      try {
+        const response = await fetch('http://localhost:8000/generate-outcomes', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ query: answers[1] }),
+        });
+  
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+  
+        const data = await response.json();
+        console.log('API response:', data); // Log the entire response for debugging
+  
+        if (Array.isArray(data.outcomes) && data.outcomes.length > 0) {
+          const optionNumbers = data.outcomes.map(outcome => outcome.optionNumber);
+          console.log('Option numbers:', optionNumbers); // Log option numbers for debugging
+  
+          const validOptionNumbers = optionNumbers.filter(num => typeof num === 'number' && !isNaN(num));
+          console.log('Valid option numbers:', validOptionNumbers); // Log valid option numbers
+  
+          if (validOptionNumbers.length > 0) {
+            const maxOptionNumber = Math.max(...validOptionNumbers);
+            console.log('Max option number:', maxOptionNumber); // Log max option number
+            console.log('Number of outcomes:', data.outcomes.length); // Log number of outcomes
+            setNumberOfOutcomes(data.outcomes.length);
+          } else {
+            console.error('No valid option numbers found');
+            setNumberOfOutcomes(data.outcomes.length); // Fallback to array length
+          }
+        } else {
+          console.error('No outcomes or invalid outcomes array:', data.outcomes);
+          setNumberOfOutcomes(0);
+        }
+        
         setOutcomesReady(true);
-      }, 5000); // Adjust this timeout as needed
+      } catch (error) {
+        console.error('Error in outcome generation:', error);
+        setNumberOfOutcomes(0);
+      } finally {
+        setIsGenerating(false);
+      }
     }
-  }, 1000), [step, questions.length]);
+  }, 1000), [step, questions.length, answers]);
 
   useEffect(() => {
     if (answers[step].trim().length > 0) {
@@ -117,11 +160,13 @@ const FlowchartPage = () => {
   const handleChartRendered = () => {
     // This function will be called when the flowchart is fully rendered
     setChartFullyRendered(true);
+    // Fade out the Spline animation only when the chart is fully rendered
+    setShowSpline(false);
   };
 
   return (
     <div className="flex h-screen w-screen overflow-hidden max-w-screen">
-      <div className={`${chartFullyRendered ? 'w-2/6' : 'w-full'} h-full flex flex-col z-[99]`}>
+      <div className={`${chartFullyRendered ? 'w-2/6' : 'w-full'} h-full flex flex-col z-[99] ${chartFullyRendered ? 'bg-white' : 'bg-[#E8E4DB]'} transition-colors duration-500`}>
         <div className="flex-1 flex flex-col items-center justify-center p-4">
           <AnimatePresence mode="wait">
             {!isGenerating && !outcomesReady ? (
@@ -138,7 +183,7 @@ const FlowchartPage = () => {
                   type="text"
                   value={answers[step]}
                   onChange={handleInputChange}
-                  className="w-full mb-4 text-center placeholder-center focus:outline-none focus:ring-0 font-man"
+                  className="w-full mb-4 text-center placeholder-center focus:outline-none focus:ring-0 font-man bg-transparent"
                   placeholder="Enter your answer"
                   autoFocus
                   style={{
@@ -148,36 +193,46 @@ const FlowchartPage = () => {
                   }}
                 />
               </motion.div>
-            ) : isGenerating || !chartFullyRendered ? (
+            ) : showSpline ? (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="text-center"
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.5 }}
+                className="text-center w-full h-full bg-[#E8E4DB] flex items-center justify-center"
               >
-                {/* <h2 className="text-lg mb-2 font-mono uppercase">Generating possible outcomes...</h2> */}
-                <div className="flex items-center justify-center min-w-screen">
-                <Spline
-        scene="https://prod.spline.design/q9u89sUBdytvk3zO/scene.splinecode" 
-        width={500}
-        height={500}
-      />
-                </div>
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 1 }}
+                  className="flex items-center justify-center"
+                >
+                  <Spline
+                    scene="https://prod.spline.design/gbG6-0xtiOTPHBfn/scene.splinecode" 
+                    width={400}
+                    height={400}
+                  />
+                </motion.div>
               </motion.div>
-            ) : (
+            ) : chartFullyRendered ? (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="text-center"
+                className="text-center w-full"
               >
-                <h2 className="text-lg mb-2 font-mono uppercase">Possible outcomes generated</h2>
+                <div className="mb-4">
+                  <span className="text-6xl font-bold font-ibm text-[#3C3C3C]">{numberOfOutcomes}</span>
+                </div>
+                <h2 className="text-lg mb-2 font-mono uppercase text-[#3C3C3C]">Possible outcomes generated</h2>
                 <p className='font-man text-gray-500'>Interact with the flowchart.</p>
               </motion.div>
-            )}
+            ) : null}
           </AnimatePresence>
         </div>
       </div>
       {showChart && (
-        <div className="w-4/6 h-full">
+        <div className={`${chartFullyRendered ? 'w-4/6' : 'w-0'} h-full transition-all duration-500`}>
           <FlowChart 
             initialSituation={answers[0]} 
             initialAction={answers[1]} 
@@ -192,6 +247,7 @@ const FlowchartPage = () => {
 
 
 
+
 const FullScreenPopup = ({ node, onClose }) => {
   return (
     <div className="fixed inset-y-0 right-0 w-4/6 bg-[#E8E4DB] shadow-lg z-50 flex flex-col p-12">
@@ -200,7 +256,7 @@ const FullScreenPopup = ({ node, onClose }) => {
           <h2 className="text-3xl mb-2">{node.probability}% {node.title}</h2>
           <p className="text-3xl text-gray-500">Option {node.optionNumber}</p>
         </div>
-        <button 
+        <button
           onClick={onClose}
           className="text-2xl font-bold hover:text-gray-700"
         >
@@ -500,14 +556,26 @@ const generateOutcomes = async (parentX: number, parentY: number, action: string
     }
   };
 
+  const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
+
+
   const renderNode = (node, depth = 0, path = []) => {
     if (!node) return null;
     const hasOutcomes = node.outcomes && node.outcomes.length > 0;
     const isSelected = JSON.stringify(path) === JSON.stringify(selectedPath);
+    const isOnSelectedPath = selectedPath.length >= path.length && 
+      JSON.stringify(path) === JSON.stringify(selectedPath.slice(0, path.length));
     const isEditing = editingNode === node.id;
     
-    const nodeBackgroundColor = node.type === 'action' ? 'bg-[#3C3C3C] ' : 'bg-none';
-    const nodeBorderClass = isSelected ? 'border-2 border-black' : 'border-2 border-[#C2BEB5]';
+    let nodeBackgroundColor = 'bg-white'; // Default background color
+    if (node.type === 'action') {
+      nodeBackgroundColor = 'bg-[#3C3C3C]';
+    } else if (node.type === 'outcome') {
+      nodeBackgroundColor = isOnSelectedPath ? 'bg-[#00B7FC]' : 'bg-[#F2B8EB]';
+    }
+  
+    const nodeBorderClass = isSelected ? 'border-[2px] border-black' : 'border-[2px] border-[#C2BEB5]';
+    
     
     if (depth === 0) {
       return (
@@ -542,6 +610,7 @@ const generateOutcomes = async (parentX: number, parentY: number, action: string
       );
     }
         
+
     return (
       <div key={node.id}>
         <div 
@@ -624,7 +693,8 @@ const generateOutcomes = async (parentX: number, parentY: number, action: string
             );
           })}
         </svg>
-        {node.outcomes.map((outcome, index) => renderNode(outcome, depth + 1, [...path, index]))}
+        {hasOutcomes && node.outcomes.map((outcome, index) => renderNode(outcome, depth + 1, [...path, index]))}
+
       </>
     )}
     </div>
