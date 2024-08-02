@@ -80,12 +80,6 @@ const FlowchartPage = () => {
   const [showSpline, setShowSpline] = useState(false);
   const [numberOfOutcomes, setNumberOfOutcomes] = useState(0);
 
-  const handleOutcomesUpdate = (newOutcomesCount: number) => {
-    setNumberOfOutcomes(newOutcomesCount);
-  };
-
-  
-
   const questions = [
     "Set the setting",
     "What action will you take?"
@@ -244,7 +238,6 @@ const FlowchartPage = () => {
             initialAction={answers[1]} 
             showChart={showChart}
             onChartRendered={handleChartRendered}
-            onOutcomesUpdate={handleOutcomesUpdate}
           />
         </div>
       )}
@@ -278,7 +271,7 @@ const FullScreenPopup = ({ node, onClose }) => {
   );
 };
 
-const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered, onOutcomesUpdate }) => {
+const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered }) => {
 
   const [treeData, setTreeData] = useState(initialTree);
   const [isDragging, setIsDragging] = useState(false);
@@ -289,9 +282,6 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
   const [selectedPath, setSelectedPath] = useState<number[]>([]);
   const [editingNode, setEditingNode] = useState('start');
   const [selectedNodeDetail, setSelectedNodeDetail] = useState(null);
-  const [numberOfOutcomes, setNumberOfOutcomes] = useState(0);
-
-  
   const containerRef = useRef<HTMLDivElement>(null);
 
   const NODE_WIDTH = 200;
@@ -553,8 +543,6 @@ const generateOutcomes = async (parentX: number, parentY: number, action: string
           if (node.id === nodeId) {
             node.content = content;
             node.outcomes = outcomes;
-            // Update the number of outcomes for this specific action
-            onOutcomesUpdate(outcomes.length);
             return true;
           }
           return node.outcomes && node.outcomes.some(updateNode);
@@ -562,13 +550,11 @@ const generateOutcomes = async (parentX: number, parentY: number, action: string
         updateNode(newTree);
         return newTree;
       });
-
       setEditingNode(null);
     } catch (error) {
       console.error('Error submitting action:', error);
     }
   };
-
 
   const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
 
