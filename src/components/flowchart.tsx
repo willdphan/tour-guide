@@ -80,6 +80,11 @@ const FlowchartPage = () => {
   const [showSpline, setShowSpline] = useState(false);
   const [numberOfOutcomes, setNumberOfOutcomes] = useState(0);
 
+  const updateNumberOfOutcomes = useCallback((count: number) => {
+    setNumberOfOutcomes(count);
+  }, []);
+
+
   const questions = [
     "Set the setting",
     "What action will you take?"
@@ -233,12 +238,13 @@ const FlowchartPage = () => {
       </div>
       {showChart && (
         <div className={`${chartFullyRendered ? 'w-4/6' : 'w-0'} h-full transition-all duration-500`}>
-          <FlowChart 
-            initialSituation={answers[0]} 
-            initialAction={answers[1]} 
-            showChart={showChart}
-            onChartRendered={handleChartRendered}
-          />
+         <FlowChart 
+  initialSituation={answers[0]} 
+  initialAction={answers[1]} 
+  showChart={showChart}
+  onChartRendered={handleChartRendered}
+  updateNumberOfOutcomes={updateNumberOfOutcomes}
+/>
         </div>
       )}
     </div>
@@ -271,8 +277,7 @@ const FullScreenPopup = ({ node, onClose }) => {
   );
 };
 
-const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered }) => {
-
+const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered, updateNumberOfOutcomes }) => {
   const [treeData, setTreeData] = useState(initialTree);
   const [isDragging, setIsDragging] = useState(false);
   const [draggedNode, setDraggedNode] = useState(null);
@@ -293,9 +298,7 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
 
   useEffect(() => {
     if (showChart) {
-      // Assuming you have some async process to generate the chart
       generateInitialFlowchart(initialSituation, initialAction).then(() => {
-        // Call onChartRendered when the chart is fully generated and rendered
         onChartRendered();
       });
     }
@@ -304,19 +307,19 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
 
   const generateInitialFlowchart = async (situation, action) => {
     const outcomes = await generateOutcomes(0, 0, action);
+    updateNumberOfOutcomes(outcomes.length); // Use updateNumberOfOutcomes prop here
     const totalHeight = (outcomes.length - 1) * VERTICAL_SPACING;
-    const startY = window.innerHeight / 2 - totalHeight / 2; // Center vertically
-  
+    const startY = window.innerHeight / 2 - totalHeight / 2;
+
     const initialTree = {
       id: 'start',
       content: situation,
-      position: { x: 0, y: startY + totalHeight / 2 }, // Center the root node
+      position: { x: 0, y: startY + totalHeight / 2 },
       type: 'situation',
       outcomes: outcomes.map((outcome, index) => ({
         ...outcome,
         position: {
           x: INITIAL_HORIZONTAL_SPACING,
-          // x: INITIAL_HORIZONTAL_SPACING + (index * NODE_WIDTH / 2), // Add horizontal offset based on index
           y: startY + index * VERTICAL_SPACING
         }
       }))
@@ -324,46 +327,48 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
     setTreeData(initialTree);
   };
 
+  const generateOutcomes = async (parentX: number, parentY: number, action: string): Promise<any[]> => {
+    try {
+      const response = await fetch('http://localhost:8000/generate-outcomes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query: action }),
+      });
 
-// Update the generateOutcomes function
-const generateOutcomes = async (parentX: number, parentY: number, action: string): Promise<any[]> => {
-  try {
-    const response = await fetch('http://localhost:8000/generate-outcomes', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ query: action }),
-    });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const data = await response.json();
+      const totalHeight = (data.outcomes.length - 1) * VERTICAL_SPACING;
+      const startY = parentY - totalHeight / 2;
+
+      const newOutcomes = data.outcomes.map((outcome: Outcome, i: number) => ({
+        id: `outcome-${Date.now()}-${i}`,
+        title: outcome.title,
+        content: outcome.description,
+        probability: outcome.probability,
+        optionNumber: outcome.optionNumber,
+        position: { 
+          x: parentX + HORIZONTAL_SPACING, 
+          y: startY + i * VERTICAL_SPACING
+        },
+        type: 'outcome',
+        outcomes: []
+      }));
+
+      // Update the number of outcomes
+      updateNumberOfOutcomes(newOutcomes.length);
+
+      return newOutcomes;
+    } catch (error) {
+      console.error('Error generating outcomes:', error);
+      updateNumberOfOutcomes(0); // Set to 0 if there's an error
+      return [];
     }
-
-    const data = await response.json();
-    const totalHeight = (data.outcomes.length - 1) * VERTICAL_SPACING;
-    const startY = parentY - totalHeight / 2;
-
-    const newOutcomes = data.outcomes.map((outcome: Outcome, i: number) => ({
-      id: `outcome-${Date.now()}-${i}`,
-      title: outcome.title,
-      content: outcome.description,
-      probability: outcome.probability,
-      optionNumber: outcome.optionNumber,
-      position: { 
-        x: parentX + HORIZONTAL_SPACING, 
-        y: startY + i * VERTICAL_SPACING
-      },
-      type: 'outcome',
-      outcomes: []
-    }));
-
-    return newOutcomes;
-  } catch (error) {
-    console.error('Error generating outcomes:', error);
-    return [];
-  }
-};
+  };
 
   const getNodePath = (tree, nodeId, path = []) => {
     if (tree.id === nodeId) return path;
