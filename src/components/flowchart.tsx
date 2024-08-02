@@ -1,10 +1,9 @@
 'use client';
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { Pie, PieChart, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
-import debounce from 'lodash/debounce';
 import Spline from '@splinetool/react-spline';
-
+import debounce from 'lodash/debounce';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
@@ -16,23 +15,23 @@ const generateRandomPercentages = (count) => {
 
 interface ComponentProps {
   probability: number;
-  index: number; // Add this to differentiate between outcomes
+  index: number;
 }
 
 const Component: React.FC<ComponentProps> = ({ probability, index }) => {
-  const rotation = (index % 4) * 90; // Rotate by 0, 90, 180, or 270 degrees
+  const rotation = (index % 4) * 90;
   const startAngle = rotation;
-  const endAngle = startAngle + 360; // Full circle
+  const endAngle = startAngle + 360;
 
   const data = [
     { name: "Probability", value: probability },
     { name: "Remaining", value: 100 - probability }
   ];
 
-  const nodeWidth = Math.max(20, probability.toFixed(0).length * 10); // Adjust the multiplier for desired width
+  const nodeWidth = Math.max(20, probability.toFixed(0).length * 10);
 
   return (
-    <div className={`relative w-${nodeWidth} h-16`}> {/* Add dynamic width based on probability */}
+    <div className={`relative w-${nodeWidth} h-16`}>
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
@@ -51,7 +50,6 @@ const Component: React.FC<ComponentProps> = ({ probability, index }) => {
           </Pie>
         </PieChart>
       </ResponsiveContainer>
-      {/* Overlay text */}
       <div className="absolute inset-0 flex items-center justify-center">
         <span className="text-sm text-[#3C3C3C] font-mono uppercase">{probability.toFixed(0)}%</span>
       </div>
@@ -67,9 +65,6 @@ const initialTree = {
   outcomes: []
 };
 
-
-
-
 const FlowchartPage = () => {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState(['', '']);
@@ -79,11 +74,8 @@ const FlowchartPage = () => {
   const [chartFullyRendered, setChartFullyRendered] = useState(false);
   const [showSpline, setShowSpline] = useState(false);
   const [numberOfOutcomes, setNumberOfOutcomes] = useState(0);
-
-  const updateNumberOfOutcomes = useCallback((count: number) => {
-    setNumberOfOutcomes(count);
-  }, []);
-
+  const isGeneratingRef = useRef(false);
+  const abortControllerRef = useRef(new AbortController());
 
   const questions = [
     "Set the setting",
@@ -96,65 +88,76 @@ const FlowchartPage = () => {
     setAnswers(newAnswers);
   };
 
-  const progressStep = useCallback(debounce(async () => {
+  const handleInputSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (step < questions.length - 1) {
       setStep(step + 1);
-    } else {
-      setIsGenerating(true);
-      setShowSpline(true);
-      try {
-        const response = await fetch('http://localhost:8000/generate-outcomes', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ query: answers[1] }),
-        });
-  
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-  
-        const data = await response.json();
-        console.log('API response:', data); // Log the entire response for debugging
-  
-        if (Array.isArray(data.outcomes) && data.outcomes.length > 0) {
-          const optionNumbers = data.outcomes.map(outcome => outcome.optionNumber);
-          console.log('Option numbers:', optionNumbers); // Log option numbers for debugging
-  
-          const validOptionNumbers = optionNumbers.filter(num => typeof num === 'number' && !isNaN(num));
-          console.log('Valid option numbers:', validOptionNumbers); // Log valid option numbers
-  
-          if (validOptionNumbers.length > 0) {
-            const maxOptionNumber = Math.max(...validOptionNumbers);
-            console.log('Max option number:', maxOptionNumber); // Log max option number
-            console.log('Number of outcomes:', data.outcomes.length); // Log number of outcomes
-            setNumberOfOutcomes(data.outcomes.length);
-          } else {
-            console.error('No valid option numbers found');
-            setNumberOfOutcomes(data.outcomes.length); // Fallback to array length
-          }
-        } else {
-          console.error('No outcomes or invalid outcomes array:', data.outcomes);
-          setNumberOfOutcomes(0);
-        }
-        
-        setOutcomesReady(true);
-      } catch (error) {
-        console.error('Error in outcome generation:', error);
-        setNumberOfOutcomes(0);
-      } finally {
-        setIsGenerating(false);
-      }
+    } else if (!isGeneratingRef.current) {
+      await debouncedProgressStep();
     }
-  }, 1000), [step, questions.length, answers]);
+  };
 
-  useEffect(() => {
-    if (answers[step].trim().length > 0) {
-      progressStep();
+  const progressStep = useCallback(async () => {
+    if (isGeneratingRef.current) {
+      console.log('Already generating outcomes, skipping...');
+      return;
     }
-    return () => progressStep.cancel();
-  }, [answers, step, progressStep]);
+    
+    isGeneratingRef.current = true;
+    setIsGenerating(true);
+    setShowSpline(true);
+    
+    const callId = Date.now();
+    console.log(`Starting outcome generation... (Call ID: ${callId})`);
+    
+    try {
+      abortControllerRef.current.abort(); // Cancel any ongoing requests
+      abortControllerRef.current = new AbortController();
+
+      const response = await fetch('http://localhost:8000/generate-outcomes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query: answers[1] }),
+        signal: abortControllerRef.current.signal
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log(`API response received: (Call ID: ${callId})`, data);
+
+      if (Array.isArray(data.outcomes) && data.outcomes.length > 0) {
+        console.log(`Updating number of outcomes to ${data.outcomes.length} (Call ID: ${callId})`);
+        setNumberOfOutcomes(data.outcomes.length);
+      } else {
+        console.error(`No outcomes or invalid outcomes array: (Call ID: ${callId})`, data.outcomes);
+        setNumberOfOutcomes(0);
+      }
+      
+      console.log(`Setting outcomesReady to true (Call ID: ${callId})`);
+      setOutcomesReady(true);
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        console.log(`Request aborted (Call ID: ${callId})`);
+      } else {
+        console.error(`Error in outcome generation: (Call ID: ${callId})`, error);
+        setNumberOfOutcomes(0);
+      }
+    } finally {
+      console.log(`Finishing outcome generation... (Call ID: ${callId})`);
+      setIsGenerating(false);
+      isGeneratingRef.current = false;
+    }
+  }, [answers]);
+
+  const debouncedProgressStep = useMemo(
+    () => debounce(progressStep, 300),
+    [progressStep]
+  );
 
   useEffect(() => {
     if (outcomesReady) {
@@ -162,12 +165,21 @@ const FlowchartPage = () => {
     }
   }, [outcomesReady]);
 
-  const handleChartRendered = () => {
-    // This function will be called when the flowchart is fully rendered
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current.abort();
+      debouncedProgressStep.cancel();
+    };
+  }, [debouncedProgressStep]);
+
+  const handleChartRendered = useCallback(() => {
     setChartFullyRendered(true);
-    // Fade out the Spline animation only when the chart is fully rendered
     setShowSpline(false);
-  };
+  }, []);
+
+  const updateNumberOfOutcomes = useCallback((count: number) => {
+    setNumberOfOutcomes(count);
+  }, []);
 
   return (
     <div className="flex h-screen w-screen overflow-hidden max-w-screen">
@@ -184,19 +196,21 @@ const FlowchartPage = () => {
                 className="w-full max-w-sm"
               >
                 <h2 className="text-lg mb-4 text-center uppercase font-mono">{questions[step]}</h2>
-                <input
-                  type="text"
-                  value={answers[step]}
-                  onChange={handleInputChange}
-                  className="w-full mb-4 text-center placeholder-center focus:outline-none focus:ring-0 font-man bg-transparent"
-                  placeholder="Enter your answer"
-                  autoFocus
-                  style={{
-                    '::placeholder': {
-                      textAlign: 'center',
-                    },
-                  }}
-                />
+                <form onSubmit={handleInputSubmit}>
+                  <input
+                    type="text"
+                    value={answers[step]}
+                    onChange={handleInputChange}
+                    className="w-full mb-4 text-center placeholder-center focus:outline-none focus:ring-0 font-man bg-transparent"
+                    placeholder="Enter your answer"
+                    autoFocus
+                    style={{
+                      '::placeholder': {
+                        textAlign: 'center',
+                      },
+                    }}
+                  />
+                </form>
               </motion.div>
             ) : showSpline ? (
               <motion.div
@@ -238,21 +252,18 @@ const FlowchartPage = () => {
       </div>
       {showChart && (
         <div className={`${chartFullyRendered ? 'w-4/6' : 'w-0'} h-full transition-all duration-500`}>
-         <FlowChart 
-  initialSituation={answers[0]} 
-  initialAction={answers[1]} 
-  showChart={showChart}
-  onChartRendered={handleChartRendered}
-  updateNumberOfOutcomes={updateNumberOfOutcomes}
-/>
+          <FlowChart 
+            initialSituation={answers[0]} 
+            initialAction={answers[1]} 
+            showChart={showChart}
+            onChartRendered={handleChartRendered}
+            updateNumberOfOutcomes={updateNumberOfOutcomes}
+          />
         </div>
       )}
     </div>
   );
 };
-
-
-
 
 const FullScreenPopup = ({ node, onClose }) => {
   return (
@@ -281,18 +292,16 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
   const [treeData, setTreeData] = useState(initialTree);
   const [isDragging, setIsDragging] = useState(false);
   const [draggedNode, setDraggedNode] = useState(null);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-
   const [selectedPath, setSelectedPath] = useState<number[]>([]);
   const [editingNode, setEditingNode] = useState('start');
   const [selectedNodeDetail, setSelectedNodeDetail] = useState(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [popupNode, setPopupNode] = useState(null);
 
   const NODE_WIDTH = 200;
   const NODE_HEIGHT = 100;
-  const INITIAL_HORIZONTAL_SPACING = 300; // Adjust this value as needed
-
+  const INITIAL_HORIZONTAL_SPACING = 300;
   const HORIZONTAL_SPACING = 550;
   const VERTICAL_SPACING = 150;
 
@@ -304,13 +313,11 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
     }
   }, [showChart, initialSituation, initialAction, onChartRendered]);
 
-
   const generateInitialFlowchart = async (situation, action) => {
     const outcomes = await generateOutcomes(0, 0, action);
-    updateNumberOfOutcomes(outcomes.length); // Use updateNumberOfOutcomes prop here
     const totalHeight = (outcomes.length - 1) * VERTICAL_SPACING;
     const startY = window.innerHeight / 2 - totalHeight / 2;
-
+  
     const initialTree = {
       id: 'start',
       content: situation,
@@ -327,7 +334,7 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
     setTreeData(initialTree);
   };
 
-  const generateOutcomes = async (parentX: number, parentY: number, action: string): Promise<any[]> => {
+  const generateOutcomes = useCallback(async (parentX: number, parentY: number, action: string): Promise<any[]> => {
     try {
       const response = await fetch('http://localhost:8000/generate-outcomes', {
         method: 'POST',
@@ -359,16 +366,15 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
         outcomes: []
       }));
 
-      // Update the number of outcomes
       updateNumberOfOutcomes(newOutcomes.length);
 
       return newOutcomes;
     } catch (error) {
       console.error('Error generating outcomes:', error);
-      updateNumberOfOutcomes(0); // Set to 0 if there's an error
+      updateNumberOfOutcomes(0);
       return [];
     }
-  };
+  }, [updateNumberOfOutcomes]);
 
   const getNodePath = (tree, nodeId, path = []) => {
     if (tree.id === nodeId) return path;
@@ -427,9 +433,7 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
       });
     }
   };
-  const [popupNode, setPopupNode] = useState(null);
 
-  // Modify handleExpandClick
   const handleExpandClick = (nodeId: string, event: React.MouseEvent) => {
     event.stopPropagation();
     const clickedNode = findNodeById(treeData, nodeId);
@@ -438,11 +442,9 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
     }
   };
 
-    // Add the closePopup function
-    const closePopup = () => {
-      setPopupNode(null);
-    };
-  
+  const closePopup = () => {
+    setPopupNode(null);
+  };
 
   const getNodeByPath = (tree, path) => {
     let node = tree;
@@ -504,26 +506,6 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
     };
   }, [isDragging, handleNodeDrag, handleNodeDragEnd]);
 
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (isDragging) {
-      handleNodeDrag(e);
-    }
-  }, [isDragging]);
-
-  const handleMouseUp = useCallback(() => {
-    handleNodeDragEnd();
-  }, []);
-
-  useEffect(() => {
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [handleMouseMove, handleMouseUp]);
-
   const findNodeById = (node, id) => {
     if (node.id === id) return node;
     if (node.outcomes) {
@@ -561,9 +543,6 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
     }
   };
 
-  const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
-
-
   const renderNode = (node, depth = 0, path = []) => {
     if (!node) return null;
     const hasOutcomes = node.outcomes && node.outcomes.length > 0;
@@ -572,7 +551,7 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
       JSON.stringify(path) === JSON.stringify(selectedPath.slice(0, path.length));
     const isEditing = editingNode === node.id;
     
-    let nodeBackgroundColor = 'bg-white'; // Default background color
+    let nodeBackgroundColor = 'bg-white';
     if (node.type === 'action') {
       nodeBackgroundColor = 'bg-[#3C3C3C]';
     } else if (node.type === 'outcome') {
@@ -580,7 +559,6 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
     }
   
     const nodeBorderClass = isSelected ? 'border-[2px] border-black' : 'border-[2px] border-[#C2BEB5]';
-    
     
     if (depth === 0) {
       return (
@@ -591,7 +569,7 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
                 {node.outcomes.map((outcome, index) => {
                   const isOutcomeSelected = selectedPath.length > path.length && 
                                             selectedPath[path.length] === index;
-                  const startX = 0; // Start from the left edge of the flowchart area
+                  const startX = 0;
                   const startY = node.position.y + NODE_HEIGHT / 2;
                   const endX = outcome.position.x;
                   const endY = outcome.position.y + NODE_HEIGHT / 2;
@@ -614,8 +592,7 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
         </div>
       );
     }
-        
-
+            
     return (
       <div key={node.id}>
         <div 
@@ -648,13 +625,13 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
             <>
               <div className="w-full flex-grow flex items-center justify-between ">
               {node.type === 'outcome' && (
-        <div className="w-16 h-16 mr-4">
-          <Component 
-            probability={node.probability} 
-            index={path[path.length - 1]} // Use the last element of the path as the index
-          />
-        </div>
-      )}
+                <div className="w-16 h-16 mr-4">
+                  <Component 
+                    probability={node.probability} 
+                    index={path[path.length - 1]}
+                  />
+                </div>
+              )}
                 <div className="flex-grow text-sm font-medium overflow-hidden text-black">
                   <div className="text-ellipsis overflow-hidden">
                     {node.type === 'action' ? node.content : node.title}
@@ -676,36 +653,34 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
           )}
         </div>
         {hasOutcomes && (
-      <>
-        <svg className="absolute" style={{ left: '0', top: '0', width: '100%', height: '100%', overflow: 'visible', pointerEvents: 'none' }}>
-          {node.outcomes.map((outcome, index) => {
-            const isOutcomeSelected = selectedPath.length > path.length && 
-                                      selectedPath[path.length] === index;
-            const startX = node.position.x + 320; // Adjust this value based on your actual node width
-            const startY = node.position.y + NODE_HEIGHT / 2;
-            const endX = outcome.position.x;
-            const endY = outcome.position.y + NODE_HEIGHT / 2;
-            const midX = (startX + endX) / 2;
+          <>
+            <svg className="absolute" style={{ left: '0', top: '0', width: '100%', height: '100%', overflow: 'visible', pointerEvents: 'none' }}>
+              {node.outcomes.map((outcome, index) => {
+                const isOutcomeSelected = selectedPath.length > path.length && 
+                                          selectedPath[path.length] === index;
+                const startX = node.position.x + 320;
+                const startY = node.position.y + NODE_HEIGHT / 2;
+                const endX = outcome.position.x;
+                const endY = outcome.position.y + NODE_HEIGHT / 2;
+                const midX = (startX + endX) / 2;
 
-            return (
-              <path
-                key={outcome.id}
-                d={`M ${startX},${startY} C ${midX},${startY} ${midX},${endY} ${endX},${endY}`}
-                fill="none"
-                stroke={isOutcomeSelected ? "black" : "#C2BEB5"}
-                strokeWidth={isOutcomeSelected ? "3" : "2"}
-              />
-            );
-          })}
-        </svg>
-        {hasOutcomes && node.outcomes.map((outcome, index) => renderNode(outcome, depth + 1, [...path, index]))}
-
-      </>
-    )}
-    </div>
-  );
-};
-
+                return (
+                  <path
+                    key={outcome.id}
+                    d={`M ${startX},${startY} C ${midX},${startY} ${midX},${endY} ${endX},${endY}`}
+                    fill="none"
+                    stroke={isOutcomeSelected ? "black" : "#C2BEB5"}
+                    strokeWidth={isOutcomeSelected ? "3" : "2"}
+                  />
+                );
+              })}
+            </svg>
+            {hasOutcomes && node.outcomes.map((outcome, index) => renderNode(outcome, depth + 1, [...path, index]))}
+          </>
+        )}
+      </div>
+    );
+  };
 
   const getMaxCoordinates = (node) => {
     let maxX = node.position.x;
