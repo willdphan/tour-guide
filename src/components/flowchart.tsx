@@ -638,7 +638,7 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
               </div>
               {node.type === 'outcome' && (
                 <button 
-                  className={`flex-shrink-0 text-xl ${isSelected ? 'bg-[#00B7FC] hover:bg-[#007AB3]' : 'hover:bg-[#DCA7D6]'} pl-2 pr-2 text-black transition-colors duration-200`}
+                  className={`flex-shrink-0 text-xl ${isSelected ? 'bg-[#00B7FC] hover:bg-[#00A6E5]' : 'hover:bg-[#DCA7D6]'} pl-2 pr-2 text-black transition-colors duration-200`}
                   onClick={(e) => {
                     e.stopPropagation();
                     handleExpandClick(node.id, e);
