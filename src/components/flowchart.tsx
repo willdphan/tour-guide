@@ -4,6 +4,7 @@ import { Pie, PieChart, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
 import Spline from '@splinetool/react-spline';
 import debounce from 'lodash/debounce';
+import Counter from './Counter';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
@@ -241,7 +242,7 @@ const FlowchartPage = () => {
                 className="text-center w-full"
               >
                 <div className="mb-4">
-                  <span className="text-6xl font-bold font-ibm text-[#3C3C3C]">{numberOfOutcomes}</span>
+                  <span className="text-6xl font-bold font-ibm text-[#3C3C3C]"><Counter numberOfOutcomes={numberOfOutcomes} /></span>
                 </div>
                 <h2 className="text-lg mb-2 font-mono uppercase text-[#3C3C3C]">Possible outcomes generated</h2>
                 <p className='font-man text-gray-500'>Interact with the flowchart.</p>
