@@ -12,11 +12,8 @@ interface ComponentProps {
   isSelected: boolean;
 }
 
-const Component: React.FC<ComponentProps> = ({ probability, index, isSelected }) => {
-  const rotation = (index % 4) * 90;
-  const startAngle = rotation;
-  const endAngle = startAngle + 360;
 
+const Component: React.FC<ComponentProps> = ({ probability, index, isSelected }) => {
   const data = [
     { name: "Probability", value: probability },
     { name: "Remaining", value: 100 - probability }
@@ -35,12 +32,12 @@ const Component: React.FC<ComponentProps> = ({ probability, index, isSelected })
             outerRadius="100%"
             innerRadius="0%"
             dataKey="value"
-            startAngle={startAngle}
-            endAngle={endAngle}
+            startAngle={90}
+            endAngle={-270}
             stroke="none"
           >
             <Cell fill={isSelected ? "#009BD6" : "#DCA7D6"} />
-            <Cell fill="none" />
+            <Cell fill="transparent" />
           </Pie>
         </PieChart>
       </ResponsiveContainer>
@@ -622,14 +619,14 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
           ) : (
             <>
             <div className="w-full flex-grow flex items-center justify-between ">
-              {node.type === 'outcome' && (
-                <div className="w-16 h-16 font-medium">
-                  <Component 
-                    probability={node.probability}
-                    index={path[path.length - 1]}
-                    isSelected={isSelected}
-                  />
-                </div>
+            {node.type === 'outcome' && (
+        <div className="w-16 h-16 font-medium">
+          <Component 
+            probability={node.probability}
+            index={path[path.length - 1]}
+            isSelected={isSelected || isOnSelectedPath}
+          />
+        </div>
               )}
               <div className="flex-grow text-sm overflow-hidden text-black">
                 <div className="text-ellipsis overflow-hidden font-ibm">
