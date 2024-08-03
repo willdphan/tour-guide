@@ -9,9 +9,10 @@ import Counter from './Counter';
 interface ComponentProps {
   probability: number;
   index: number;
+  isSelected: boolean;
 }
 
-const Component: React.FC<ComponentProps> = ({ probability, index }) => {
+const Component: React.FC<ComponentProps> = ({ probability, index, isSelected }) => {
   const rotation = (index % 4) * 90;
   const startAngle = rotation;
   const endAngle = startAngle + 360;
@@ -38,13 +39,13 @@ const Component: React.FC<ComponentProps> = ({ probability, index }) => {
             endAngle={endAngle}
             stroke="none"
           >
-            <Cell fill="#C2BEB5" />
+            <Cell fill={isSelected ? "#009BD6" : "#DCA7D6"} />
             <Cell fill="none" />
           </Pie>
         </PieChart>
       </ResponsiveContainer>
       <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-md text-[#3C3C3C] font-ibm uppercase">{probability.toFixed(0)}%</span>
+        <span className="text-lg text-[#3C3C3C] font-ibm uppercase">{probability.toFixed(0)}%</span>
       </div>
     </div>
   );
@@ -236,7 +237,7 @@ const FlowchartPage = () => {
                 <div className="mb-4">
                   <span className="text-6xl font-bold font-ibm text-[#3C3C3C]"><Counter numberOfOutcomes={numberOfOutcomes} /></span>
                 </div>
-                <h2 className="text-lg mb-2 font-mono uppercase text-[#3C3C3C]">Possible outcomes generated</h2>
+                <h2 className="text-lg mb-2 font-ibm uppercase text-[#3C3C3C]">Possible outcomes generated</h2>
                 <p className='font-man text-gray-500'>Interact with the flowchart.</p>
               </motion.div>
             ) : null}
@@ -260,7 +261,7 @@ const FlowchartPage = () => {
 
 const FullScreenPopup = ({ node, onClose }) => {
   return (
-    <div className="fixed inset-y-0 right-0 w-4/6 bg-[#E8E4DB] shadow-lg z-50 flex flex-col p-12">
+    <div className="fixed inset-y-0 right-0 w-4/6 bg-[#E8E4DB] shadow-lg z-50 flex flex-col p-12 ">
       <div className="flex justify-between items-start">
         <div className='flex flex-col'>
           <h2 className="text-3xl mb-2">{node.probability}% {node.title}</h2>
@@ -350,7 +351,8 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
         title: outcome.title,
         content: outcome.description,
         probability: outcome.probability,
-        optionNumber: outcome.optionNumber,
+        optionNumber: i + 1, // Generate option number if not provided by API
+
         position: { 
           x: parentX + HORIZONTAL_SPACING, 
           y: startY + i * VERTICAL_SPACING
@@ -536,6 +538,7 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
     }
   };
 
+
   const renderNode = (node, depth = 0, path = []) => {
     if (!node) return null;
     const hasOutcomes = node.outcomes && node.outcomes.length > 0;
@@ -552,6 +555,7 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
     }
   
     const nodeBorderClass = isSelected ? 'border-[2px] border-black' : 'border-[2px] border-[#C2BEB5]';
+    
     
     if (depth === 0) {
       return (
@@ -586,10 +590,11 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
       );
     }
             
+    
     return (
       <div key={node.id}>
         <div 
-          className={`absolute p-2 py-2 px-4 cursor-pointer text-wrap w-[20em] h-[5em] font-mono uppercase text-center font-normal ${nodeBackgroundColor} ${nodeBorderClass}`}
+          className={`absolute p-2 py-2 px-4 cursor-pointer text-wrap w-[20em] h-[5em] uppercase text-center font-normal ${nodeBackgroundColor} ${nodeBorderClass}`}
           style={{
             left: `${node.position.x}px`,
             top: `${node.position.y}px`,
@@ -616,32 +621,33 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
             </form>
           ) : (
             <>
-              <div className="w-full flex-grow flex items-center justify-between ">
+            <div className="w-full flex-grow flex items-center justify-between ">
               {node.type === 'outcome' && (
-                <div className="w-16 h-16 mr-4s">
+                <div className="w-16 h-16 font-medium">
                   <Component 
                     probability={node.probability}
                     index={path[path.length - 1]}
+                    isSelected={isSelected}
                   />
                 </div>
               )}
-                <div className="flex-grow text-sm font-medium overflow-hidden text-black">
-                  <div className="text-ellipsis overflow-hidden">
-                    {node.type === 'action' ? node.content : node.title}
-                  </div>
+              <div className="flex-grow text-sm overflow-hidden text-black">
+                <div className="text-ellipsis overflow-hidden font-ibm">
+                  {node.type === 'action' ? node.content : node.title}
                 </div>
-                {node.type === 'outcome' && (
-                  <button 
-                    className="flex-shrink-0 text-3xl px-2 rounded hover:bg-gray-300 ml-2 text-black"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleExpandClick(node.id, e);
-                    }}
-                  >
-                    +
-                  </button>
-                )}
               </div>
+              {node.type === 'outcome' && (
+                <button 
+                  className={`flex-shrink-0 text-xl ${isSelected ? 'bg-[#00B7FC] hover:bg-[#007AB3]' : 'hover:bg-[#DCA7D6]'} pl-2 pr-2 text-black transition-colors duration-200`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleExpandClick(node.id, e);
+                  }}
+                >
+                  +
+                </button>
+              )}
+            </div>
             </>
           )}
         </div>
