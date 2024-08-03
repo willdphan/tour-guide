@@ -6,14 +6,6 @@ import Spline from '@splinetool/react-spline';
 import debounce from 'lodash/debounce';
 import Counter from './Counter';
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
-
-const generateRandomPercentages = (count) => {
-  let percentages = Array(count).fill(0).map(() => Math.random());
-  const total = percentages.reduce((a, b) => a + b, 0);
-  return percentages.map(p => +(p / total * 100).toFixed(1));
-};
-
 interface ComponentProps {
   probability: number;
   index: number;
@@ -52,7 +44,7 @@ const Component: React.FC<ComponentProps> = ({ probability, index }) => {
         </PieChart>
       </ResponsiveContainer>
       <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-sm text-[#3C3C3C] font-mono uppercase">{probability.toFixed(0)}%</span>
+        <span className="text-md text-[#3C3C3C] font-ibm uppercase">{probability.toFixed(0)}%</span>
       </div>
     </div>
   );
@@ -626,9 +618,9 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
             <>
               <div className="w-full flex-grow flex items-center justify-between ">
               {node.type === 'outcome' && (
-                <div className="w-16 h-16 mr-4">
+                <div className="w-16 h-16 mr-4s">
                   <Component 
-                    probability={node.probability} 
+                    probability={node.probability}
                     index={path[path.length - 1]}
                   />
                 </div>
