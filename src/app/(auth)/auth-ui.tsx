@@ -10,6 +10,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/use-toast';
 import { ActionResponse } from '@/types/action-response';
+import Spline from '@splinetool/react-spline';
 
 const titleMap = {
   login: 'Login to UPDATE_THIS_WITH_YOUR_APP_DISPLAY_NAME',
@@ -23,17 +24,16 @@ export function AuthUI({
 }: {
   mode: 'login' | 'signup';
   signInWithOAuth: (provider: 'github' | 'google') => Promise<ActionResponse>;
-  signInWithEmail: (email: string) => Promise<ActionResponse>;
+  signInWithEmail: (email: string, password: string) => Promise<ActionResponse>;
 }) {
   const [pending, setPending] = useState(false);
-  const [emailFormOpen, setEmailFormOpen] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   async function handleEmailSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setPending(true);
-    const form = event.target as HTMLFormElement;
-    const email = form['email'].value;
-    const response = await signInWithEmail(email);
+    const response = await signInWithEmail(email, password);
 
     if (response?.error) {
       toast({
@@ -42,11 +42,10 @@ export function AuthUI({
       });
     } else {
       toast({
-        description: `To continue, click the link in the email sent to: ${email}`,
+        description: `Successfully signed in with email: ${email}`,
       });
     }
 
-    form.reset();
     setPending(false);
   }
 
@@ -64,74 +63,120 @@ export function AuthUI({
   }
 
   return (
-    <section className='mt-16 flex w-full flex-col gap-16 rounded-lg bg-black p-10 px-4 text-center'>
-      <div className='flex flex-col gap-4'>
-        <Image src='/logo.png' width={80} height={80} alt='' className='m-auto' />
-        <h1 className='text-lg'>{titleMap[mode]}</h1>
-      </div>
-      <div className='flex flex-col gap-4'>
-        <button
-          className='flex items-center justify-center gap-2 rounded-md bg-cyan-500 py-4 font-medium text-black transition-all hover:bg-cyan-400 disabled:bg-neutral-700'
-          onClick={() => handleOAuthClick('google')}
-          disabled={pending}
-        >
-          <IoLogoGoogle size={20} />
-          Continue with Google
-        </button>
-        <button
-          className='flex items-center justify-center gap-2 rounded-md bg-fuchsia-500 py-4 font-medium text-black transition-all hover:bg-fuchsia-400 disabled:bg-neutral-700'
-          onClick={() => handleOAuthClick('github')}
-          disabled={pending}
-        >
-          <IoLogoGithub size={20} />
-          Continue with GitHub
-        </button>
+    <div className="font-[sans-serif] flex h-screen w-full">
+   <div className="w-1/2 bg-[#E8E4DB] flex items-center justify-center p-4">
+  <div className="w-full max-w-[400px] aspect-square">
+    <Spline
+      scene="https://prod.spline.design/gbG6-0xtiOTPHBfn/scene.splinecode" 
+      width="100%"
+      height="100%"
+    />
+  </div>
+</div>
 
-        <Collapsible open={emailFormOpen} onOpenChange={setEmailFormOpen}>
-          <CollapsibleTrigger asChild>
-            <button
-              className='text-neutral6 flex w-full items-center justify-center gap-2 rounded-md bg-zinc-900 py-4 font-medium transition-all hover:bg-zinc-800 disabled:bg-neutral-700 disabled:text-black'
-              disabled={pending}
-            >
-              Continue with Email
-            </button>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <div className='mt-[-2px] w-full rounded-b-md bg-zinc-900 p-8'>
-              <form onSubmit={handleEmailSubmit}>
-                <Input
-                  type='email'
-                  name='email'
-                  placeholder='Enter your email'
-                  aria-label='Enter your email'
-                  autoFocus
-                />
-                <div className='mt-4 flex justify-end gap-2'>
-                  <Button type='button' onClick={() => setEmailFormOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button variant='secondary' type='submit'>
-                    Submit
-                  </Button>
-                </div>
-              </form>
+      <div className="w-1/2 p-8 overflow-auto flex items-center justify-center">
+        <form onSubmit={handleEmailSubmit} className="max-w-md mx-auto">
+          <div className="mb-8">
+            <h3 className="text-gray-800 text-3xl font-extrabold">Sign in</h3>
+            <p className="text-sm mt-4 text-gray-800">
+              Don't have an account 
+              <Link href="/signup" className="text-blue-600 font-semibold hover:underline ml-1 whitespace-nowrap">
+                Register here
+              </Link>
+            </p>
+          </div>
+
+          <div className="mb-4">
+            <label className="text-gray-800 text-[15px] mb-2 block">Email</label>
+            <div className="relative flex items-center">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full text-sm text-gray-800 bg-gray-100 focus:bg-transparent px-4 py-3.5 rounded-md outline-blue-600"
+                placeholder="Enter email"
+              />
+              {/* Email icon SVG */}
             </div>
-          </CollapsibleContent>
-        </Collapsible>
+          </div>
+
+          <div className="mb-4">
+            <label className="text-gray-800 text-[15px] mb-2 block">Password</label>
+            <div className="relative flex items-center">
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full text-sm text-gray-800 bg-gray-100 focus:bg-transparent px-4 py-3.5 rounded-md outline-blue-600"
+                placeholder="Enter password"
+              />
+              {/* Password icon SVG */}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center">
+              <input id="remember-me" name="remember-me" type="checkbox" className="h-4 w-4 shrink-0 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-md" />
+              <label htmlFor="remember-me" className="ml-3 block text-sm">
+                Remember me
+              </label>
+            </div>
+            <a href="javascript:void(0);" className="text-blue-600 font-semibold text-sm hover:underline">
+              Forgot Password?
+            </a>
+          </div>
+
+          <button
+            type="submit"
+            disabled={pending}
+            className="w-full py-3 px-6 text-sm tracking-wide rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none mb-4"
+          >
+            Sign in
+          </button>
+
+          <div className="my-4 flex items-center gap-4">
+            <hr className="w-full border-gray-300" />
+            <p className="text-sm text-gray-800 text-center">or</p>
+            <hr className="w-full border-gray-300" />
+          </div>
+
+          <button
+            type="button"
+            onClick={() => handleOAuthClick('google')}
+            disabled={pending}
+            className="w-full flex items-center justify-center gap-4 py-3 px-6 text-sm tracking-wide text-gray-800 border border-gray-300 rounded-md bg-gray-50 hover:bg-gray-100 focus:outline-none mb-4"
+          >
+            <IoLogoGoogle size={20} />
+            Continue with Google
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleOAuthClick('github')}
+            disabled={pending}
+            className="w-full flex items-center justify-center gap-4 py-3 px-6 text-sm tracking-wide text-gray-800 border border-gray-300 rounded-md bg-gray-50 hover:bg-gray-100 focus:outline-none"
+          >
+            <IoLogoGithub size={20} />
+            Continue with GitHub
+          </button>
+
+          {mode === 'signup' && (
+            <p className="text-sm text-gray-600 mt-4">
+              By clicking continue, you agree to our{' '}
+              <Link href="/terms" className="text-blue-600 hover:underline">
+                Terms of Service
+              </Link>{' '}
+              and{' '}
+              <Link href="/privacy" className="text-blue-600 hover:underline">
+                Privacy Policy
+              </Link>
+              .
+            </p>
+          )}
+        </form>
       </div>
-      {mode === 'signup' && (
-        <span className='text-neutral5 m-auto max-w-sm text-sm'>
-          By clicking continue, you agree to our{' '}
-          <Link href='/terms' className='underline'>
-            Terms of Service
-          </Link>{' '}
-          and{' '}
-          <Link href='/privacy' className='underline'>
-            Privacy Policy
-          </Link>
-          .
-        </span>
-      )}
-    </section>
+    </div>
   );
 }

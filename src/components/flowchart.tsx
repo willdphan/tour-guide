@@ -661,13 +661,16 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
                 const midX = (startX + endX) / 2;
 
                 return (
-                  <path
-                    key={outcome.id}
-                    d={`M ${startX},${startY} C ${midX},${startY} ${midX},${endY} ${endX},${endY}`}
-                    fill="none"
-                    stroke={isOutcomeSelected ? "black" : "#C2BEB5"}
-                    strokeWidth={isOutcomeSelected ? "3" : "2"}
-                  />
+                  <motion.path
+                  key={outcome.id}
+                  d={`M ${startX},${startY} C ${midX},${startY} ${midX},${endY} ${endX},${endY}`}
+                  fill="none"
+                  stroke={isOutcomeSelected ? "black" : "#C2BEB5"}
+                  strokeWidth={isOutcomeSelected ? "3" : "2"}
+                  initial={{ pathLength: 0 }}
+                  animate={{ pathLength: 1 }}
+                  transition={{ duration: 0.5, delay: (depth + 1) * 0.1 }}
+                />
                 );
               })}
             </svg>
@@ -695,26 +698,27 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
   const containerWidth = Math.max(maxX + NODE_WIDTH + HORIZONTAL_SPACING, window.innerWidth);
   const containerHeight = Math.max(maxY + NODE_HEIGHT + VERTICAL_SPACING, window.innerHeight);
 
-  return (
-    <div className="h-full w-full bg-[#E8E4DB] overflow-auto">
-      <div 
-        ref={containerRef}
-        className="relative"
-        style={{ 
-          width: `${containerWidth}px`,
-          height: `${containerHeight}px`,
-          minHeight: '100vh'
-        }}
-      >
-        {renderNode(treeData)}
-      </div>
-      {popupNode && (
-        <FullScreenPopup 
-          node={popupNode} 
-          onClose={closePopup} 
-        />
-      )}
+return (
+  <div className="h-full w-full bg-[#E8E4DB] overflow-auto">
+    <div 
+      ref={containerRef}
+      className="relative"
+      style={{ 
+        width: `${containerWidth}px`,
+        height: `${containerHeight}px`,
+        minHeight: '100vh'
+      }}
+      key={JSON.stringify(treeData)} // Add this line
+    >
+      {renderNode(treeData)}
     </div>
+    {popupNode && (
+      <FullScreenPopup 
+        node={popupNode} 
+        onClose={closePopup} 
+      />
+    )}
+  </div>
   );
 };
 

@@ -19,7 +19,7 @@ export default async function SignUp() {
   }
 
   return (
-    <section className='py-xl m-auto flex h-full max-w-lg items-center'>
+    <section className=' flex min-h-screen min-w-screen items-center justify-center'>
       <AuthUI mode='signup' signInWithOAuth={signInWithOAuth} signInWithEmail={signInWithEmail} />
     </section>
   );
