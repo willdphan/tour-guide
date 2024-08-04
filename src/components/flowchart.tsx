@@ -14,6 +14,82 @@ interface ComponentProps {
   isSelected: boolean;
 }
 
+interface PopupNode {
+  probability: number;
+  title: string;
+  optionNumber: number;
+  content: string;
+}
+
+interface FullScreenPopupProps {
+  node: PopupNode;
+  onClose: () => void;
+}
+
+interface FlowChartProps {
+  initialSituation: string;
+  initialAction: string;
+  showChart: boolean;
+  onChartRendered: () => void;
+  updateNumberOfOutcomes: (count: number) => void;
+}
+
+interface Outcome {
+  title: string;
+  description: string;
+  probability: number;
+}
+
+type NodeType = 'situation' | 'action' | 'outcome';
+
+interface TreeNode {
+  id: string;
+  content: string;
+  position: { x: number; y: number };
+  type: NodeType;
+  outcomes: TreeNode[];
+  probability?: number;
+  title?: string;
+  optionNumber?: number;
+}
+
+const findNodeById = (tree: TreeNode, id: string): TreeNode | null => {
+  if (tree.id === id) {
+    return tree;
+  }
+  for (const outcome of tree.outcomes) {
+    const found = findNodeById(outcome, id);
+    if (found) {
+      return found;
+    }
+  }
+  return null;
+};
+
+const getNodePath = (tree: TreeNode, id: string): number[] | null => {
+  if (tree.id === id) {
+    return [];
+  }
+  for (let i = 0; i < tree.outcomes.length; i++) {
+    const path = getNodePath(tree.outcomes[i], id);
+    if (path !== null) {
+      return [i, ...path];
+    }
+  }
+  return null;
+};
+
+const getNodeByPath = (tree: TreeNode, path: number[]): TreeNode | null => {
+  let currentNode = tree;
+  for (const index of path) {
+    if (currentNode.outcomes[index]) {
+      currentNode = currentNode.outcomes[index];
+    } else {
+      return null;
+    }
+  }
+  return currentNode;
+};
 
 const Component: React.FC<ComponentProps> = ({ probability, index, isSelected }) => {
   const data = [
@@ -133,12 +209,15 @@ const FlowchartPage = () => {
       
       console.log(`Setting outcomesReady to true (Call ID: ${callId})`);
       setOutcomesReady(true);
-    } catch (error) {
-      if (error.name === 'AbortError') {
-        console.log(`Request aborted (Call ID: ${callId})`);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          console.log(`Request aborted (Call ID: ${callId})`);
+        } else {
+          console.error(`Error in outcome generation: (Call ID: ${callId})`, error);
+        }
       } else {
-        console.error(`Error in outcome generation: (Call ID: ${callId})`, error);
-        setNumberOfOutcomes(0);
+        console.error(`Unknown error occurred: (Call ID: ${callId})`, error);
       }
     } finally {
       console.log(`Finishing outcome generation... (Call ID: ${callId})`);
@@ -197,11 +276,11 @@ const FlowchartPage = () => {
                     className="w-full mb-4 text-center placeholder-center focus:outline-none focus:ring-0 font-man bg-transparent"
                     placeholder="Enter your answer"
                     autoFocus
-                    style={{
-                      '::placeholder': {
-                        textAlign: 'center',
-                      },
-                    }}
+                    // style={{
+                    //   '::placeholder': {
+                    //     textAlign: 'center',
+                    //   },
+                    // }}
                   />
                 </form>
               </motion.div>
@@ -222,8 +301,7 @@ const FlowchartPage = () => {
                 >
                   <Spline
                     scene="https://prod.spline.design/gbG6-0xtiOTPHBfn/scene.splinecode" 
-                    width={400}
-                    height={400}
+                 
                   />
                 </motion.div>
               </motion.div>
@@ -234,7 +312,7 @@ const FlowchartPage = () => {
                 className="text-center w-full"
               >
                 <div className="mb-4">
-                  <span className="text-6xl font-bold font-ibm text-[#3C3C3C]"><Counter numberOfOutcomes={numberOfOutcomes} /></span>
+                  <span className="text-6xl font-bold font-ibm text-[#3C3C3C]"><Counter value={numberOfOutcomes} /></span>
                 </div>
                 <h2 className="text-lg mb-2 font-ibm uppercase text-[#3C3C3C]">Possible outcomes generated</h2>
                 <p className='font-man text-gray-500'>Interact with the flowchart.</p>
@@ -258,7 +336,7 @@ const FlowchartPage = () => {
   );
 };
 
-const FullScreenPopup = ({ node, onClose }) => {
+const FullScreenPopup: React.FC<FullScreenPopupProps> = ({ node, onClose }) => {
   return (
     <div className="fixed inset-y-0 right-0 w-4/6 bg-[#E8E4DB] shadow-lg z-50 flex flex-col p-12 ">
       <div className="flex justify-between items-start">
@@ -281,16 +359,31 @@ const FullScreenPopup = ({ node, onClose }) => {
   );
 };
 
-const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered, updateNumberOfOutcomes }) => {
-  const [treeData, setTreeData] = useState(initialTree);
+const FlowChart: React.FC<FlowChartProps> = ({ 
+  initialSituation, 
+  initialAction, 
+  showChart, 
+  onChartRendered, 
+  updateNumberOfOutcomes 
+}) => {
+
+  
+  const [treeData, setTreeData] = useState<TreeNode>({
+    id: 'start',
+    content: '',
+    position: { x: 0, y: 0 },
+    type: 'action',
+    outcomes: []  // This should now be correctly typed
+  });
+
   const [isDragging, setIsDragging] = useState(false);
-  const [draggedNode, setDraggedNode] = useState(null);
+  const [draggedNode, setDraggedNode] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [selectedPath, setSelectedPath] = useState<number[]>([]);
   const [editingNode, setEditingNode] = useState('start');
   const [selectedNodeDetail, setSelectedNodeDetail] = useState(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [popupNode, setPopupNode] = useState(null);
+  const [popupNode, setPopupNode] = useState<PopupNode | null>(null);
 
   const NODE_WIDTH = 200;
   const NODE_HEIGHT = 100;
@@ -298,7 +391,8 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
   const HORIZONTAL_SPACING = 550;
   const VERTICAL_SPACING = 150;
 
-  const generateOutcomes = useCallback(async (parentX: number, parentY: number, action: string): Promise<any[]> => {
+  const generateOutcomes = useCallback(async (parentX: number, parentY: number, action: string): Promise<TreeNode[]> => {
+
     try {
       const response = await fetch('http://localhost:8000/generate-outcomes', {
         method: 'POST',
@@ -307,16 +401,16 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
         },
         body: JSON.stringify({ query: action }),
       });
-
+  
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-
-      const data = await response.json();
+  
+      const data: { outcomes: Outcome[] } = await response.json();
       const totalHeight = (data.outcomes.length - 1) * VERTICAL_SPACING;
       const startY = parentY - totalHeight / 2;
-
-      const newOutcomes = data.outcomes.map((outcome: Outcome, i: number) => ({
+  
+      const newOutcomes: TreeNode[] = data.outcomes.map((outcome: Outcome, i: number) => ({
         id: `outcome-${Date.now()}-${i}`,
         title: outcome.title,
         content: outcome.description,
@@ -327,9 +421,9 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
           y: startY + i * VERTICAL_SPACING
         },
         type: 'outcome',
-        outcomes: []
+        outcomes: []  // This should now be correctly typed
       }));
-
+  
       updateNumberOfOutcomes(newOutcomes.length);
       return newOutcomes;
     } catch (error) {
@@ -339,22 +433,25 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
     }
   }, [updateNumberOfOutcomes, VERTICAL_SPACING, HORIZONTAL_SPACING]);
 
-  const generateInitialFlowchart = useCallback(async (situation, action) => {
+  const generateInitialFlowchart = useCallback(async (situation: string, action: string) => {
     const outcomes = await generateOutcomes(0, 0, action);
     const totalHeight = (outcomes.length - 1) * VERTICAL_SPACING;
     const startY = window.innerHeight / 2 - totalHeight / 2;
   
-    const initialTree = {
+    const initialTree: TreeNode = {
       id: 'start',
       content: situation,
       position: { x: 0, y: startY + totalHeight / 2 },
       type: 'situation',
       outcomes: outcomes.map((outcome, index) => ({
         ...outcome,
+        id: `outcome-${Date.now()}-${index}`,
         position: {
           x: INITIAL_HORIZONTAL_SPACING,
           y: startY + index * VERTICAL_SPACING
-        }
+        },
+        type: 'outcome' as const,
+        outcomes: []
       }))
     };
     setTreeData(initialTree);
@@ -371,28 +468,38 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
   const handleNodeClick = useCallback((nodeId: string, event: React.MouseEvent) => {
     event.stopPropagation();
     const clickedNode = findNodeById(treeData, nodeId);
-    setSelectedPath(getNodePath(treeData, nodeId));
-    if (clickedNode.type === 'action') {
-      setEditingNode(nodeId);
+    if (clickedNode) {
+      const path = getNodePath(treeData, nodeId);
+      if (path !== null) {
+        setSelectedPath(path);
+        if (clickedNode.type === 'action') {
+          setEditingNode(nodeId);
+        }
+      }
     }
   }, [treeData]);
 
   const handleNodeDoubleClick = useCallback((nodeId: string, event: React.MouseEvent) => {
     event.stopPropagation();
     const clickedNode = findNodeById(treeData, nodeId);
-    if (clickedNode.type === 'outcome') {
+    if (clickedNode && clickedNode.type === 'outcome') {
       setTreeData(prevTree => {
-        const newTree = JSON.parse(JSON.stringify(prevTree));
-        const parentPath = getNodePath(newTree, nodeId).slice(0, -1);
-        const parentNode = getNodeByPath(newTree, parentPath);
+        const newTree = JSON.parse(JSON.stringify(prevTree)) as TreeNode;
+        const parentPath = getNodePath(newTree, nodeId);
+        if (parentPath === null) return prevTree;
+  
+        const parentNodePath = parentPath.slice(0, -1);
+        const parentNode = getNodeByPath(newTree, parentNodePath);
         
+        if (!parentNode) return prevTree;
+  
         parentNode.outcomes.forEach(outcome => {
           outcome.outcomes = [];
         });
         
-        const updateNode = (node) => {
+        const updateNode = (node: TreeNode): boolean => {
           if (node.id === nodeId) {
-            const newAction = {
+            const newAction: TreeNode = {
               id: `action-${Date.now()}`,
               content: '',
               position: {
@@ -400,13 +507,13 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
                 y: node.position.y
               },
               type: 'action',
-              outcomes: []
+              outcomes: []  // This should now be correctly typed
             };
             node.outcomes = [newAction];
             setEditingNode(newAction.id);
             return true;
           }
-          return node.outcomes && node.outcomes.some(updateNode);
+          return node.outcomes.some(updateNode);
         };
         updateNode(newTree);
         
@@ -415,31 +522,40 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
     }
   }, [treeData, HORIZONTAL_SPACING]);
 
+
   const handleExpandClick = useCallback((nodeId: string, event: React.MouseEvent) => {
     event.stopPropagation();
     const clickedNode = findNodeById(treeData, nodeId);
-    if (clickedNode.type === 'outcome') {
-      setPopupNode(clickedNode);
+    if (clickedNode && clickedNode.type === 'outcome') {
+      const popupData: PopupNode = {
+        probability: clickedNode.probability ?? 0, // Provide a default value if undefined
+        title: clickedNode.title ?? '', // Provide a default value if undefined
+        optionNumber: clickedNode.optionNumber ?? 0, // Provide a default value if undefined
+        content: clickedNode.content
+      };
+      setPopupNode(popupData);
     }
   }, [treeData]);
 
   const handleNodeDragStart = useCallback((e: React.MouseEvent, nodeId: string) => {
     e.stopPropagation();
     const node = findNodeById(treeData, nodeId);
-    setIsDragging(true);
-    setDraggedNode(nodeId);
-    setDragOffset({
-      x: e.clientX - node.position.x,
-      y: e.clientY - node.position.y
-    });
+    if (node) {
+      setIsDragging(true);
+      setDraggedNode(nodeId);
+      setDragOffset({
+        x: e.clientX - node.position.x,
+        y: e.clientY - node.position.y
+      });
+    }
   }, [treeData]);
 
   const handleNodeDrag = useCallback((e: MouseEvent) => {
     if (!isDragging || !draggedNode) return;
-
+  
     setTreeData(prevTree => {
       const newTree = JSON.parse(JSON.stringify(prevTree));
-      const updateNodePosition = (node) => {
+      const updateNodePosition = (node: TreeNode): boolean => {
         if (node.id === draggedNode) {
           node.position = {
             x: e.clientX - dragOffset.x,
@@ -447,7 +563,7 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
           };
           return true;
         }
-        return node.outcomes && node.outcomes.some(updateNodePosition);
+        return node.outcomes.some(updateNodePosition);
       };
       
       updateNodePosition(newTree);
@@ -468,19 +584,19 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
       const outcomes = await generateOutcomes(node.position.x, node.position.y, content);
       
       setTreeData(prevTree => {
-        const newTree = JSON.parse(JSON.stringify(prevTree));
-        const updateNode = (node) => {
+        const newTree = JSON.parse(JSON.stringify(prevTree)) as TreeNode;
+        const updateNode = (node: TreeNode): boolean => {
           if (node.id === nodeId) {
             node.content = content;
             node.outcomes = outcomes;
             return true;
           }
-          return node.outcomes && node.outcomes.some(updateNode);
+          return node.outcomes.some(updateNode);
         };
         updateNode(newTree);
         return newTree;
       });
-      setEditingNode(null);
+      setEditingNode('');
     } catch (error) {
       console.error('Error submitting action:', error);
     }
@@ -489,7 +605,7 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
 
 
 
-  const renderNode = (node, depth = 0, path = []) => {
+  const renderNode = (node: TreeNode, depth: number = 0, path: number[] = []): React.ReactNode => {
     if (!node) return null;
     const hasOutcomes = node.outcomes && node.outcomes.length > 0;
     const isSelected = JSON.stringify(path) === JSON.stringify(selectedPath);
@@ -507,13 +623,14 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
     const nodeBorderClass = isSelected ? 'border-[2px] border-black' : 'border-[2px] border-[#C2BEB5]';
     
     
+    
     if (depth === 0) {
       return (
         <div key={node.id}>
           {hasOutcomes && (
             <>
               <svg className="absolute" style={{ left: '0', top: '0', width: '100%', height: '100%', overflow: 'visible', pointerEvents: 'none' }}>
-                {node.outcomes.map((outcome, index) => {
+                {node.outcomes.map((outcome: TreeNode, index: number) => {
                   const isOutcomeSelected = selectedPath.length > path.length && 
                                             selectedPath[path.length] === index;
                   const startX = 0;
@@ -533,7 +650,7 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
                   );
                 })}
               </svg>
-              {node.outcomes.map((outcome, index) => renderNode(outcome, depth + 1, [...path, index]))}
+              {node.outcomes.map((outcome: TreeNode, index: number) => renderNode(outcome, depth + 1, [...path, index]))}
             </>
           )}
         </div>
@@ -560,7 +677,11 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
           {node.type === 'action' && (isEditing || node.content === '') ? (
             <form onSubmit={(e) => {
               e.preventDefault();
-              handleActionSubmit(node.id, e.currentTarget.action.value);
+              const form = e.currentTarget;
+              const actionInput = form.elements.namedItem('action') as HTMLInputElement;
+              if (actionInput) {
+                handleActionSubmit(node.id, actionInput.value);
+              }
             }} className="w-full h-full">
               <input
                 name="action"
@@ -574,11 +695,11 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
             <div className="w-full flex-grow flex items-center justify-between ">
             {node.type === 'outcome' && (
         <div className="w-16 h-16 font-medium">
-          <Component 
-            probability={node.probability}
-            index={path[path.length - 1]}
-            isSelected={isSelected || isOnSelectedPath}
-          />
+        <Component 
+  probability={node.probability ?? 0} // Use nullish coalescing operator to provide a default value
+  index={path[path.length - 1] ?? 0} // Also provide a default for index
+  isSelected={isSelected || isOnSelectedPath}
+/>
         </div>
               )}
               <div className="flex-grow text-sm overflow-hidden text-black">
@@ -634,11 +755,11 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
     );
   };
 
-  const getMaxCoordinates = (node) => {
+  const getMaxCoordinates = (node: TreeNode) => {
     let maxX = node.position.x;
     let maxY = node.position.y;
     if (node.outcomes) {
-      node.outcomes.forEach(outcome => {
+      node.outcomes.forEach((outcome: any) => {
         const { maxX: childMaxX, maxY: childMaxY } = getMaxCoordinates(outcome);
         maxX = Math.max(maxX, childMaxX);
         maxY = Math.max(maxY, childMaxY);
@@ -651,6 +772,10 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
   const containerWidth = Math.max(maxX + NODE_WIDTH + HORIZONTAL_SPACING, window.innerWidth);
   const containerHeight = Math.max(maxY + NODE_HEIGHT + VERTICAL_SPACING, window.innerHeight);
 
+  function closePopup(): void {
+    setPopupNode(null);
+  }
+  
 return (
   <div className="h-full w-full bg-[#E8E4DB] overflow-auto">
     <div 

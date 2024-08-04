@@ -11,9 +11,8 @@ const Counter: React.FC<CounterProps> = ({ value }) => {
 
   React.useEffect(() => {
     const animation = animate(count, value, { duration: 1 });
-
     return animation.stop;
-  }, [value]);
+  }, [value, count]);
 
   return <motion.div>{rounded}</motion.div>;
 };

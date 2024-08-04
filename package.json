@@ -38,6 +38,7 @@
     "classnames": "2.3.2",
     "clsx": "2.1.0",
     "framer-motion": "^11.3.21",
+    "lodash": "^4.17.21",
     "lucide-react": "0.309.0",
     "next": "14.2.5",
     "next-route-handler-pipe": "1.0.5",
@@ -54,6 +55,7 @@
     "zod": "3.22.4"
   },
   "devDependencies": {
+    "@types/lodash": "^4.17.7",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "autoprefixer": "10.4.14",

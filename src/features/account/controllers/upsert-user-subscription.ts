@@ -30,7 +30,8 @@ export async function upsertUserSubscription({
   });
 
   // Upsert the latest status of the subscription object.
-  const subscriptionData: Database['public']['Tables']['subscriptions']['Insert'] = {
+ 
+    const subscriptionData: Database['public']['Tables']['subscriptions']['Insert'] = {
     id: subscription.id,
     user_id: userId,
     metadata: subscription.metadata,
