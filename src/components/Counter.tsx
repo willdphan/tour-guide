@@ -1,7 +1,11 @@
 import React from 'react';
-import { animate,motion, useMotionValue, useTransform } from 'framer-motion';
+import { animate, motion, useMotionValue, useTransform } from 'framer-motion';
 
-const Counter = ({ value }) => {
+interface CounterProps {
+  value: number;
+}
+
+const Counter: React.FC<CounterProps> = ({ value }) => {
   const count = useMotionValue(0);
   const rounded = useTransform(count, latest => Math.round(latest));
 
@@ -9,19 +13,9 @@ const Counter = ({ value }) => {
     const animation = animate(count, value, { duration: 1 });
 
     return animation.stop;
-  }, [value, count]);
+  }, [value]);
 
-  return (
-    <div className="mb-4">
-      <motion.span className="text-6xl font-bold font-ibm text-[#3C3C3C]">
-        {rounded}
-      </motion.span>
-    </div>
-  );
+  return <motion.div>{rounded}</motion.div>;
 };
 
-export default function AnimatedOutcomeCounter({ numberOfOutcomes }) {
-  return (
-    <Counter value={numberOfOutcomes} />
-  );
-}
+export default Counter;
