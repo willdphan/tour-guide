@@ -9,7 +9,7 @@ const Counter = ({ value }) => {
     const animation = animate(count, value, { duration: 1 });
 
     return animation.stop;
-  }, [value]);
+  }, [value, count]);
 
   return (
     <div className="mb-4">

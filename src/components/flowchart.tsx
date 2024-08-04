@@ -304,7 +304,7 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
         onChartRendered();
       });
     }
-  }, [showChart, initialSituation, initialAction, onChartRendered]);
+  }, [showChart, initialSituation, initialAction, onChartRendered, generateInitialFlowchart]);
 
   const generateInitialFlowchart = async (situation, action) => {
     const outcomes = await generateOutcomes(0, 0, action);
