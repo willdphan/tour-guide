@@ -64,16 +64,14 @@ export function AuthUI({
 
   return (
     <div className="font-[sans-serif] flex h-screen w-full">
-   <div className="w-1/2 bg-[#E8E4DB] flex items-center justify-center p-4">
-  <div className="w-full max-w-[400px] aspect-square">
-    <Spline
-      scene="https://prod.spline.design/gbG6-0xtiOTPHBfn/scene.splinecode" 
-      width="100%"
-      height="100%"
-    />
-  </div>
-</div>
-
+    <div className="w-1/2 bg-[#E8E4DB] flex items-center justify-center p-4">
+      <div className="w-full max-w-[400px] aspect-square">
+        <Spline
+          scene="https://prod.spline.design/gbG6-0xtiOTPHBfn/scene.splinecode"
+        />
+      </div>
+    </div>
+    
       <div className="w-1/2 p-8 overflow-auto flex items-center justify-center">
         <form onSubmit={handleEmailSubmit} className="max-w-md mx-auto">
           <div className="mb-8">
