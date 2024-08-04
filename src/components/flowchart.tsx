@@ -298,35 +298,6 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
   const HORIZONTAL_SPACING = 550;
   const VERTICAL_SPACING = 150;
 
-  useEffect(() => {
-    if (showChart) {
-      generateInitialFlowchart(initialSituation, initialAction).then(() => {
-        onChartRendered();
-      });
-    }
-  }, [showChart, initialSituation, initialAction, onChartRendered, generateInitialFlowchart]);
-
-  const generateInitialFlowchart = async (situation, action) => {
-    const outcomes = await generateOutcomes(0, 0, action);
-    const totalHeight = (outcomes.length - 1) * VERTICAL_SPACING;
-    const startY = window.innerHeight / 2 - totalHeight / 2;
-  
-    const initialTree = {
-      id: 'start',
-      content: situation,
-      position: { x: 0, y: startY + totalHeight / 2 },
-      type: 'situation',
-      outcomes: outcomes.map((outcome, index) => ({
-        ...outcome,
-        position: {
-          x: INITIAL_HORIZONTAL_SPACING,
-          y: startY + index * VERTICAL_SPACING
-        }
-      }))
-    };
-    setTreeData(initialTree);
-  };
-
   const generateOutcomes = useCallback(async (parentX: number, parentY: number, action: string): Promise<any[]> => {
     try {
       const response = await fetch('http://localhost:8000/generate-outcomes', {
@@ -350,8 +321,7 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
         title: outcome.title,
         content: outcome.description,
         probability: outcome.probability,
-        optionNumber: i + 1, // Generate option number if not provided by API
-
+        optionNumber: i + 1,
         position: { 
           x: parentX + HORIZONTAL_SPACING, 
           y: startY + i * VERTICAL_SPACING
@@ -361,36 +331,53 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
       }));
 
       updateNumberOfOutcomes(newOutcomes.length);
-
       return newOutcomes;
     } catch (error) {
       console.error('Error generating outcomes:', error);
       updateNumberOfOutcomes(0);
       return [];
     }
-  }, [updateNumberOfOutcomes]);
+  }, [updateNumberOfOutcomes, VERTICAL_SPACING, HORIZONTAL_SPACING]);
 
-  const getNodePath = (tree, nodeId, path = []) => {
-    if (tree.id === nodeId) return path;
-    if (tree.outcomes) {
-      for (let i = 0; i < tree.outcomes.length; i++) {
-        const result = getNodePath(tree.outcomes[i], nodeId, [...path, i]);
-        if (result) return result;
-      }
+  const generateInitialFlowchart = useCallback(async (situation, action) => {
+    const outcomes = await generateOutcomes(0, 0, action);
+    const totalHeight = (outcomes.length - 1) * VERTICAL_SPACING;
+    const startY = window.innerHeight / 2 - totalHeight / 2;
+  
+    const initialTree = {
+      id: 'start',
+      content: situation,
+      position: { x: 0, y: startY + totalHeight / 2 },
+      type: 'situation',
+      outcomes: outcomes.map((outcome, index) => ({
+        ...outcome,
+        position: {
+          x: INITIAL_HORIZONTAL_SPACING,
+          y: startY + index * VERTICAL_SPACING
+        }
+      }))
+    };
+    setTreeData(initialTree);
+  }, [generateOutcomes, VERTICAL_SPACING, INITIAL_HORIZONTAL_SPACING]);
+
+  useEffect(() => {
+    if (showChart) {
+      generateInitialFlowchart(initialSituation, initialAction).then(() => {
+        onChartRendered();
+      });
     }
-    return null;
-  };
+  }, [showChart, initialSituation, initialAction, onChartRendered, generateInitialFlowchart]);
 
-  const handleNodeClick = (nodeId: string, event: React.MouseEvent) => {
+  const handleNodeClick = useCallback((nodeId: string, event: React.MouseEvent) => {
     event.stopPropagation();
     const clickedNode = findNodeById(treeData, nodeId);
     setSelectedPath(getNodePath(treeData, nodeId));
     if (clickedNode.type === 'action') {
       setEditingNode(nodeId);
     }
-  };
+  }, [treeData]);
 
-  const handleNodeDoubleClick = (nodeId: string, event: React.MouseEvent) => {
+  const handleNodeDoubleClick = useCallback((nodeId: string, event: React.MouseEvent) => {
     event.stopPropagation();
     const clickedNode = findNodeById(treeData, nodeId);
     if (clickedNode.type === 'outcome') {
@@ -426,29 +413,17 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
         return newTree;
       });
     }
-  };
+  }, [treeData, HORIZONTAL_SPACING]);
 
-  const handleExpandClick = (nodeId: string, event: React.MouseEvent) => {
+  const handleExpandClick = useCallback((nodeId: string, event: React.MouseEvent) => {
     event.stopPropagation();
     const clickedNode = findNodeById(treeData, nodeId);
     if (clickedNode.type === 'outcome') {
       setPopupNode(clickedNode);
     }
-  };
+  }, [treeData]);
 
-  const closePopup = () => {
-    setPopupNode(null);
-  };
-
-  const getNodeByPath = (tree, path) => {
-    let node = tree;
-    for (const index of path) {
-      node = node.outcomes[index];
-    }
-    return node;
-  };
-
-  const handleNodeDragStart = (e: React.MouseEvent, nodeId: string) => {
+  const handleNodeDragStart = useCallback((e: React.MouseEvent, nodeId: string) => {
     e.stopPropagation();
     const node = findNodeById(treeData, nodeId);
     setIsDragging(true);
@@ -457,7 +432,7 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
       x: e.clientX - node.position.x,
       y: e.clientY - node.position.y
     });
-  };
+  }, [treeData]);
 
   const handleNodeDrag = useCallback((e: MouseEvent) => {
     if (!isDragging || !draggedNode) return;
@@ -485,33 +460,7 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
     setDraggedNode(null);
   }, []);
 
-  useEffect(() => {
-    if (isDragging) {
-      document.addEventListener('mousemove', handleNodeDrag);
-      document.addEventListener('mouseup', handleNodeDragEnd);
-    } else {
-      document.removeEventListener('mousemove', handleNodeDrag);
-      document.removeEventListener('mouseup', handleNodeDragEnd);
-    }
-
-    return () => {
-      document.removeEventListener('mousemove', handleNodeDrag);
-      document.removeEventListener('mouseup', handleNodeDragEnd);
-    };
-  }, [isDragging, handleNodeDrag, handleNodeDragEnd]);
-
-  const findNodeById = (node, id) => {
-    if (node.id === id) return node;
-    if (node.outcomes) {
-      for (const outcome of node.outcomes) {
-        const found = findNodeById(outcome, id);
-        if (found) return found;
-      }
-    }
-    return null;
-  };
-
-  const handleActionSubmit = async (nodeId: string, content: string) => {
+  const handleActionSubmit = useCallback(async (nodeId: string, content: string) => {
     try {
       const node = findNodeById(treeData, nodeId);
       if (!node) return;
@@ -535,7 +484,9 @@ const FlowChart = ({ initialSituation, initialAction, showChart, onChartRendered
     } catch (error) {
       console.error('Error submitting action:', error);
     }
-  };
+  }, [treeData, generateOutcomes]);
+
+
 
 
   const renderNode = (node, depth = 0, path = []) => {
