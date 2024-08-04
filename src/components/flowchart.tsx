@@ -1,9 +1,11 @@
 'use client';
-import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
-import { Pie, PieChart, Cell, Tooltip, ResponsiveContainer } from 'recharts';
-import { motion, AnimatePresence } from 'framer-motion';
-import Spline from '@splinetool/react-spline';
+import React, { useCallback, useEffect, useMemo,useRef, useState } from 'react';
+import { AnimatePresence,motion } from 'framer-motion';
 import debounce from 'lodash/debounce';
+import { Cell, Pie, PieChart, ResponsiveContainer,Tooltip } from 'recharts';
+
+import Spline from '@splinetool/react-spline';
+
 import Counter from './Counter';
 
 interface ComponentProps {

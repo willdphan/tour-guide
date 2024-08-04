@@ -1,4 +1,5 @@
 import dynamic from 'next/dynamic';
+
 import Spline from '@splinetool/react-spline';
 
 // // Dynamically import the Spline component with SSR disabled

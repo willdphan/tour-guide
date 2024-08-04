@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion, useMotionValue, useTransform, animate } from 'framer-motion';
+import { animate,motion, useMotionValue, useTransform } from 'framer-motion';
 
 const Counter = ({ value }) => {
   const count = useMotionValue(0);

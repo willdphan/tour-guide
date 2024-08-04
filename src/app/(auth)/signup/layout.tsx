@@ -1,12 +1,14 @@
 import { PropsWithChildren } from 'react';
 import type { Metadata } from 'next';
 import { Montserrat, Montserrat_Alternates } from 'next/font/google';
+
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/utils/cn';
 import { Analytics } from '@vercel/analytics/react';
 
 import { Navigation } from './navigation';
 
+import '@/styles/globals.css';
 import '@/styles/globals.css';
 
 export const dynamic = 'force-dynamic';

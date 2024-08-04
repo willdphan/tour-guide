@@ -3,12 +3,14 @@
 import { useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import HeroSpline from '@/components/hero-spline';
+
 import { Container } from '@/components/container';
-import { Button } from '@/components/ui/button';
-import { PricingSection } from '@/features/pricing/components/pricing-section';
 import FlowchartPage from '@/components/flowchart';
 import { Hero } from '@/components/hero';
+import HeroSpline from '@/components/hero-spline';
+import { Button } from '@/components/ui/button';
+import { PricingSection } from '@/features/pricing/components/pricing-section';
+
 import styles from '@/styles/HomePage.module.css';
 
 export default function HomePage() {

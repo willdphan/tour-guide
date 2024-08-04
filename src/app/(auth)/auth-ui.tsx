@@ -78,12 +78,12 @@ export function AuthUI({
         <form onSubmit={handleEmailSubmit} className="max-w-md mx-auto">
           <div className="mb-8">
             <h3 className="text-gray-800 text-3xl font-extrabold">Sign in</h3>
-            <p className="text-sm mt-4 text-gray-800">
-              Don't have an account 
-              <Link href="/signup" className="text-blue-600 font-semibold hover:underline ml-1 whitespace-nowrap">
-                Register here
-              </Link>
-            </p>
+            <p className='text-sm mt-4 text-gray-800'>
+  Don&apos;t have an account 
+  <Link href='/signup' className='text-blue-600 font-semibold hover:underline ml-1 whitespace-nowrap'>
+    Register here
+  </Link>
+</p>
           </div>
 
           <div className="mb-4">
