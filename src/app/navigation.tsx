@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { IoMenu } from 'react-icons/io5';
 
 import { AccountMenu } from '@/components/account-menu';
-import { Logo } from '@/components/hero';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTrigger } from '@/components/ui/sheet';
 import { getSession } from '@/features/account/controllers/get-session';
@@ -27,7 +26,7 @@ export async function Navigation() {
           </SheetTrigger>
           <SheetContent className='w-full bg-black'>
             <SheetHeader>
-              <Logo />
+              {/* <Logo /> */}
               <SheetDescription className='py-8'>
                 <Button variant='sexy' className='flex-shrink-0' asChild>
                   <Link href='/signup'>Get started for free</Link>
