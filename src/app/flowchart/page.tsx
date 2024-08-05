@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+
 import FlowChart from '@/components/flowchart';
+
 
 export default function FlowchartPageWrapper() {
   const router = useRouter();

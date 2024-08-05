@@ -3,6 +3,7 @@
 import { FormEvent, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { IoLogoGithub, IoLogoGoogle } from 'react-icons/io5';
 
 import { Button } from '@/components/ui/button';
@@ -11,7 +12,6 @@ import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/use-toast';
 import { ActionResponse } from '@/types/action-response';
 import Spline from '@splinetool/react-spline';
-import { useRouter } from 'next/navigation';
 
 const titleMap = {
   login: 'Login to UPDATE_THIS_WITH_YOUR_APP_DISPLAY_NAME',

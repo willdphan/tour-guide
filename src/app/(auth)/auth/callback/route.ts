@@ -2,6 +2,7 @@
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import { getURL } from '@/utils/get-url';
 
