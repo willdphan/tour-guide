@@ -775,7 +775,7 @@ const FlowChart: React.FC<FlowChartProps> = ({
   function closePopup(): void {
     setPopupNode(null);
   }
-  
+
 return (
   <div className="h-full w-full bg-[#E8E4DB] overflow-auto">
     <div 

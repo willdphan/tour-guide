@@ -10,13 +10,17 @@ export default async function SignUp() {
   const session = await getSession();
   const subscription = await getSubscription();
 
-  if (session && subscription) {
-    redirect('/account');
-  }
+  // if (session && subscription) {
+  //   redirect('/account');
+  // }
 
-  if (session && !subscription) {
-    redirect('/pricing');
-  }
+  // if (session && !subscription) {
+  //   redirect('/pricing');
+  // }
+
+  // if (session) {
+  //   redirect('/flowchart');
+  // }
 
   return (
     <section className=' flex min-h-screen min-w-screen items-center justify-center'>

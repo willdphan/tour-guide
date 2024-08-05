@@ -7,7 +7,6 @@ import { cn } from '@/utils/cn';
 import { Analytics } from '@vercel/analytics/react';
 
 import '@/styles/globals.css';
-import '@/styles/globals.css';
 
 export const dynamic = 'force-dynamic';
 
