@@ -4,7 +4,6 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { IoCheckmark } from 'react-icons/io5';
 
-import { SexyBoarder } from '@/components/sexy-boarder';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -26,18 +25,9 @@ export function PricingCard({
 
   // Determine the price to render
   const currentPrice = useMemo(() => {
-    // If price is passed in we use that one. This is used on the account page when showing the user their current subscription.
     if (price) return price;
-
-    // If no price provided we need to find the right one to render for the product.
-    // First check if the product has a price - in the case of our enterprise product, no price is included.
-    // We'll return null and handle that case when rendering.
     if (product.prices.length === 0) return null;
-
-    // Next determine if the product is a one time purchase - in these cases it will only have a single price.
     if (product.prices.length === 1) return product.prices[0];
-
-    // Lastly we can assume the product is a subscription one with a month and year price, so we get the price according to the select billingInterval
     return product.prices.find((price) => price.interval === billingInterval);
   }, [billingInterval, price, product.prices]);
 
@@ -56,91 +46,90 @@ export function PricingCard({
   }
 
   return (
-    <WithSexyBorder variant={metadata.priceCardVariant} className='w-full flex-1'>
-      <div className='flex w-full flex-col rounded-md border border-zinc-800 bg-black p-4 lg:p-8'>
-        <div className='p-4'>
-          <div className='mb-1 text-center font-alt text-xl font-bold'>{product.name}</div>
-          <div className='flex justify-center gap-0.5 text-zinc-400'>
-            <span className='font-semibold'>
-              {yearPrice && isBillingIntervalYearly
-                ? '$' + yearPrice / 100
-                : monthPrice
-                ? '$' + monthPrice / 100
-                : 'Custom'}
-            </span>
-            <span>{yearPrice && isBillingIntervalYearly ? '/year' : monthPrice ? '/month' : null}</span>
-          </div>
+    <div className='w-full flex-1 min-h-screen max-h-screen'>
+    <div className='flex w-full flex-col rounded-md border border-[#C2BEB5] bg-white p-4 lg:p-8 transition-none hover:shadow-none hover:border-[#C2BEB5]'>
+      <div className='p-4'>
+        <div className='mb-1 text-center font-man text-xl font-bold text-[#3C3C3C]'>{product.name}</div>
+        <div className='flex justify-center gap-0.5 text-[#3C3C3C] font-ibm'>
+          <span className='font-semibold text-2xl'>
+            {yearPrice && isBillingIntervalYearly
+              ? '$' + yearPrice / 100
+              : monthPrice
+              ? '$' + monthPrice / 100
+              : 'Custom'}
+          </span>
+          <span className='self-end'>{yearPrice && isBillingIntervalYearly ? '/year' : monthPrice ? '/month' : null}</span>
         </div>
+      </div>
 
         {!Boolean(price) && product.prices.length > 1 && <PricingSwitch onChange={handleBillingIntervalChange} />}
 
         <div className='m-auto flex w-fit flex-1 flex-col gap-2 px-8 py-4'>
-          {metadata.generatedImages === 'enterprise' && <CheckItem text={`Unlimited banner images`} />}
-          {metadata.generatedImages !== 'enterprise' && (
-            <CheckItem text={`Generate ${metadata.generatedImages} banner images`} />
-          )}
-          {<CheckItem text={`${metadata.imageEditor} image editing features`} />}
-          {<CheckItem text={`${metadata.supportLevel} support`} />}
-        </div>
+  {metadata.generatedImages === 'enterprise' && <CheckItem text={`Unlimited banner images`} />}
+  {metadata.generatedImages !== 'enterprise' && (
+    <CheckItem text={`Generate ${metadata.generatedImages} banner images`} />
+  )}
+  {<CheckItem text={`${metadata.imageEditor} image editing features`} />}
+  {<CheckItem text={`${metadata.supportLevel} support`} />}
+</div>
 
         {createCheckoutAction && (
-          <div className='py-4'>
+          <div className='py-3'>
             {currentPrice && (
               <Button
-                variant={buttonVariantMap[metadata.priceCardVariant]}
-                className='w-full'
+                variant="default"  // Use a consistent variant
+                className='w-full bg-[#00B7FC] text-black hover:bg-[#00B7FC] hover:no-underline font-man border-2 border-black'
                 onClick={() => createCheckoutAction({ price: currentPrice })}
               >
                 Get Started
               </Button>
             )}
             {!currentPrice && (
-              <Button variant={buttonVariantMap[metadata.priceCardVariant]} className='w-full' asChild>
+              <Button 
+                variant="default"  // Use a consistent variant
+                className='w-full bg-[#00B7FC] text-white hover:bg-[#00B7FC] hover:no-underline ' 
+                asChild
+              >
                 <Link href='/contact'>Contact Us</Link>
               </Button>
             )}
           </div>
         )}
       </div>
-    </WithSexyBorder>
+    </div>
   );
 }
 
 function CheckItem({ text }: { text: string }) {
   return (
-    <div className='flex items-center gap-2'>
-      <IoCheckmark className='my-auto flex-shrink-0 text-slate-500' />
-      <p className='text-sm font-medium text-white first-letter:capitalize'>{text}</p>
+    <div className='flex items-center gap-2 pt-2'>
+      <IoCheckmark className='my-auto flex-shrink-0 text-[#3C3C3C]' />
+      <p className='text-sm font-man text-[#3C3C3C] first-letter:capitalize'>{text}</p>
     </div>
   );
 }
 
-export function WithSexyBorder({
-  variant,
-  className,
-  children,
-}: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant: PriceCardVariant }) {
-  if (variant === 'pro') {
-    return (
-      <SexyBoarder className={className} offset={100}>
-        {children}
-      </SexyBoarder>
-    );
-  } else {
-    return <div className={className}>{children}</div>;
-  }
-}
 
-function PricingSwitch({ onChange }: { onChange: (value: BillingInterval) => void }) {
+function PricingSwitch({ onChange }: { onChange: (interval: BillingInterval) => void }) {
   return (
-    <Tabs
-      defaultValue='month'
-      className='flex items-center'
-      onValueChange={(newBillingInterval) => onChange(newBillingInterval as BillingInterval)}
+    <Tabs 
+      defaultValue="month" 
+      className="w-full" 
+      onValueChange={(value) => onChange(value as BillingInterval)}
     >
-      <TabsList className='m-auto'>
-        <TabsTrigger value='month'>Monthly</TabsTrigger>
-        <TabsTrigger value='year'>Yearly</TabsTrigger>
+      <TabsList className="grid w-full grid-cols-2 bg-[#E8E4DB] my-2 border-[1px] border-black">
+        <TabsTrigger 
+          value="month"
+          className="data-[state=active]:bg-[#3C3C3C] data-[state=active]:text-[#E8E4DB] data-[state=inactive]:bg-[#E8E4DB] data-[state=inactive]:text-[#3C3C3C] font-ibm"
+        >
+         MONTHLY
+        </TabsTrigger>
+        <TabsTrigger 
+          value="year"
+          className="data-[state=active]:bg-[#3C3C3C] data-[state=active]:text-[#E8E4DB] data-[state=inactive]:bg-[#E8E4DB] data-[state=inactive]:text-[#3C3C3C] font-ibm"
+        >
+         YEARLY
+        </TabsTrigger>
       </TabsList>
     </Tabs>
   );

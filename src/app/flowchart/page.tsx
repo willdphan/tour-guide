@@ -14,7 +14,7 @@ export default function FlowchartPage() {
   const supabase = createClientComponentClient();
 
   
-
+  // check if user is logged in
   useEffect(() => {
     const checkUser = async () => {
       try {
@@ -41,7 +41,7 @@ export default function FlowchartPage() {
   }, [router, supabase, searchParams]);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div className='flex min-h-screen items-center justify-center'>LOADING...</div>;
   }
 
   return user ? <FlowChart /> : null;

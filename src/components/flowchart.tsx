@@ -339,10 +339,10 @@ const FlowchartPage = () => {
 const FullScreenPopup: React.FC<FullScreenPopupProps> = ({ node, onClose }) => {
   return (
     <div className="fixed inset-y-0 right-0 w-4/6 bg-[#E8E4DB] shadow-lg z-50 flex flex-col p-12 ">
-      <div className="flex justify-between items-start">
+      <div className="flex justify-between items-start px-5">
         <div className='flex flex-col'>
-          <h2 className="text-3xl mb-2">{node.probability}% {node.title}</h2>
-          <p className="text-3xl text-gray-500">Option {node.optionNumber}</p>
+          <h2 className="text-2xl mb-2 font-semibold">{node.probability}% {node.title}</h2>
+          <p className="text-lg text-gray-500 uppercase font-ibm">Option {node.optionNumber}</p>
         </div>
         <button
           onClick={onClose}
@@ -351,9 +351,9 @@ const FullScreenPopup: React.FC<FullScreenPopupProps> = ({ node, onClose }) => {
           &times;
         </button>
       </div>
-      <div className="flex-grow mt-16">
-        <h3 className="text-xl font-mono uppercase mb-6">WHY IS THIS?</h3>
-        <p className="text-lg font-man leading-relaxed">{node.content}</p>
+      <div className="flex-grow mt-12 px-5 pr-28">
+        <h3 className="text-lg font-ibm uppercase mb-3">WHY IS THIS?</h3>
+        <p className="text-md font-man leading-relaxed">{node.content}</p>
       </div>
     </div>
   );
