@@ -1,6 +1,7 @@
 // ref: https://github.com/vercel/next.js/blob/canary/examples/with-supabase/app/auth/callback/route.ts
 
 import { NextResponse } from 'next/server';
+
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import { getURL } from '@/utils/get-url';
 

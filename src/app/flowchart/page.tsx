@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+
 import FlowChart from '@/components/flowchart';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 export default function FlowchartPage() {
   const [isLoading, setIsLoading] = useState(true);
