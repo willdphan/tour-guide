@@ -56,7 +56,7 @@ export function AuthUI({
   async function handleOAuthClick(provider: 'google' | 'github') {
     setPending(true);
     const response = await signInWithOAuth(provider);
-
+  
     if (response?.error) {
       toast({
         variant: 'destructive',
@@ -64,8 +64,13 @@ export function AuthUI({
       });
       setPending(false);
     } else {
-      // Redirect to the flowchart page after successful authentication
-      router.push('/flowchart');
+      // Redirect to /flowchart after successful authentication
+      console.log('Authentication successful, redirecting to /flowchart');
+      
+      // Add a small delay before redirecting
+      setTimeout(() => {
+        router.replace('/flowchart');
+      }, 100);
     }
   }
 

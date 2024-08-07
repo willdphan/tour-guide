@@ -9,10 +9,11 @@ import { getURL } from '@/utils/get-url';
 export async function signInWithOAuth(provider: 'github' | 'google'): Promise<ActionResponse> {
   const supabase = createSupabaseServerClient();
 
+  // after login, redirect to /flowchart
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
     options: {
-      redirectTo: getURL('/auth/callback'),
+      redirectTo: getURL('/auth/callback?redirect=/flowchart'),
     },
   });
 
@@ -23,7 +24,6 @@ export async function signInWithOAuth(provider: 'github' | 'google'): Promise<Ac
 
   return redirect(data.url);
 }
-
 export async function signInWithEmail(email: string): Promise<ActionResponse> {
   const supabase = createSupabaseServerClient();
 

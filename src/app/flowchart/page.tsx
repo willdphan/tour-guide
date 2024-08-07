@@ -1,43 +1,47 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-
+import { useRouter, useSearchParams } from 'next/navigation';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import FlowChart from '@/components/flowchart';
 
-
-export default function FlowchartPageWrapper() {
-  const router = useRouter();
+export default function FlowchartPage() {
   const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const supabase = createClientComponentClient();
 
-  // useEffect(() => {
-  //   const checkSession = async () => {
-  //     try {
-  //       const res = await fetch('/api/check-session');
-  //       const { authenticated } = await res.json();
-  //       if (!authenticated) {
-  //         router.push('/flowchart');
-  //       } else {
-  //         setIsLoading(false);
-  //       }
-  //     } catch (error) {
-  //       console.error('Error checking session:', error);
-  //       router.push('/signup');
-  //     }
-  //   };
+  
 
-  //   checkSession();
-  // }, [router]);
+  useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const { data: { user }, error } = await supabase.auth.getUser();
+        if (error) throw error;
+        if (user) {
+          setUser(user);
+        } else {
+          router.push('/login');
+        }
+      } catch (error) {
+        console.error('Error checking user:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  // if (isLoading) {
-  //   return <div>Loading...</div>; // Or a more sophisticated loading component
-  // }
+    checkUser();
 
-  return  (
-    <div className="max-h-screen">
-     
-        <FlowChart />
-    
-    </div>
-  );
+    // If we've just logged in, force a refresh of the page
+    if (searchParams.get('login') === 'success') {
+      router.refresh();
+    }
+  }, [router, supabase, searchParams]);
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  return user ? <FlowChart /> : null;
 }

@@ -29,6 +29,7 @@
     "@splinetool/react-spline": "^4.0.0",
     "@splinetool/runtime": "^1.9.3",
     "@stripe/stripe-js": "2.2.0",
+    "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/ssr": "0.1.0",
     "@supabase/supabase-js": "2.39.0",
     "@types/recharts": "^1.8.29",
