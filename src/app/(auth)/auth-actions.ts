@@ -24,13 +24,15 @@ export async function signInWithOAuth(provider: 'github' | 'google'): Promise<Ac
 
   return redirect(data.url);
 }
+
+
 export async function signInWithEmail(email: string): Promise<ActionResponse> {
   const supabase = createSupabaseServerClient();
 
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
-      emailRedirectTo: getURL('/auth/callback'),
+      emailRedirectTo: getURL('/auth/callback?redirect=/flowchart'),
     },
   });
 
@@ -41,6 +43,7 @@ export async function signInWithEmail(email: string): Promise<ActionResponse> {
 
   return { data: null, error: null };
 }
+
 
 export async function signOut(): Promise<ActionResponse> {
   const supabase = createSupabaseServerClient();
