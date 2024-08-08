@@ -147,6 +147,7 @@ const FlowchartPage = () => {
   const [numberOfOutcomes, setNumberOfOutcomes] = useState(0);
   const isGeneratingRef = useRef(false);
   const abortControllerRef = useRef(new AbortController());
+  
 
   const questions = [
     "Set the setting",
@@ -856,19 +857,21 @@ const FlowChart: React.FC<FlowChartProps> = ({
   const containerStyle = {
     width: `${containerWidth}px`,
     height: `${containerHeight}px`,
-    position: 'absolute' as const,
-    left: `${Math.max(0, (window.innerWidth - containerWidth * zoom) / 2 / zoom - minX)}px`,
-    top: `${Math.max(0, (window.innerHeight - containerHeight * zoom) / 2 / zoom - minY)}px`,
     transform: `scale(${zoom})`,
     transformOrigin: 'top left',
     transition: 'transform 0.3s ease-out',
+    padding: '300px', // Increase padding to ensure nodes near the edges are not cut off
+    position: 'absolute', // Ensure absolute positioning
+    top: `${-minY + 100}px`, // Adjust top based on minimum Y coordinate with extra space
+    left: `${-minX + 100}px`, // Adjust left based on minimum X coordinate with extra space
   };
-
+  
   return (
-    <div className="h-full w-full relative bg-[#E8E4DB] overflow-hidden">
+    <div className="h-full w-full relative bg-[#E8E4DB] overflow-auto"> {/* Ensure overflow-auto is set */}
       <div 
         ref={containerRef}
         style={containerStyle}
+        className="relative" // Ensure relative positioning
         key={JSON.stringify(treeData)}
       >
         {renderNode(treeData)}
@@ -896,6 +899,5 @@ const FlowChart: React.FC<FlowChartProps> = ({
     </div>
   );
 };
-
 
 export default FlowchartPage;
