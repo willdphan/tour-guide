@@ -6,14 +6,18 @@
 
 // 1. When you need to access the database from the server side.
 // 2. When you need to access the database from the server side and you need to send the user's cookies to the server.
-
-import { cookies } from 'next/headers';
-
 import { Database } from '@/libs/supabase/types';
 import { getEnvVar } from '@/utils/get-env-var';
 import { type CookieOptions, createServerClient } from '@supabase/ssr';
 
 export function createSupabaseServerClient() {
+  // Ensure this code only runs on the server side
+  if (typeof window !== 'undefined') {
+    throw new Error('createSupabaseServerClient should only be used on the server side');
+  }
+
+  // Import 'next/headers' only on the server side
+  const { cookies } = require('next/headers');
   const cookieStore = cookies();
 
   // Create and return a new Supabase server client
@@ -26,15 +30,15 @@ export function createSupabaseServerClient() {
       cookies: {
         // Function to get a cookie value by name
         get(name: string) {
-          return cookieStore.get(name)?.value;
+          return cookieStore?.get(name)?.value;
         },
         // Function to set a cookie with name, value, and options
         set(name: string, value: string, options: CookieOptions) {
-          cookieStore.set({ name, value, ...options });
+          cookieStore?.set({ name, value, ...options });
         },
         // Function to remove a cookie by setting its value to empty string
         remove(name: string, options: CookieOptions) {
-          cookieStore.set({ name, value: '', ...options });
+          cookieStore?.set({ name, value: '', ...options });
         },
       },
     }

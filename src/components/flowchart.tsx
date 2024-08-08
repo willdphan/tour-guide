@@ -7,7 +7,8 @@ import { Cell, Pie, PieChart, ResponsiveContainer,Tooltip } from 'recharts';
 import Spline from '@splinetool/react-spline';
 
 import Counter from './Counter';
-import { NavigationMenuDemo } from "@/components/navigation-menu"
+import withAuth from '@/utils/withAuth';
+
 
 
 interface ComponentProps {
@@ -355,7 +356,7 @@ const FlowchartPage = () => {
               onClick={() => setActiveView('outcomes')}
               className={`px-4 py-2 ${activeView === 'outcomes' ? 'bg-[#3C3C3C] text-white' : 'bg-white text-[#3C3C3C]'} border border-[#3C3C3C]`}
             >
-              Outcomes
+             Graph
             </button>
           </div>
         )}
@@ -900,4 +901,4 @@ const FlowChart: React.FC<FlowChartProps> = ({
   );
 };
 
-export default FlowchartPage;
+export default withAuth(FlowchartPage);
