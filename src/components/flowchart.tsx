@@ -405,6 +405,7 @@ const FlowChart: React.FC<FlowChartProps> = ({
   updateNumberOfOutcomes 
 }) => {
 
+  const [zoom, setZoom] = useState(1);
   
   const [treeData, setTreeData] = useState<TreeNode>({
     id: 'start',
@@ -428,6 +429,28 @@ const FlowChart: React.FC<FlowChartProps> = ({
   const INITIAL_HORIZONTAL_SPACING = 300;
   const HORIZONTAL_SPACING = 550;
   const VERTICAL_SPACING = 150;
+
+  const handleZoom = useCallback((direction: 'in' | 'out') => {
+    setZoom(prevZoom => {
+      let newZoom = direction === 'in' ? prevZoom * 1.2 : prevZoom / 1.2;
+      
+      // Ensure we don't zoom out beyond fitting the entire graph
+      if (containerRef.current) {
+        const containerRect = containerRef.current.getBoundingClientRect();
+        const parentRect = containerRef.current.parentElement?.getBoundingClientRect();
+        
+        if (parentRect) {
+          const minZoom = Math.min(
+            parentRect.width / containerRect.width,
+            parentRect.height / containerRect.height
+          );
+          newZoom = Math.max(newZoom, minZoom);
+        }
+      }
+      
+      return newZoom;
+    });
+  }, []);
 
   const generateOutcomes = useCallback(async (parentX: number, parentY: number, action: string): Promise<TreeNode[]> => {
 
@@ -474,19 +497,26 @@ const FlowChart: React.FC<FlowChartProps> = ({
   const generateInitialFlowchart = useCallback(async (situation: string, action: string) => {
     const outcomes = await generateOutcomes(0, 0, action);
     const totalHeight = (outcomes.length - 1) * VERTICAL_SPACING;
-    const startY = window.innerHeight / 2 - totalHeight / 2;
+    
+    // Calculate the starting position very close to the left
+    const startX = window.innerWidth * 0.1; // 10% from the left edge
+    const centerY = window.innerHeight / 2;
+  
+    // Position the situation node
+    const situationX = startX;
+    const situationY = centerY;
   
     const initialTree: TreeNode = {
       id: 'start',
       content: situation,
-      position: { x: 0, y: startY + totalHeight / 2 },
+      position: { x: situationX, y: situationY },
       type: 'situation',
       outcomes: outcomes.map((outcome, index) => ({
         ...outcome,
         id: `outcome-${Date.now()}-${index}`,
         position: {
-          x: INITIAL_HORIZONTAL_SPACING,
-          y: startY + index * VERTICAL_SPACING
+          x: situationX + INITIAL_HORIZONTAL_SPACING,
+          y: situationY + (index - (outcomes.length - 1) / 2) * VERTICAL_SPACING
         },
         type: 'outcome' as const,
         outcomes: []
@@ -494,6 +524,7 @@ const FlowChart: React.FC<FlowChartProps> = ({
     };
     setTreeData(initialTree);
   }, [generateOutcomes, VERTICAL_SPACING, INITIAL_HORIZONTAL_SPACING]);
+
 
   useEffect(() => {
     if (showChart) {
@@ -800,49 +831,71 @@ const FlowChart: React.FC<FlowChartProps> = ({
     );
   };
 
-  const getMaxCoordinates = (node: TreeNode) => {
+  const getMinMaxCoordinates = (node: TreeNode) => {
+    let minX = node.position.x;
+    let minY = node.position.y;
     let maxX = node.position.x;
     let maxY = node.position.y;
     if (node.outcomes) {
-      node.outcomes.forEach((outcome: any) => {
-        const { maxX: childMaxX, maxY: childMaxY } = getMaxCoordinates(outcome);
+      node.outcomes.forEach((outcome: TreeNode) => {
+        const { minX: childMinX, minY: childMinY, maxX: childMaxX, maxY: childMaxY } = getMinMaxCoordinates(outcome);
+        minX = Math.min(minX, childMinX);
+        minY = Math.min(minY, childMinY);
         maxX = Math.max(maxX, childMaxX);
         maxY = Math.max(maxY, childMaxY);
       });
     }
-    return { maxX, maxY };
+    return { minX, minY, maxX, maxY };
   };
 
-  const { maxX, maxY } = getMaxCoordinates(treeData);
-  const containerWidth = Math.max(maxX + NODE_WIDTH + HORIZONTAL_SPACING, window.innerWidth);
-  const containerHeight = Math.max(maxY + NODE_HEIGHT + VERTICAL_SPACING, window.innerHeight);
+  const { minX, minY, maxX, maxY } = getMinMaxCoordinates(treeData);
 
-  function closePopup(): void {
-    setPopupNode(null);
-  }
+  const containerWidth = maxX - minX + NODE_WIDTH + HORIZONTAL_SPACING;
+  const containerHeight = maxY - minY + NODE_HEIGHT + VERTICAL_SPACING;
 
-return (
-  <div className="h-full w-full bg-[#E8E4DB] overflow-auto">
-    <div 
-      ref={containerRef}
-      className="relative"
-      style={{ 
-        width: `${containerWidth}px`,
-        height: `${containerHeight}px`,
-        minHeight: '100vh'
-      }}
-      key={JSON.stringify(treeData)} // Add this line
-    >
-      {renderNode(treeData)}
+  const containerStyle = {
+    width: `${containerWidth}px`,
+    height: `${containerHeight}px`,
+    position: 'absolute' as const,
+    left: `${Math.max(0, (window.innerWidth - containerWidth * zoom) / 2 / zoom - minX)}px`,
+    top: `${Math.max(0, (window.innerHeight - containerHeight * zoom) / 2 / zoom - minY)}px`,
+    transform: `scale(${zoom})`,
+    transformOrigin: 'top left',
+    transition: 'transform 0.3s ease-out',
+  };
+
+  return (
+    <div className="h-full w-full relative bg-[#E8E4DB] overflow-hidden">
+      <div 
+        ref={containerRef}
+        style={containerStyle}
+        key={JSON.stringify(treeData)}
+      >
+        {renderNode(treeData)}
+      </div>
+      {popupNode && (
+        <FullScreenPopup 
+          node={popupNode} 
+          onClose={() => setPopupNode(null)}
+        />
+      )}
+      <div className="fixed bottom-4 right-4 flex space-x-2 z-10">
+        <button
+          onClick={() => handleZoom('in')}
+          className="bg-white text-black px-3 py-1 rounded-md shadow-md hover:bg-gray-100"
+        >
+          +
+        </button>
+        <button
+          onClick={() => handleZoom('out')}
+          className="bg-white text-black px-3 py-1 rounded-md shadow-md hover:bg-gray-100"
+        >
+          -
+        </button>
+      </div>
     </div>
-    {popupNode && (
-      <FullScreenPopup 
-        node={popupNode} 
-        onClose={closePopup} 
-      />
-    )}
-  </div>
   );
 };
+
 
 export default FlowchartPage;
