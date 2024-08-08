@@ -620,7 +620,7 @@ const FlowChart: React.FC<FlowChartProps> = ({
       nodeBackgroundColor = isOnSelectedPath ? 'bg-[#00B7FC]' : 'bg-[#F2B8EB]';
     }
   
-    const nodeBorderClass = isSelected ? 'border-[2px] border-black' : 'border-[2px] border-[#C2BEB5]';
+    const nodeBorderClass = isSelected ? 'border-[2px] border-black' : 'border-[2px] border-black';
     
     
     
@@ -655,14 +655,21 @@ const FlowChart: React.FC<FlowChartProps> = ({
           )}
         </div>
       );
+    
     }
-            
+
+    
+              // Add this custom style for the solid shadow
+  const solidShadowStyle = {
+    boxShadow: '4px 4px 0px 0px rgba(0, 0, 0, 0.75)',
+  };
     
     return (
       <div key={node.id}>
         <div 
-          className={`absolute p-2 py-2 px-4 cursor-pointer text-wrap w-[20em] h-[5em] uppercase text-center font-normal ${nodeBackgroundColor} ${nodeBorderClass}`}
+        className={`absolute p-2 py-2 px-4 cursor-pointer text-wrap w-[20em] h-[5em] uppercase text-center font-normal ${nodeBackgroundColor} ${nodeBorderClass}`}
           style={{
+            ...solidShadowStyle,  // Apply the solid shadow style here
             left: `${node.position.x}px`,
             top: `${node.position.y}px`,
             display: 'flex',
