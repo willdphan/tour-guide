@@ -7,6 +7,8 @@ import { Cell, Pie, PieChart, ResponsiveContainer,Tooltip } from 'recharts';
 import Spline from '@splinetool/react-spline';
 
 import Counter from './Counter';
+import { NavigationMenuDemo } from "@/components/navigation-menu"
+
 
 interface ComponentProps {
   probability: number;
@@ -253,9 +255,12 @@ const FlowchartPage = () => {
     setNumberOfOutcomes(count);
   }, []);
 
+  const [activeView, setActiveView] = useState<'profile' | 'outcomes'>('outcomes');
+
+
   return (
     <div className="flex h-screen w-screen overflow-hidden max-w-screen">
-      <div className={`${chartFullyRendered ? 'w-2/6' : 'w-full'} h-full flex flex-col z-[99] ${chartFullyRendered ? 'bg-white' : 'bg-[#E8E4DB]'} transition-colors duration-500`}>
+      <div className={`${chartFullyRendered ? 'w-2/6' : 'w-full'} h-full flex flex-col z-[99] ${chartFullyRendered ? 'bg-white' : 'bg-[#E8E4DB]'} transition-colors duration-500 relative`}>
         <div className="flex-1 flex flex-col items-center justify-center p-4">
           <AnimatePresence mode="wait">
             {!isGenerating && !outcomesReady ? (
@@ -276,11 +281,6 @@ const FlowchartPage = () => {
                     className="w-full mb-4 text-center placeholder-center focus:outline-none focus:ring-0 font-man bg-transparent"
                     placeholder="Enter your answer"
                     autoFocus
-                    // style={{
-                    //   '::placeholder': {
-                    //     textAlign: 'center',
-                    //   },
-                    // }}
                   />
                 </form>
               </motion.div>
@@ -301,25 +301,63 @@ const FlowchartPage = () => {
                 >
                   <Spline
                     scene="https://prod.spline.design/gbG6-0xtiOTPHBfn/scene.splinecode" 
-                 
                   />
                 </motion.div>
               </motion.div>
             ) : chartFullyRendered ? (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="text-center w-full"
-              >
-                <div className="mb-4">
-                  <span className="text-6xl font-bold font-ibm text-[#3C3C3C]"><Counter value={numberOfOutcomes} /></span>
-                </div>
-                <h2 className="text-lg mb-2 font-ibm uppercase text-[#3C3C3C]">Possible outcomes generated</h2>
-                <p className='font-man text-gray-500'>Interact with the flowchart.</p>
-              </motion.div>
+              <AnimatePresence mode="wait">
+                {activeView === 'profile' && (
+                  <motion.div
+                    key="profile"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="text-center w-full"
+                  >
+                    <h2 className="text-lg mb-2 font-ibm uppercase text-[#3C3C3C]">PROFILE</h2>
+                    <p className='font-man text-gray-500'>PROFILE DESCRIPTION.</p>
+                  </motion.div>
+                )}
+  
+                {activeView === 'outcomes' && (
+                  <motion.div
+                    key="outcomes"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="text-center w-full"
+                  >
+                    <div className="mb-4">
+                      <span className="text-6xl font-bold font-ibm text-[#3C3C3C]">
+                        <Counter value={numberOfOutcomes} />
+                        {`${numberOfOutcomes}`}
+                      </span>
+                    </div>
+                    <h2 className="text-lg mb-2 font-ibm uppercase text-[#3C3C3C]">Possible outcomes generated</h2>
+                    <p className='font-man text-gray-500'>Interact with the flowchart.</p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             ) : null}
           </AnimatePresence>
         </div>
+        
+        {chartFullyRendered && (
+          <div className="absolute bottom-4 left-4 flex">
+            <button
+              onClick={() => setActiveView('profile')}
+              className={`px-4 py-2 mr-2 ${activeView === 'profile' ? 'bg-[#3C3C3C] text-white' : 'bg-white text-[#3C3C3C]'} border border-[#3C3C3C]`}
+            >
+              Profile
+            </button>
+            <button
+              onClick={() => setActiveView('outcomes')}
+              className={`px-4 py-2 ${activeView === 'outcomes' ? 'bg-[#3C3C3C] text-white' : 'bg-white text-[#3C3C3C]'} border border-[#3C3C3C]`}
+            >
+              Outcomes
+            </button>
+          </div>
+        )}
       </div>
       {showChart && (
         <div className={`${chartFullyRendered ? 'w-4/6' : 'w-0'} h-full transition-all duration-500`}>

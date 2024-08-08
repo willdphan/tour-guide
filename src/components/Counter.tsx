@@ -14,7 +14,7 @@ const Counter: React.FC<CounterProps> = ({ value }) => {
     return animation.stop;
   }, [value, count]);
 
-  return <motion.div>{rounded}</motion.div>;
+  return <motion.div></motion.div>;
 };
 
 export default Counter;
