@@ -35,6 +35,7 @@ interface FlowChartProps {
   showChart: boolean;
   onChartRendered: () => void;
   updateNumberOfOutcomes: (count: number) => void;
+  user: { email: string }; // Add user prop here
 }
 
 interface Outcome {
@@ -137,7 +138,7 @@ const initialTree = {
   outcomes: []
 };
 
-const FlowchartPage = () => {
+const FlowchartPage: React.FC<{ user: { email: string } }> = ({ user }) => {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState(['', '']);
   const [showChart, setShowChart] = useState(false);
@@ -317,7 +318,8 @@ const FlowchartPage = () => {
                     className="text-center w-full"
                   >
                     <h2 className="text-lg mb-2 font-ibm uppercase text-[#3C3C3C]">PROFILE</h2>
-                    <p className='font-man text-gray-500'>PROFILE DESCRIPTION.</p>
+                    <h2 className="text-lg mb-2 font-man text-gray-500">{user.email}</h2>
+                    <h2 className="text-lg mb-2 font-ibm uppercase text-[#3C3C3C]">PROFILE</h2>
                   </motion.div>
                 )}
   
@@ -369,6 +371,7 @@ const FlowchartPage = () => {
             showChart={showChart}
             onChartRendered={handleChartRendered}
             updateNumberOfOutcomes={updateNumberOfOutcomes}
+            user={user} // Pass user prop here
           />
         </div>
       )}
@@ -404,7 +407,7 @@ const FlowChart: React.FC<FlowChartProps> = ({
   initialAction, 
   showChart, 
   onChartRendered, 
-  updateNumberOfOutcomes 
+  updateNumberOfOutcomes,
 }) => {
 
   const [zoom, setZoom] = useState(1);
