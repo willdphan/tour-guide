@@ -8,10 +8,10 @@ import Spline from '@splinetool/react-spline';
 
 import Counter from './Counter';
 import withAuth from '@/utils/withAuth';
-import { useRouter } from 'next/router';
+import { Router, useRouter } from 'next/router';
 import { supabaseMiddlewareClient } from '@/libs/supabase/supabase-middleware-client';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-
+import { signOut as authSignOut } from '@/app/(auth)/auth-actions';
 
 
 ////////////////
@@ -70,6 +70,38 @@ interface TreeNode {
 //////////////////////
 // HELPER FUNCTIONS //
 //////////////////////
+
+import { Button } from '@/components/ui/button';
+import { signOut } from '@/app/(auth)/auth-actions';
+import { toast } from '@/components/ui/use-toast';
+import { redirect } from 'next/navigation';
+
+function LogoutButton() {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleLogout = async () => {
+    setIsLoading(true);
+    try {
+      await signOut();
+      // redirect('/signup')
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to log out. Please try again.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <button className='bg-[#3C3C3C] text-white font-man py-1 px-3 mt-2 border-none' onClick={handleLogout} disabled={isLoading}>
+      {isLoading ? 'Logging Out...' : 'Log Out'}
+    </button>
+  );
+}
+
 
 const findNodeById = (tree: TreeNode, id: string): TreeNode | null => {
   if (tree.id === id) {
@@ -268,13 +300,15 @@ const FlowchartPage: React.FC<{ user: { email: string } }> = ({ user }) => {
       abortControllerRef.current.abort(); // Cancel any ongoing requests
       abortControllerRef.current = new AbortController();
 
+      const combinedInput = `${answers[0]}\n${answers[1]}`;
+
       // EDIT API LINK HERE!
       const response = await fetch('https://willdphan--fastapi-groq-api-generate-outcomes.modal.run', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ query: answers[1] }),
+        body: JSON.stringify({ query: combinedInput }),
         signal: abortControllerRef.current.signal
       });
 
@@ -399,7 +433,7 @@ const FlowchartPage: React.FC<{ user: { email: string } }> = ({ user }) => {
                 >
                   <h2 className="text-lg mb-2 font-ibm uppercase text-[#3C3C3C]">PROFILE</h2>
                   <h2 className="text-lg mb-2 font-man text-gray-500">{user.email}</h2>
-                  <h2 className="text-lg mb-2 font-ibm uppercase text-[#3C3C3C]">PROFILE</h2>
+                  <LogoutButton/>
                 </motion.div>
               )}
           
@@ -440,30 +474,30 @@ const FlowchartPage: React.FC<{ user: { email: string } }> = ({ user }) => {
         </div>
         
         {chartFullyRendered && (
-          <div className="absolute bottom-4 left-4 flex">
+          <div className="absolute bottom-4 left-4 flex font-man">
             <button
               onClick={() => setActiveView('profile')}
-              className={`px-4 py-2 mr-2 ${activeView === 'profile' ? 'bg-[#3C3C3C] text-white' : 'bg-white text-[#3C3C3C]'} border border-[#3C3C3C]`}
+              className={`px-4 py-1 mr-2 ${activeView === 'profile' ? 'bg-[#3C3C3C] text-white' : 'bg-white text-[#3C3C3C]'} border border-[#3C3C3C]`}
             >
               Profile
             </button>
             <button
               onClick={() => setActiveView('outcomes')}
-              className={`px-4 py-2 mr-2 ${activeView === 'outcomes' ? 'bg-[#3C3C3C] text-white' : 'bg-white text-[#3C3C3C]'} border border-[#3C3C3C]`}
+              className={`px-4 py-0 mr-2 ${activeView === 'outcomes' ? 'bg-[#3C3C3C] text-white' : 'bg-white text-[#3C3C3C]'} border border-[#3C3C3C]`}
             >
              Graph
             </button>
             <button
               onClick={() => setActiveView('history')}
-              className={`px-4 py-2 mr-2 ${activeView === 'history' ? 'bg-[#3C3C3C] text-white' : 'bg-white text-[#3C3C3C]'} border border-[#3C3C3C]`}
+              className={`px-4 py-0 mr-2 ${activeView === 'history' ? 'bg-[#3C3C3C] text-white' : 'bg-white text-[#3C3C3C]'} border border-[#3C3C3C]`}
             >
               History
             </button>
             <button
               onClick={saveFlowchart}
-              className="px-4 py-2 bg-blue-500 text-white rounded-md"
+              className="px-4 py-0 bg-[#00B9F9] text-black rounded-md border broder-[1px] border-black"
             >
-              Save Flowchart
+              Save
             </button>
           </div>
         )}
@@ -1021,13 +1055,13 @@ const FlowChart: React.FC<FlowChartProps> = ({
         
         <button
           onClick={() => handleZoom('in')}
-          className="bg-white text-black px-3 py-1 rounded-md shadow-md hover:bg-gray-100"
-        >
+            className="bg-white text-black px-3 py-0  hover:bg-gray-100 border border-[1px] border-black "
+          >
           +
         </button>
         <button
           onClick={() => handleZoom('out')}
-          className="bg-white text-black px-3 py-1 rounded-md shadow-md hover:bg-gray-100"
+          className="bg-white text-black px-3 py-0  hover:bg-gray-100 border border-[1px] border-black "
         >
           -
         </button>

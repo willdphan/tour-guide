@@ -52,6 +52,8 @@ export default function FlowchartPage() {
   
     checkUser();
 
+    
+
     if (searchParams.get('login') === 'success') {
       console.log('Login success detected, refreshing...');
       router.refresh();

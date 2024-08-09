@@ -12,6 +12,8 @@ import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/use-toast';
 import { ActionResponse } from '@/types/action-response';
 import Spline from '@splinetool/react-spline';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+
 
 const titleMap = {
   login: 'Login to UPDATE_THIS_WITH_YOUR_APP_DISPLAY_NAME',
@@ -33,6 +35,7 @@ export function AuthUI({
   const [pending, setPending] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const supabase = createClientComponentClient();
 
   async function handleEmailSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -48,6 +51,7 @@ export function AuthUI({
       toast({
         description: `Successfully signed in with email: ${email}`,
       });
+      router.push('/flowchart')
     }
 
     setPending(false);
@@ -55,25 +59,32 @@ export function AuthUI({
 
   async function handleOAuthClick(provider: 'google' | 'github') {
     setPending(true);
-    const response = await signInWithOAuth(provider);
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'select_account',
+          },
+        },
+      });
   
-    if (response?.error) {
+      if (error) throw error;
+  
+      // The user will be redirected to the provider's login page,
+      // so we don't need to handle success here.
+    } catch (error) {
+      console.error('OAuth error:', error);
       toast({
         variant: 'destructive',
         description: 'An error occurred while authenticating. Please try again.',
       });
+    } finally {
       setPending(false);
-    } else {
-      // Redirect to /flowchart after successful authentication
-      console.log('Authentication successful, redirecting to /flowchart');
-      
-      // Add a small delay before redirecting
-      setTimeout(() => {
-        router.replace('/flowchart');
-      }, 100);
     }
   }
-
   return (
     <div className="font-[sans-serif] flex h-screen w-full">
     <div className="w-1/2 bg-[#E8E4DB] flex items-center justify-center p-4">

@@ -28,8 +28,8 @@ export function AccountMenu({ signOut }: { signOut: () => Promise<ActionResponse
         description: 'An error occurred while logging out. Please try again or contact support.',
       });
     } else {
-      router.refresh();
-
+      router.push('/signup')
+    
       toast({
         description: 'You have been logged out.',
       });

@@ -58,12 +58,12 @@ const History: React.FC<HistoryProps> = ({ onLoadFlowchart }) => {
 
   console.log('Rendering History component, flowcharts:', flowcharts);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div className='flex items-center justify-center text-center uppercase'>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
 
   return (
-    <div className="p-4">
-      <h2 className="text-lg mb-4 font-ibm uppercase text-[#3C3C3C]">Saved Flowcharts</h2>
+    <div className="p-4 text-center">
+      <h2 className="text-lg mb-4 font-ibm uppercase text-black">Saved Flowcharts</h2>
       {flowcharts.length === 0 ? (
         <p className="font-man text-gray-500">No saved flowcharts.</p>
       ) : (
@@ -72,7 +72,7 @@ const History: React.FC<HistoryProps> = ({ onLoadFlowchart }) => {
             <li key={flowchart.id}>
               <button
                 onClick={() => onLoadFlowchart(flowchart.id)}
-                className="w-full text-left px-4 py-2 bg-white border border-gray-300 rounded-md hover:bg-gray-100 transition-colors duration-200"
+                className="w-full text-left px-4 py-2 bg-white border border-black rounded-md hover:bg-gray-100 transition-colors duration-200"
               >
                 <span className="font-man text-gray-700">
                   {new Date(flowchart.created_at).toLocaleString()}

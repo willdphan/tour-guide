@@ -213,9 +213,10 @@ def generate_outcomes(query: Query):
         
         # Set up Groq client with hardcoded API key
         client = Groq(api_key=GROQ_API_KEY)
+        
 
         prompt = f"""You are an assistant that generates possible outcomes for given actions.
-    Given the action: '{query.query}', list 4-5 possible outcomes. For each outcome, provide:
+    Given the setting and action: '{query.query}', list all possible outcomes. For each outcome, provide:
     1. A short title (3-5 words)
     2. A detailed description (at least 200 words) explaining the outcome, its implications, and any relevant context. Use multiple paragraphs if necessary.
     3. The probability of occurring (as a percentage).

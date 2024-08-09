@@ -6,6 +6,7 @@ import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-clie
 import { ActionResponse } from '@/types/action-response';
 import { getURL } from '@/utils/get-url';
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 
 
 export async function signInWithOAuth(provider: 'github' | 'google'): Promise<ActionResponse> {
@@ -46,15 +47,23 @@ export async function signInWithEmail(email: string): Promise<ActionResponse> {
   return { data: null, error: null };
 }
 
-
-export async function signOut(): Promise<ActionResponse> {
+export async function signOut() {
   const supabase = createSupabaseServerClient();
   const { error } = await supabase.auth.signOut();
 
   if (error) {
-    console.error(error);
-    return { data: null, error: error };
+    console.error('Error signing out:', error);
+    return { success: false, error: error.message };
   }
 
-  return { data: null, error: null };
+  // Clear all cookies
+  const cookieStore = cookies();
+  cookieStore.getAll().forEach(cookie => {
+    cookieStore.delete(cookie.name);
+  });
+
+  // Clear Supabase-specific cookies
+  cookieStore.delete('sb-access-token');
+
+  redirect('/signup')
 }
