@@ -206,7 +206,6 @@ const FlowchartPage: React.FC<{ user: { email: string } }> = ({ user }) => {
 
   const supabase = createClientComponentClient();
 
-
   const updateTreeData = (newData: TreeNode) => {
     setTreeData(newData);
   };
@@ -375,6 +374,16 @@ const FlowchartPage: React.FC<{ user: { email: string } }> = ({ user }) => {
 
   const [activeView, setActiveView] = useState<'profile' | 'outcomes' | 'history'>('outcomes');
 
+
+  const [skippedQuestions, setSkippedQuestions] = useState(false);
+
+  const handleSkippedQuestions = () => {
+    setIsGenerating(true);
+    setShowSpline(true);
+    setOutcomesReady(true);
+    setShowChart(true);
+  };
+  
   return (
     <div className="flex h-screen w-screen overflow-hidden max-w-screen">
       <div className={`${chartFullyRendered ? 'w-2/6' : 'w-full'} h-full flex flex-col z-[99] ${chartFullyRendered ? 'bg-white' : 'bg-[#E8E4DB]'} transition-colors duration-500 relative`}>
@@ -389,6 +398,7 @@ const FlowchartPage: React.FC<{ user: { email: string } }> = ({ user }) => {
                 transition={{ duration: 0.5 }}
                 className="w-full max-w-sm"
               >
+                
                 <h2 className="text-lg mb-4 text-center uppercase font-mono">{questions[step]}</h2>
                 <form onSubmit={handleInputSubmit}>
                   <input
@@ -399,6 +409,12 @@ const FlowchartPage: React.FC<{ user: { email: string } }> = ({ user }) => {
                     placeholder="Enter your answer"
                     autoFocus
                   />
+                  <button
+  onClick={handleSkippedQuestions}
+  className="absolute bottom-5 left-1/2 transform -translate-x-1/2 flex items-center justify-center px-4 py-2 bg-[#3C3C3C] text-white font-man uppercase"
+>
+  Skip Questions
+</button>
                 </form>
               </motion.div>
             ) : showSpline ? (
