@@ -268,7 +268,8 @@ const FlowchartPage: React.FC<{ user: { email: string } }> = ({ user }) => {
       abortControllerRef.current.abort(); // Cancel any ongoing requests
       abortControllerRef.current = new AbortController();
 
-      const response = await fetch('http://localhost:8000/generate-outcomes', {
+      // EDIT API LINK HERE!
+      const response = await fetch('https://willdphan--fastapi-groq-api-generate-outcomes.modal.run', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -589,7 +590,8 @@ const FlowChart: React.FC<FlowChartProps> = ({
   const generateOutcomes = useCallback(async (parentX: number, parentY: number, action: string): Promise<TreeNode[]> => {
 
     try {
-      const response = await fetch('http://localhost:8000/generate-outcomes', {
+      // EDIT API LINK HERE!
+      const response = await fetch('https://willdphan--fastapi-groq-api-generate-outcomes.modal.run', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
