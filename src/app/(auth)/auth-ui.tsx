@@ -98,7 +98,7 @@ export function AuthUI({
       <div className="w-1/2 p-8 overflow-auto flex items-center justify-center">
         <form onSubmit={handleEmailSubmit} className="max-w-md mx-auto">
           <div className="mb-6">
-            <h3 className="text-gray-800 text-3xl font-extrabold font-man ">Sign in</h3>
+            <h3 className="text-gray-800 text-3xl font-extrabold font-man ">Sign In</h3>
             <p className='text-md mt-4 text-gray-800 font-man'>
               Login with your email.
   {/* Don&apos;t have an account?
@@ -155,7 +155,7 @@ export function AuthUI({
             disabled={pending}
             className="w-full py-3 px-6 text-sm tracking-wide text-black bg-[#E8E4DB] hover:bg-[#D4D0C6] mb-4 border-[1px] border border-black mb-[-1px] font-man font-semibold"
           >
-            Sign in
+            Sign In
           </button>
 
           <div className="my-4 flex items-center gap-4">
