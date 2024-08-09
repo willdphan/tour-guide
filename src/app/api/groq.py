@@ -18,7 +18,7 @@ app.add_middleware(
 )
 
 # Set Groq API key
-os.environ['GROQ_API_KEY'] = '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'
+os.environ['GROQ_API_KEY'] = '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'
 
 class Query(BaseModel):
     query: str

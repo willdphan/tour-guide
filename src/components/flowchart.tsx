@@ -3,13 +3,20 @@ import React, { useCallback, useEffect, useMemo,useRef, useState } from 'react';
 import { AnimatePresence,motion } from 'framer-motion';
 import debounce from 'lodash/debounce';
 import { Cell, Pie, PieChart, ResponsiveContainer,Tooltip } from 'recharts';
-
+import History from './history';
 import Spline from '@splinetool/react-spline';
 
 import Counter from './Counter';
 import withAuth from '@/utils/withAuth';
+import { useRouter } from 'next/router';
+import { supabaseMiddlewareClient } from '@/libs/supabase/supabase-middleware-client';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 
+
+////////////////
+// INTERFACES //
+///////////////
 
 interface ComponentProps {
   probability: number;
@@ -35,7 +42,9 @@ interface FlowChartProps {
   showChart: boolean;
   onChartRendered: () => void;
   updateNumberOfOutcomes: (count: number) => void;
-  user: { email: string }; // Add user prop here
+  user: { email: string };
+  updateTreeData: (newData: TreeNode) => void;
+  selectedFlowchart?: TreeNode | null;
 }
 
 interface Outcome {
@@ -56,6 +65,11 @@ interface TreeNode {
   title?: string;
   optionNumber?: number;
 }
+
+
+//////////////////////
+// HELPER FUNCTIONS //
+//////////////////////
 
 const findNodeById = (tree: TreeNode, id: string): TreeNode | null => {
   if (tree.id === id) {
@@ -130,13 +144,17 @@ const Component: React.FC<ComponentProps> = ({ probability, index, isSelected })
   );
 };
 
-const initialTree = {
+const initialTree: TreeNode = {
   id: 'start',
   content: '',
   position: { x: 0, y: 0 },
-  type: 'action',
+  type: 'action', // Ensure this is one of the NodeType values
   outcomes: []
 };
+
+//////////////////////
+// FLOWCHART PAGE ////
+//////////////////////
 
 const FlowchartPage: React.FC<{ user: { email: string } }> = ({ user }) => {
   const [step, setStep] = useState(0);
@@ -149,7 +167,69 @@ const FlowchartPage: React.FC<{ user: { email: string } }> = ({ user }) => {
   const [numberOfOutcomes, setNumberOfOutcomes] = useState(0);
   const isGeneratingRef = useRef(false);
   const abortControllerRef = useRef(new AbortController());
+  const [treeData, setTreeData] = useState<TreeNode>(initialTree); // Add this line
+
+
+  const [selectedFlowchart, setSelectedFlowchart] = useState<TreeNode | null>(null);
+
+  const supabase = createClientComponentClient();
+
+
+  const updateTreeData = (newData: TreeNode) => {
+    setTreeData(newData);
+  };
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const id = urlParams.get('id');
+      if (id) {
+        loadFlowchart(id);
+      }
+    }
+  }, []);
+
+  const saveFlowchart = async () => {
+    const supabase = createClientComponentClient();
+    try {
+      const { data, error } = await supabase
+        .from('flowcharts')
+        .insert([{ 
+          user_email: user.email, 
+          tree_data: treeData 
+        }])
+        .select();
   
+      if (error) {
+        console.error('Error saving flowchart:', error);
+        alert(`Error saving flowchart: ${error.message}`);
+      } else {
+        console.log('Flowchart saved successfully:', data);
+        alert('Flowchart saved!');
+      }
+    } catch (err) {
+      console.error('Exception when saving flowchart:', err);
+      alert(`Exception when saving flowchart: ${err.message}`);
+    }
+  };
+
+  const loadFlowchart = async (id: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('flowcharts')
+        .select('tree_data')
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+
+      setSelectedFlowchart(data.tree_data);
+      setActiveView('outcomes'); // Switch to outcomes view to display the loaded flowchart
+    } catch (error) {
+      console.error('Error loading flowchart:', error);
+    }
+  };
+
 
   const questions = [
     "Set the setting",
@@ -258,8 +338,7 @@ const FlowchartPage: React.FC<{ user: { email: string } }> = ({ user }) => {
     setNumberOfOutcomes(count);
   }, []);
 
-  const [activeView, setActiveView] = useState<'profile' | 'outcomes'>('outcomes');
-
+  const [activeView, setActiveView] = useState<'profile' | 'outcomes' | 'history'>('outcomes');
 
   return (
     <div className="flex h-screen w-screen overflow-hidden max-w-screen">
@@ -307,41 +386,54 @@ const FlowchartPage: React.FC<{ user: { email: string } }> = ({ user }) => {
                   />
                 </motion.div>
               </motion.div>
-            ) : chartFullyRendered ? (
-              <AnimatePresence mode="wait">
-                {activeView === 'profile' && (
-                  <motion.div
-                    key="profile"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="text-center w-full"
-                  >
-                    <h2 className="text-lg mb-2 font-ibm uppercase text-[#3C3C3C]">PROFILE</h2>
-                    <h2 className="text-lg mb-2 font-man text-gray-500">{user.email}</h2>
-                    <h2 className="text-lg mb-2 font-ibm uppercase text-[#3C3C3C]">PROFILE</h2>
-                  </motion.div>
-                )}
-  
-                {activeView === 'outcomes' && (
-                  <motion.div
-                    key="outcomes"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="text-center w-full"
-                  >
-                    <div className="mb-4">
-                      <span className="text-6xl font-bold font-ibm text-[#3C3C3C]">
-                        <Counter value={numberOfOutcomes} />
-                        {`${numberOfOutcomes}`}
-                      </span>
-                    </div>
-                    <h2 className="text-lg mb-2 font-ibm uppercase text-[#3C3C3C]">Possible outcomes generated</h2>
-                    <p className='font-man text-gray-500'>Interact with the flowchart.</p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+          ) : chartFullyRendered ? (
+            <AnimatePresence mode="wait">
+              {activeView === 'profile' && (
+                <motion.div
+                  key="profile"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="text-center w-full"
+                >
+                  <h2 className="text-lg mb-2 font-ibm uppercase text-[#3C3C3C]">PROFILE</h2>
+                  <h2 className="text-lg mb-2 font-man text-gray-500">{user.email}</h2>
+                  <h2 className="text-lg mb-2 font-ibm uppercase text-[#3C3C3C]">PROFILE</h2>
+                </motion.div>
+              )}
+          
+              {activeView === 'outcomes' && (
+                <motion.div
+                  key="outcomes"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="text-center w-full"
+                >
+                  <div className="mb-4">
+                    <span className="text-6xl font-bold font-ibm text-[#3C3C3C]">
+                      <Counter value={numberOfOutcomes} />
+                      {`${numberOfOutcomes}`}
+                    </span>
+                  </div>
+                  <h2 className="text-lg mb-2 font-ibm uppercase text-[#3C3C3C]">Possible outcomes generated</h2>
+                  <p className='font-man text-gray-500'>Interact with the flowchart.</p>
+                </motion.div>
+              )}
+          
+          {activeView === 'history' && (
+    <motion.div
+      key="history"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="w-full"
+    >
+      <History onLoadFlowchart={loadFlowchart} />
+    </motion.div>
+  )}
+
+            </AnimatePresence>
             ) : null}
           </AnimatePresence>
         </div>
@@ -356,28 +448,46 @@ const FlowchartPage: React.FC<{ user: { email: string } }> = ({ user }) => {
             </button>
             <button
               onClick={() => setActiveView('outcomes')}
-              className={`px-4 py-2 ${activeView === 'outcomes' ? 'bg-[#3C3C3C] text-white' : 'bg-white text-[#3C3C3C]'} border border-[#3C3C3C]`}
+              className={`px-4 py-2 mr-2 ${activeView === 'outcomes' ? 'bg-[#3C3C3C] text-white' : 'bg-white text-[#3C3C3C]'} border border-[#3C3C3C]`}
             >
              Graph
             </button>
+            <button
+              onClick={() => setActiveView('history')}
+              className={`px-4 py-2 mr-2 ${activeView === 'history' ? 'bg-[#3C3C3C] text-white' : 'bg-white text-[#3C3C3C]'} border border-[#3C3C3C]`}
+            >
+              History
+            </button>
+            <button
+              onClick={saveFlowchart}
+              className="px-4 py-2 bg-blue-500 text-white rounded-md"
+            >
+              Save Flowchart
+            </button>
           </div>
         )}
-      </div>
-      {showChart && (
-        <div className={`${chartFullyRendered ? 'w-4/6' : 'w-0'} h-full transition-all duration-500`}>
-          <FlowChart 
-            initialSituation={answers[0]} 
-            initialAction={answers[1]} 
-            showChart={showChart}
-            onChartRendered={handleChartRendered}
-            updateNumberOfOutcomes={updateNumberOfOutcomes}
-            user={user} // Pass user prop here
-          />
         </div>
-      )}
+        {showChart && (
+    <div className={`${chartFullyRendered ? 'w-4/6' : 'w-0'} h-full transition-all duration-500`}>
+      <FlowChart 
+        initialSituation={answers[0]} 
+        initialAction={answers[1]} 
+        showChart={showChart}
+        onChartRendered={handleChartRendered}
+        updateNumberOfOutcomes={updateNumberOfOutcomes}
+        user={user}
+        updateTreeData={updateTreeData}
+        selectedFlowchart={selectedFlowchart} // Pass the selected flowchart data
+      />
     </div>
-  );
-};
+  )}
+      </div>
+    );
+  };
+
+//////////////////////
+// FULL SCREEN POPUP //
+//////////////////////
 
 const FullScreenPopup: React.FC<FullScreenPopupProps> = ({ node, onClose }) => {
   return (
@@ -402,13 +512,32 @@ const FullScreenPopup: React.FC<FullScreenPopupProps> = ({ node, onClose }) => {
   );
 };
 
+////////////////////////
+// FLOWCHART COMPONENT //
+////////////////////////
+
+
 const FlowChart: React.FC<FlowChartProps> = ({ 
   initialSituation, 
   initialAction, 
   showChart, 
   onChartRendered, 
   updateNumberOfOutcomes,
+  updateTreeData,
+  selectedFlowchart, // Add this prop
 }) => {
+
+  useEffect(() => {
+    if (selectedFlowchart) {
+      setTreeData(selectedFlowchart);
+      updateTreeData(selectedFlowchart);
+      onChartRendered();
+    } else if (showChart) {
+      generateInitialFlowchart(initialSituation, initialAction).then(() => {
+        onChartRendered();
+      });
+    }
+  }, [showChart, initialSituation, initialAction, onChartRendered, selectedFlowchart]);
 
   const [zoom, setZoom] = useState(1);
   
@@ -523,12 +652,13 @@ const FlowChart: React.FC<FlowChartProps> = ({
           x: situationX + INITIAL_HORIZONTAL_SPACING,
           y: situationY + (index - (outcomes.length - 1) / 2) * VERTICAL_SPACING
         },
-        type: 'outcome' as const,
+        type: 'outcome',
         outcomes: []
       }))
     };
     setTreeData(initialTree);
-  }, [generateOutcomes, VERTICAL_SPACING, INITIAL_HORIZONTAL_SPACING]);
+    updateTreeData(initialTree); // Add this line to update the parent component's tree data
+  }, [generateOutcomes, VERTICAL_SPACING, INITIAL_HORIZONTAL_SPACING, updateTreeData]); // Add updateTreeData to dependencies
 
 
   useEffect(() => {
@@ -537,7 +667,7 @@ const FlowChart: React.FC<FlowChartProps> = ({
         onChartRendered();
       });
     }
-  }, [showChart, initialSituation, initialAction, onChartRendered, generateInitialFlowchart]);
+  }, [showChart, initialSituation, initialAction, onChartRendered]);
 
   const handleNodeClick = useCallback((nodeId: string, event: React.MouseEvent) => {
     event.stopPropagation();
@@ -590,6 +720,7 @@ const FlowChart: React.FC<FlowChartProps> = ({
           return node.outcomes.some(updateNode);
         };
         updateNode(newTree);
+        updateTreeData(newTree); // Add this line
         
         return newTree;
       });
@@ -641,9 +772,10 @@ const FlowChart: React.FC<FlowChartProps> = ({
       };
       
       updateNodePosition(newTree);
+      updateTreeData(newTree); // Add this line
       return newTree;
     });
-  }, [isDragging, draggedNode, dragOffset]);
+  }, [isDragging, draggedNode, dragOffset, updateTreeData]);
 
   const handleNodeDragEnd = useCallback(() => {
     setIsDragging(false);
@@ -668,15 +800,14 @@ const FlowChart: React.FC<FlowChartProps> = ({
           return node.outcomes.some(updateNode);
         };
         updateNode(newTree);
+        updateTreeData(newTree); // Call updateTreeData here
         return newTree;
       });
       setEditingNode('');
     } catch (error) {
       console.error('Error submitting action:', error);
     }
-  }, [treeData, generateOutcomes]);
-
-
+  }, [treeData, generateOutcomes, updateTreeData]);
 
 
   const renderNode = (node: TreeNode, depth: number = 0, path: number[] = []): React.ReactNode => {
@@ -731,9 +862,7 @@ const FlowChart: React.FC<FlowChartProps> = ({
       );
     
     }
-
-    
-              // Add this custom style for the solid shadow
+  // Add this custom style for the solid shadow
   const solidShadowStyle = {
     boxShadow: '4px 4px 0px 0px rgba(0, 0, 0, 0.75)',
   };
@@ -887,6 +1016,7 @@ const FlowChart: React.FC<FlowChartProps> = ({
         />
       )}
       <div className="fixed bottom-4 right-4 flex space-x-2 z-10">
+        
         <button
           onClick={() => handleZoom('in')}
           className="bg-white text-black px-3 py-1 rounded-md shadow-md hover:bg-gray-100"
