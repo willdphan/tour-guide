@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { AnimatePresence,motion } from 'framer-motion';
 
 import FlowChart from '@/components/flowchart';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { User } from '@supabase/supabase-js';
-import { motion, AnimatePresence } from 'framer-motion';
 
 
 export default function FlowchartPage() {
