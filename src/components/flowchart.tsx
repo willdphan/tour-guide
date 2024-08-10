@@ -413,7 +413,7 @@ const FlowchartPage: React.FC<{ user: { email: string } }> = ({ user }) => {
                   />
                   <button
   onClick={handleSkippedQuestions}
-  className="absolute bottom-5 left-1/2 transform -translate-x-1/2 flex items-center justify-center px-4 py-2 bg-[#3C3C3C] text-black font-man bg-[#E8E4DB] border border-[1px] border-black"
+  className="absolute bottom-5 left-1/2 transform -translate-x-1/2 flex items-center justify-center px-4 py-2 bg-[#3C3C3C] text-black font-man bg-[#E8E4DB] border border-[1px] border-black hover:bg-[#3C3C3C] hover:text-white"
 >
   Skip Questions
 </button>
