@@ -1,9 +1,8 @@
 "use client"
 
 import * as React from "react"
+import { useState } from "react"
 import Link from "next/link"
-
-import { cn } from "@/utils/cn"
 
 import {
   NavigationMenu,
@@ -14,7 +13,8 @@ import {
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu"
-import { useState } from "react"
+import { cn } from "@/utils/cn"
+
 import Counter from "./Counter"
 import Profile from "./profile"
 

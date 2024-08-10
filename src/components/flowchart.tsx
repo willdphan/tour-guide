@@ -1,17 +1,18 @@
 'use client';
 import React, { useCallback, useEffect, useMemo,useRef, useState } from 'react';
+import { Router, useRouter } from 'next/router';
 import { AnimatePresence,motion } from 'framer-motion';
 import debounce from 'lodash/debounce';
 import { Cell, Pie, PieChart, ResponsiveContainer,Tooltip } from 'recharts';
-import History from './history';
+
+import { signOut as authSignOut } from '@/app/(auth)/auth-actions';
+import { supabaseMiddlewareClient } from '@/libs/supabase/supabase-middleware-client';
+import withAuth from '@/utils/withAuth';
 import Spline from '@splinetool/react-spline';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 import Counter from './Counter';
-import withAuth from '@/utils/withAuth';
-import { Router, useRouter } from 'next/router';
-import { supabaseMiddlewareClient } from '@/libs/supabase/supabase-middleware-client';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { signOut as authSignOut } from '@/app/(auth)/auth-actions';
+import History from './history';
 
 
 ////////////////
@@ -71,10 +72,11 @@ interface TreeNode {
 // HELPER FUNCTIONS //
 //////////////////////
 
-import { Button } from '@/components/ui/button';
-import { signOut } from '@/app/(auth)/auth-actions';
-import { toast } from '@/components/ui/use-toast';
 import { redirect } from 'next/navigation';
+
+import { signOut } from '@/app/(auth)/auth-actions';
+import { Button } from '@/components/ui/button';
+import { toast } from '@/components/ui/use-toast';
 
 function LogoutButton() {
   const [isLoading, setIsLoading] = useState(false);

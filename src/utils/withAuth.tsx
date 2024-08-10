@@ -1,6 +1,7 @@
 import { GetServerSideProps } from 'next'; // Importing the GetServerSideProps type from Next.js for server-side rendering.
-import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client'; // Importing the function to create a Supabase client for server-side use.
 import { redirect } from 'next/navigation'; // Importing the redirect function from Next.js for navigation.
+
+import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client'; // Importing the function to create a Supabase client for server-side use.
 
 const withAuth = (WrappedComponent: React.FC<{ user: { email: string } }>) => { // Defining a higher-order component that takes a React component with user prop.
     const AuthenticatedComponent = (props: any) => { // Defining a component that wraps the passed component.

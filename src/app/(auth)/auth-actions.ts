@@ -1,12 +1,12 @@
 'use server';
 
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { NextResponse } from 'next/server';
 
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import { ActionResponse } from '@/types/action-response';
 import { getURL } from '@/utils/get-url';
-import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
 
 
 export async function signInWithOAuth(provider: 'github' | 'google'): Promise<ActionResponse> {
