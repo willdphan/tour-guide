@@ -6,6 +6,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import FlowChart from '@/components/flowchart';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { User } from '@supabase/supabase-js';
+import { motion, AnimatePresence } from 'framer-motion';
+
 
 export default function FlowchartPage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -62,7 +64,17 @@ export default function FlowchartPage() {
   }, [router, supabase, searchParams]);
 
   if (isLoading) {
-    return <div className='flex min-h-screen items-center justify-center'>LOADING...</div>;
+    return <AnimatePresence>
+    <motion.div
+      className='flex min-h-screen items-center justify-center bg-[#E8E4DB] text-black text-lg font-mono'
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      LOADING...
+    </motion.div>
+  </AnimatePresence>;
   }
 
   return user ? <FlowChart user={user} userData={userData} /> : null;
