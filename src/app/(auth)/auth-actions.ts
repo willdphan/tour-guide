@@ -12,11 +12,10 @@ import { getURL } from '@/utils/get-url';
 export async function signInWithOAuth(provider: 'github' | 'google'): Promise<ActionResponse> {
   const supabase = createSupabaseServerClient();
 
-  // after login, redirect to /flowchart
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
     options: {
-      redirectTo: getURL('/auth/callback?redirect=/flowchart'),
+      redirectTo: `${getURL()}/auth/callback`,
     },
   });
 
