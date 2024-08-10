@@ -385,7 +385,7 @@ const FlowchartPage: React.FC<{ user: { email: string } }> = ({ user }) => {
     setOutcomesReady(true);
     setShowChart(true);
   };
-  
+
   return (
     <div className="flex h-screen w-screen overflow-hidden max-w-screen">
       <div className={`${chartFullyRendered ? 'w-2/6' : 'w-full'} h-full flex flex-col z-[99] ${chartFullyRendered ? 'bg-white' : 'bg-[#E8E4DB]'} transition-colors duration-500 relative`}>
@@ -413,7 +413,7 @@ const FlowchartPage: React.FC<{ user: { email: string } }> = ({ user }) => {
                   />
                   <button
   onClick={handleSkippedQuestions}
-  className="absolute bottom-5 left-1/2 transform -translate-x-1/2 flex items-center justify-center px-4 py-2 bg-[#3C3C3C] text-white font-man uppercase"
+  className="absolute bottom-5 left-1/2 transform -translate-x-1/2 flex items-center justify-center px-4 py-2 bg-[#3C3C3C] text-black font-man bg-[#E8E4DB] border border-[1px] border-black"
 >
   Skip Questions
 </button>
