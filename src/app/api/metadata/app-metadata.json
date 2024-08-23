@@ -1,0 +1,986 @@
+{
+  "components": [
+    {
+      "name": "MessageBox",
+      "props": [
+        {
+          "name": "output",
+          "type": "TSStringKeyword"
+        }
+      ],
+      "description": "",
+      "dependencies": [
+        "./ui/card"
+      ],
+      "filePath": "/Users/williamphan/Desktop/tour/components/MessageBox.tsx",
+      "snippet": "import { Card } from './ui/card';\nimport ReactMarkdown from 'react-markdown';\n\nexport default function MessageBox(props: { output: string }) {\n  const { output } = props;",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "MessageBox",
+      "props": [
+        {
+          "name": "output",
+          "type": "TSStringKeyword"
+        }
+      ],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tour/components/MessageBoxChat.tsx",
+      "snippet": "import { Card } from '@/components/ui/card';\nimport ReactMarkdown from 'react-markdown';\n\nexport default function MessageBox(props: { output: string }) {\n  const { output } = props;",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "TextBlock",
+      "props": [
+        {
+          "name": "text",
+          "type": "any"
+        },
+        {
+          "name": "editable",
+          "type": "any"
+        },
+        {
+          "name": "onChange",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tour/components/TextBlock.tsx",
+      "snippet": "interface Props {\n  text: string;\n  editable?: boolean;\n  onChange?: (value: string) => void;\n}",
+      "stateManagement": [],
+      "interfaces": [
+        "Props"
+      ],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "AudioProgressBar",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tour/components/audio/AudioProgressBar.tsx",
+      "snippet": "import { cn } from '@/lib/utils';\nimport * as SliderPrimitive from '@radix-ui/react-slider';\nimport * as React from 'react';\n\nconst Slider = React.forwardRef<",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "VolumeInput",
+      "props": [
+        {
+          "name": "volume",
+          "type": "any"
+        },
+        {
+          "name": "onVolumeChange",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tour/components/audio/VolumeInput.tsx",
+      "snippet": "import { cn } from '@/lib/utils';\n// import { Slider } from '../ui/slider';\nimport * as SliderPrimitive from '@radix-ui/react-slider';\nimport * as React from 'react';\n",
+      "stateManagement": [],
+      "interfaces": [
+        "VolumeInputProps"
+      ],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "handleProgressChange",
+      "props": [
+        {
+          "name": "src",
+          "type": "TSAnyKeyword"
+        },
+        {
+          "name": "handleClick",
+          "type": "TSAnyKeyword"
+        },
+        {
+          "name": "loading",
+          "type": "TSAnyKeyword"
+        }
+      ],
+      "description": "",
+      "dependencies": [
+        "../ui/button",
+        "../ui/card",
+        "./AudioProgressBar",
+        "./VolumeInput"
+      ],
+      "filePath": "/Users/williamphan/Desktop/tour/components/audio/index.tsx",
+      "snippet": "import { Button } from '../ui/button';\nimport { Card } from '../ui/card';\nimport AudioProgressBar from './AudioProgressBar';\nimport VolumeInput from './VolumeInput';\nimport * as React from 'react';",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "AuthUI",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tour/components/auth/AuthUI.tsx",
+      "snippet": "'use client';\n\nimport { useSupabase } from '@/app/supabase-provider';\nimport { getURL } from '@/utils/helpers';\nimport { Auth } from '@supabase/auth-ui-react';",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "DefaultAuthLayout",
+      "props": [],
+      "description": "",
+      "dependencies": [
+        "../ui/button"
+      ],
+      "filePath": "/Users/williamphan/Desktop/tour/components/auth/index.tsx",
+      "snippet": "'use client';\n\nimport { Button } from '../ui/button';\nimport Footer from '@/components/footer/FooterAuthDefault';\nimport { useTheme } from 'next-themes';",
+      "stateManagement": [],
+      "interfaces": [
+        "DefaultAuthLayoutProps"
+      ],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "CardMenu",
+      "props": [
+        {
+          "name": "transparent",
+          "type": "TSBooleanKeyword"
+        },
+        {
+          "name": "vertical",
+          "type": "TSBooleanKeyword"
+        }
+      ],
+      "description": "",
+      "dependencies": [
+        "../ui/button"
+      ],
+      "filePath": "/Users/williamphan/Desktop/tour/components/card/CardMenu.tsx",
+      "snippet": "import { Button } from '../ui/button';\nimport {\n  DropdownMenu,\n  DropdownMenuContent,\n  DropdownMenuGroup,",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "ExampleChart",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tour/components/charts/LineChart/index.tsx",
+      "snippet": "'use client';\n\n// if you use app dir, don't forget this line\nimport dynamic from 'next/dynamic';\n",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "None"
+    },
+    {
+      "name": "handleChange",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tour/components/dashboard/ai-chat/index.tsx",
+      "snippet": "'use client';\n\n/*eslint-disable*/\nimport MessageBoxChat from '@/components/MessageBoxChat';\nimport DashboardLayout from '@/components/layout';",
+      "stateManagement": [],
+      "interfaces": [
+        "Subscription",
+        "Product",
+        "Price",
+        "ProductWithPrices",
+        "PriceWithProduct",
+        "SubscriptionWithProduct",
+        "Props"
+      ],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "OverallRevenue",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tour/components/dashboard/main/cards/MainChart.tsx",
+      "snippet": "'use client';\n\nimport LineChart from '@/components/charts/LineChart';\nimport { Card } from '@/components/ui/card';\nimport { lineChartDataMain, lineChartOptionsMain } from '@/variables/charts';",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "ComprehensiveDashboard",
+      "props": [
+        {
+          "name": "tableData",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tour/components/dashboard/main/cards/MainDashboardTable.tsx",
+      "snippet": "import React from 'react';\nimport {\n  Area,\n  AreaChart,\n  Bar,",
+      "stateManagement": [],
+      "interfaces": [
+        "RowObj"
+      ],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "redirectToCustomerPortal",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tour/components/dashboard/main/index.tsx",
+      "snippet": "/*eslint-disable*/\n'use client';\n\nimport MainChart from '@/components/dashboard/main/cards/MainChart';\nimport MainDashboardTable from '@/components/dashboard/main/cards/MainDashboardTable';",
+      "stateManagement": [],
+      "interfaces": [
+        "Subscription",
+        "Product",
+        "Price",
+        "ProductWithPrices",
+        "PriceWithProduct",
+        "SubscriptionWithProduct",
+        "Props"
+      ],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "Footer",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tour/components/footer/FooterAdmin.tsx",
+      "snippet": "'use client';\n\n/*eslint-disable*/\n\nexport default function Footer() {",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "Footer",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tour/components/footer/FooterAuthDefault.tsx",
+      "snippet": "'use client';\n\nexport default function Footer() {\n  return (\n    <div className=\"z-[3] flex flex-col items-center justify-between pb-[30px] md:px-0 lg:flex-row\">",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "GitHub",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tour/components/icons/GitHub.tsx",
+      "snippet": "const GitHub = ({ ...props }) => {\n  return (\n    <svg\n      width=\"24\"\n      height=\"24\"",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "None"
+    },
+    {
+      "name": "Logo",
+      "props": [
+        {
+          "name": "className",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tour/components/icons/Logo.tsx",
+      "snippet": "const Logo = ({ className = '', ...props }) => (\n  <svg\n    width=\"32\"\n    height=\"32\"\n    viewBox=\"0 0 32 32\"",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "DashboardLayout",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tour/components/layout/index.tsx",
+      "snippet": "import Footer from '@/components/footer/FooterAdmin';\nimport Navbar from '@/components/navbar/NavbarAdmin';\nimport { routes } from '@/components/routes';\nimport Sidebar from '@/components/sidebar/Sidebar';\nimport { Toaster } from '@/components/ui/toaster';",
+      "stateManagement": [],
+      "interfaces": [
+        "Subscription",
+        "Product",
+        "Price",
+        "ProductWithPrices",
+        "PriceWithProduct",
+        "SubscriptionWithProduct",
+        "Props"
+      ],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "InnerContent",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tour/components/layout/innerContent.tsx",
+      "snippet": "import React from 'react';\n\nexport default function InnerContent(props) {\n  const { children, extra, ...rest } = props;\n  return (",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "NavLink",
+      "props": [
+        {
+          "name": "className",
+          "type": "any"
+        },
+        {
+          "name": "children",
+          "type": "any"
+        },
+        {
+          "name": "styles",
+          "type": "any"
+        },
+        {
+          "name": "borderRadius",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tour/components/link/NavLink.tsx",
+      "snippet": "'use client';\n\nimport NextLink, { LinkProps as NextLinkProps } from 'next/link';\nimport { CSSProperties, PropsWithChildren, useMemo } from 'react';\n",
+      "stateManagement": [],
+      "interfaces": [
+        "NavLinkProps"
+      ],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "changeNavbar",
+      "props": [
+        {
+          "name": "brandText",
+          "type": "TSStringKeyword"
+        },
+        {
+          "name": "userDetails",
+          "type": "TSUnionType"
+        },
+        {
+          "name": "onOpen",
+          "type": "TSFunctionType"
+        }
+      ],
+      "description": "",
+      "dependencies": [
+        "./NavbarLinksAdmin"
+      ],
+      "filePath": "/Users/williamphan/Desktop/tour/components/navbar/NavbarAdmin.tsx",
+      "snippet": "'use client';\n\n/* eslint-disable */\nimport AdminNavbarLinks from './NavbarLinksAdmin';\nimport NavLink from '@/components/link/NavLink';",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "HeaderLinks",
+      "props": [
+        {
+          "name": "userDetails",
+          "type": "TSUnionType"
+        }
+      ],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tour/components/navbar/NavbarLinksAdmin.tsx",
+      "snippet": "'use client';\n\nimport { useSupabase } from '@/app/supabase-provider';\nimport { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';\nimport { Button } from '@/components/ui/button';",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "handleCheckout",
+      "props": [
+        {
+          "name": "session",
+          "type": "any"
+        },
+        {
+          "name": "user",
+          "type": "any"
+        },
+        {
+          "name": "products",
+          "type": "any"
+        },
+        {
+          "name": "subscription",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [
+        "../footer/FooterWebsite",
+        "../ui/badge",
+        "../ui/button"
+      ],
+      "filePath": "/Users/williamphan/Desktop/tour/components/pricing/index.tsx",
+      "snippet": "'use client';\n\n// @ts-nocheck\n// Custom components\nimport { FooterWebsite } from '../footer/FooterWebsite';",
+      "stateManagement": [],
+      "interfaces": [
+        "Subscription",
+        "Product",
+        "Price",
+        "ProductWithPrices",
+        "PriceWithProduct",
+        "SubscriptionWithProduct",
+        "Props"
+      ],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "renderView",
+      "props": [
+        {
+          "name": "style",
+          "type": "any"
+        },
+        {
+          "name": "style",
+          "type": "any"
+        },
+        {
+          "name": "style",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tour/components/scrollbar/Scrollbar.tsx",
+      "snippet": "'use client';\n\nexport const renderTrack = ({ style, ...props }: any) => {\n  const trackStyle = {\n    position: 'absolute',",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "handleCheckout",
+      "props": [],
+      "description": "",
+      "dependencies": [
+        "../ui/badge",
+        "../ui/button"
+      ],
+      "filePath": "/Users/williamphan/Desktop/tour/components/sidebar/Sidebar.tsx",
+      "snippet": "'use client';\n\nimport { Badge } from '../ui/badge';\nimport { Button } from '../ui/button';\nimport { useSupabase } from '@/app/supabase-provider';",
+      "stateManagement": [],
+      "interfaces": [
+        "SidebarProps",
+        "SidebarLinksProps",
+        "Price"
+      ],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "createAccordionLinks",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tour/components/sidebar/components/Links.tsx",
+      "snippet": "'use client';\n\n/* eslint-disable */\nimport NavLink from '@/components/link/NavLink';\nimport {",
+      "stateManagement": [],
+      "interfaces": [
+        "SidebarLinksProps"
+      ],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "SidebarDocs",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tour/components/sidebar/components/SidebarCard.tsx",
+      "snippet": "'use client';\n\nimport { Badge } from '@/components/ui/badge';\nimport { Button } from '@/components/ui/button';\nimport SidebarImage from '@/public/SidebarBadge.png';",
+      "stateManagement": [],
+      "interfaces": [
+        "Price",
+        "SidebarCard"
+      ],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "AlertDialogFooter",
+      "props": [
+        {
+          "name": "className",
+          "type": "any"
+        },
+        {
+          "name": "className",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tour/components/ui/alert-dialog.tsx",
+      "snippet": "\"use client\"\n\nimport * as React from \"react\"\nimport * as AlertDialogPrimitive from \"@radix-ui/react-alert-dialog\"\n",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "Badge",
+      "props": [
+        {
+          "name": "className",
+          "type": "any"
+        },
+        {
+          "name": "variant",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tour/components/ui/badge.tsx",
+      "snippet": "import * as React from \"react\"\nimport { cva, type VariantProps } from \"class-variance-authority\"\n\nimport { cn } from \"@/lib/utils\"\n",
+      "stateManagement": [],
+      "interfaces": [
+        "BadgeProps"
+      ],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "BreadcrumbEllipsis",
+      "props": [
+        {
+          "name": "children",
+          "type": "any"
+        },
+        {
+          "name": "className",
+          "type": "any"
+        },
+        {
+          "name": "className",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tour/components/ui/breadcrumb.tsx",
+      "snippet": "import * as React from \"react\"\nimport { Slot } from \"@radix-ui/react-slot\"\nimport { ChevronRight, MoreHorizontal } from \"lucide-react\"\n\nimport { cn } from \"@/lib/utils\"",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "Calendar",
+      "props": [
+        {
+          "name": "className",
+          "type": "any"
+        },
+        {
+          "name": "classNames",
+          "type": "any"
+        },
+        {
+          "name": "showOutsideDays",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tour/components/ui/calendar.tsx",
+      "snippet": "\"use client\"\n\nimport * as React from \"react\"\nimport { ChevronLeft, ChevronRight } from \"lucide-react\"\nimport { DayPicker } from \"react-day-picker\"",
+      "stateManagement": [],
+      "interfaces": [
+        "CalendarProps"
+      ],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "useCarousel",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tour/components/ui/carousel.tsx",
+      "snippet": "\"use client\"\n\nimport * as React from \"react\"\nimport useEmblaCarousel, {\n  type UseEmblaCarouselType,",
+      "stateManagement": [],
+      "interfaces": [
+        "CarouselApi",
+        "UseCarouselParameters",
+        "CarouselOptions",
+        "CarouselPlugin",
+        "CarouselProps",
+        "CarouselContextProps"
+      ],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "getPayloadConfigFromPayload",
+      "props": [
+        {
+          "name": "id",
+          "type": "any"
+        },
+        {
+          "name": "config",
+          "type": "any"
+        }
+      ],
+      "description": "Helper to extract item config from a payload.",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tour/components/ui/chart.tsx",
+      "snippet": "\"use client\"\n\nimport * as React from \"react\"\nimport * as RechartsPrimitive from \"recharts\"\n",
+      "stateManagement": [],
+      "interfaces": [
+        "ChartConfig",
+        "ChartContextProps"
+      ],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "CommandShortcut",
+      "props": [
+        {
+          "name": "children",
+          "type": "any"
+        },
+        {
+          "name": "className",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tour/components/ui/command.tsx",
+      "snippet": "\"use client\"\n\nimport * as React from \"react\"\nimport { type DialogProps } from \"@radix-ui/react-dialog\"\nimport { Command as CommandPrimitive } from \"cmdk\"",
+      "stateManagement": [],
+      "interfaces": [
+        "CommandDialogProps"
+      ],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "ContextMenuShortcut",
+      "props": [
+        {
+          "name": "className",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tour/components/ui/context-menu.tsx",
+      "snippet": "\"use client\"\n\nimport * as React from \"react\"\nimport * as ContextMenuPrimitive from \"@radix-ui/react-context-menu\"\nimport { Check, ChevronRight, Circle } from \"lucide-react\"",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "DialogFooter",
+      "props": [
+        {
+          "name": "className",
+          "type": "any"
+        },
+        {
+          "name": "className",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tour/components/ui/dialog.tsx",
+      "snippet": "\"use client\"\n\nimport * as React from \"react\"\nimport * as DialogPrimitive from \"@radix-ui/react-dialog\"\nimport { X } from \"lucide-react\"",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "DrawerFooter",
+      "props": [
+        {
+          "name": "shouldScaleBackground",
+          "type": "any"
+        },
+        {
+          "name": "className",
+          "type": "any"
+        },
+        {
+          "name": "className",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tour/components/ui/drawer.tsx",
+      "snippet": "\"use client\"\n\nimport * as React from \"react\"\nimport { Drawer as DrawerPrimitive } from \"vaul\"\n",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "DropdownMenuShortcut",
+      "props": [
+        {
+          "name": "className",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tour/components/ui/dropdown-menu.tsx",
+      "snippet": "\"use client\"\n\nimport * as React from \"react\"\nimport * as DropdownMenuPrimitive from \"@radix-ui/react-dropdown-menu\"\nimport { Check, ChevronRight, Circle } from \"lucide-react\"",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "useFormField",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tour/components/ui/form.tsx",
+      "snippet": "\"use client\"\n\nimport * as React from \"react\"\nimport * as LabelPrimitive from \"@radix-ui/react-label\"\nimport { Slot } from \"@radix-ui/react-slot\"",
+      "stateManagement": [],
+      "interfaces": [
+        "FormFieldContextValue",
+        "FormItemContextValue"
+      ],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "MenubarShortcut",
+      "props": [
+        {
+          "name": "className",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tour/components/ui/menubar.tsx",
+      "snippet": "\"use client\"\n\nimport * as React from \"react\"\nimport * as MenubarPrimitive from \"@radix-ui/react-menubar\"\nimport { Check, ChevronRight, Circle } from \"lucide-react\"",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "PaginationEllipsis",
+      "props": [
+        {
+          "name": "className",
+          "type": "any"
+        },
+        {
+          "name": "className",
+          "type": "any"
+        },
+        {
+          "name": "isActive",
+          "type": "any"
+        },
+        {
+          "name": "size",
+          "type": "any"
+        },
+        {
+          "name": "className",
+          "type": "any"
+        },
+        {
+          "name": "className",
+          "type": "any"
+        },
+        {
+          "name": "className",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tour/components/ui/pagination.tsx",
+      "snippet": "import * as React from \"react\"\nimport { ChevronLeft, ChevronRight, MoreHorizontal } from \"lucide-react\"\n\nimport { cn } from \"@/lib/utils\"\nimport { ButtonProps, buttonVariants } from \"@/components/ui/button\"",
+      "stateManagement": [],
+      "interfaces": [
+        "PaginationLinkProps"
+      ],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "ResizableHandle",
+      "props": [
+        {
+          "name": "className",
+          "type": "any"
+        },
+        {
+          "name": "withHandle",
+          "type": "any"
+        },
+        {
+          "name": "className",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tour/components/ui/resizable.tsx",
+      "snippet": "\"use client\"\n\nimport { GripVertical } from \"lucide-react\"\nimport * as ResizablePrimitive from \"react-resizable-panels\"\n",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "SheetFooter",
+      "props": [
+        {
+          "name": "className",
+          "type": "any"
+        },
+        {
+          "name": "className",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tour/components/ui/sheet.tsx",
+      "snippet": "\"use client\"\n\nimport * as React from \"react\"\nimport * as SheetPrimitive from \"@radix-ui/react-dialog\"\nimport { cva, type VariantProps } from \"class-variance-authority\"",
+      "stateManagement": [],
+      "interfaces": [
+        "SheetContentProps"
+      ],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "Skeleton",
+      "props": [
+        {
+          "name": "className",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tour/components/ui/skeleton.tsx",
+      "snippet": "import { cn } from \"@/lib/utils\"\n\nfunction Skeleton({\n  className,\n  ...props",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "Toaster",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tour/components/ui/sonner.tsx",
+      "snippet": "\"use client\"\n\nimport { useTheme } from \"next-themes\"\nimport { Toaster as Sonner } from \"sonner\"\n",
+      "stateManagement": [],
+      "interfaces": [
+        "ToasterProps"
+      ],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "Toaster",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tour/components/ui/toaster.tsx",
+      "snippet": "\"use client\"\n\nimport {\n  Toast,\n  ToastClose,",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/dashboard/main",
+      "component": "Main Dashboard"
+    },
+    {
+      "path": "/dashboard/ai-chat",
+      "component": "AI Chat"
+    },
+    {
+      "path": "/dashboard/ai-generator",
+      "component": "AI Generator"
+    },
+    {
+      "path": "/dashboard/ai-assistant",
+      "component": "AI Assistant"
+    },
+    {
+      "path": "/dashboard/users-list",
+      "component": "Users List"
+    },
+    {
+      "path": "/dashboard/settings",
+      "component": "Profile Settings"
+    },
+    {
+      "path": "/dashboard/subscription",
+      "component": "Subscription"
+    },
+    {
+      "path": "/home",
+      "component": "Landing Page"
+    },
+    {
+      "path": "/pricing",
+      "component": "Pricing Page"
+    }
+  ]
+}
