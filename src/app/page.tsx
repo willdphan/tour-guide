@@ -1,66 +1,92 @@
-'use client';
+import React from 'react';
+import Link from "next/link";
+import Image from "next/image";
+import { products } from '@/data/products';
 
-import { useEffect } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
+import { redirect } from 'next/navigation';
 
-import { Container } from '@/components/container';
-import FlowchartPage from '@/components/flowchart';
-import { Hero } from '@/components/hero';
-import HeroSpline from '@/components/hero-spline';
-import { Button } from '@/components/ui/button';
-import { PricingSection } from '@/features/pricing/components/pricing-section';
+const Home: React.FC = async () => {
 
-import styles from '@/styles/HomePage.module.css';
 
-export default function HomePage() {
-  useEffect(() => {
-    document.body.style.height = '100%';
-    document.body.style.overflow = 'hidden';
+  interface Product {
+    id: number
+    name: string
+    price: number
+    image: string
+    slug: string
+    weight: string
+    servings: string
+  }
 
-    return () => {
-      document.body.style.height = '';
-      document.body.style.overflow = '';
-    };
-  }, []);
+// Mock product data (replace with actual data from your backend)
+const products: Product[] = [
+  { id: 1, name: "Arnold Circus Stool", price: 20, weight: "500g", servings: "22 servings", image: "/test.png", slug: "arnold-circus-stool" },
+  { id: 2, name: "Arnoldino Stool", price: 30, weight: "500g",servings: "22 servings",image: "/test.png", slug: "arnoldino-stool" },
+  { id: 3, name: "Hookalotti", price: 40, weight: "500g",servings: "22 servings",image: "/test.png", slug: "hookalotti" },
+  // Add more products as needed
+  { id: 4, name: "Hookalotti", price: 40, weight: "500g",servings: "22 servings",image: "/test.png", slug: "hookalotti" },
+  // Add more products as needed
+  { id: 5, name: "Hookalotti", price: 40, weight: "500g", servings: "22 servings",image: "/test.png", slug: "hookalotti" },
+  // Add more products as needed
+];
 
   return (
-    <div className={`flex flex-col bg-[#E8E4DB] ${styles.homePageContainer}`}>
-      <Hero />
-      <HeroSpline/>
-      {/* <FlowchartPage /> */}
-      {/* <PricingSection /> */}
+    <div className="flex flex-col w-full min-h-screen">
+      <header className="flex flex-col sm:flex-row items-center justify-between w-full px-4 py-2 ">
+        <nav className="flex items-center space-x-2 mb-0 sm:mb-0 ">
+          <Link href="#" className="text-xs font-semibold" prefetch={false}>
+            Stools & Co
+          </Link>
+          <Link href="#" className="text-sm" prefetch={false}>
+            Products
+          </Link>
+        </nav>
+        <nav className="flex items-center space-x-2">
+          <Link href="#" className="text-sm" prefetch={false}>
+            Where to buy
+          </Link>
+          <Link href="#" className="text-sm" prefetch={false}>
+            Become a stockist
+          </Link>
+          <Link href="/dashboard/ai-chat" className="text-sm" prefetch={false}>
+            AI Chat
+          </Link>
+        </nav>
+      </header>
+      <main className="flex flex-col w-full p-4 space-y-4">
+      <div className="max-w-4xl w-full">
+          <p className="text-sm sm:text-base mb-2 mt-10 text-left">
+            Stools & Co. are the Australia & New Zealand licensed manufacturer and distributor of the
+            <span className="font-bold"> Arnold Circus Stool</span>, <span className="font-bold">Arnoldino Stool</span>,{" "}
+            <span className="font-bold">Hookalotti</span> designed by Martino Gamper.
+          </p>
+        </div>
+        <div className="w-full overflow-x-auto max-h-screen">
+  <div className="flex space-x-4 sm:space-x-6 h-[calc(100vh-230px)] sm:h-[calc(100vh-220px)] lg:h-[calc(100vh-180px)]">
+    {products.map((product) => (
+      <Link key={product.id} href={`/product/${product.slug}`} className="flex-shrink-0 w-64 sm:w-80 lg:w-96 xl:w-[28rem] h-full">
+        <div className="relative w-full h-full">
+          <Image
+            src={product.image}
+            alt={product.name}
+            layout="fill"
+            objectFit="cover"
+          />
+          <div className="absolute bottom-0 left-0 p-4 text-black ">
+            <h3 className="text-xl font-semibold pb-1">{product.name}</h3>
+            <div className='flex space-x-2'> <p className="text-md">${product.price}</p>
+            <span>|</span>
+            <p className="text-md">${product.servings}</p></div>
+           
+          </div>
+        </div>
+      </Link>
+    ))}
+  </div>
+</div>
+      </main>
     </div>
   );
-}
+};
 
-// ... rest of the file remains the same
-// function HeroSection() {
-//   return (
-//     <section className='relative overflow-hidden lg:overflow-visible'>
-//       <Container className='relative rounded-lg bg-black py-20 lg:py-[140px]'>
-//         <div className='relative z-10 flex flex-col gap-5 lg:max-w-xl lg:pl-8'>
-//           <div className='w-fit rounded-full bg-gradient-to-r from-[#616571] via-[#7782A9] to-[#826674] px-4 py-1 '>
-//             <span className='font-alt text-sm font-semibold text-black mix-blend-soft-light'>
-//               Generate banners with DALL·E
-//             </span>
-//           </div>
-//           <h1>Instantly craft stunning Twitter banners.</h1>
-//           <Button asChild variant='sexy'>
-//             <Link href='/signup'>Get started for free</Link>
-//           </Button>
-//         </div>
-//       </Container>
-//       <Image
-//         src='/hero-shape.png'
-//         width={867}
-//         height={790}
-//         alt=''
-//         className='absolute right-0 top-0 rounded-tr-lg'
-//         priority
-//         quality={100}
-//       />
-//     </section>
-//   );
-// }
-
+export default Home;
