@@ -1,34 +1,12 @@
+// npx tsx src/app/sdk/run_sdk.ts
+
 import * as fs from 'fs';
 import * as path from 'path';
-import { Node, Project, PropertyAssignment, SourceFile,SyntaxKind } from 'ts-morph';
+import { Node, Project, PropertyAssignment, SourceFile, SyntaxKind } from 'ts-morph';
 
 import * as parser from '@babel/parser';
-import traverse from '@babel/traverse';
 
-interface ComponentMetadata {
-  name: string;
-  props: { name: string; type: string }[];
-  description: string;
-  dependencies: string[];
-  filePath: string;
-  snippet: string;
-  stateManagement: string[];
-  interfaces: string[];
-  testFile: string | null;
-  stylingApproach: string;
-}
-
-interface RouteMetadata {
-  path: string;
-  component: string;
-}
-
-interface AppMetadata {
-  components: ComponentMetadata[];
-  routes: RouteMetadata[];
-}
-
-function analyzeComponent(filePath: string, project: Project): ComponentMetadata {
+async function analyzeComponent(filePath: string, project: Project): Promise<ComponentMetadata> {
   const source = fs.readFileSync(filePath, 'utf-8');
   const ast = parser.parse(source, {
     sourceType: 'module',
@@ -42,6 +20,9 @@ function analyzeComponent(filePath: string, project: Project): ComponentMetadata
   const stateManagement: string[] = [];
   const interfaces: string[] = [];
   let stylingApproach = 'None';
+
+  // Import traverse dynamically
+  const { default: traverse } = await import('@babel/traverse');
 
   function extractPropsFromParams(params: any[]) {
     params.forEach(param => {
@@ -120,9 +101,9 @@ function analyzeComponent(filePath: string, project: Project): ComponentMetadata
           if (member.type === 'ClassProperty' && member.key.type === 'Identifier') {
             props.push({ name: member.key.name, type: (member.typeAnnotation as any)?.typeAnnotation?.type || 'any' });
           }
-      });
+        });
+      }
     }
-} 
   });
 
   const snippet = source.split('\n').slice(0, 5).join('\n');
@@ -138,11 +119,11 @@ function analyzeComponent(filePath: string, project: Project): ComponentMetadata
 
   const testFile = findTestFile(filePath);
 
-  return { 
-    name: componentName, 
-    props, 
-    description, 
-    dependencies, 
+  return {
+    name: componentName,
+    props,
+    description,
+    dependencies,
     filePath,
     snippet,
     stateManagement,
@@ -174,8 +155,14 @@ function findTestFile(componentPath: string): string | null {
   return null;
 }
 
-function analyzeRoutes(routesFilePath: string): RouteMetadata[] {
-  const project = new Project();
+function analyzeRoutes(project: Project, rootDir: string): RouteMetadata[] {
+  const routesFilePath = path.join(rootDir, 'src', 'app', 'routes.ts');
+  
+  if (!fs.existsSync(routesFilePath)) {
+    console.warn(`Warning: Routes file not found at ${routesFilePath}`);
+    return [];
+  }
+
   const sourceFile = project.addSourceFileAtPath(routesFilePath);
   const routes: RouteMetadata[] = [];
 
@@ -187,11 +174,11 @@ function analyzeRoutes(routesFilePath: string): RouteMetadata[] {
           if (Node.isObjectLiteralExpression(element)) {
             const pathProp = element.getProperty('path');
             const nameProp = element.getProperty('name');
-            
+
             if (pathProp && nameProp && Node.isPropertyAssignment(pathProp) && Node.isPropertyAssignment(nameProp)) {
               const path = pathProp.getInitializer()?.getText();
               const name = nameProp.getInitializer()?.getText();
-              
+
               if (path && name) {
                 routes.push({ path: path.replace(/'/g, ''), component: name.replace(/'/g, '') });
               }
@@ -205,19 +192,19 @@ function analyzeRoutes(routesFilePath: string): RouteMetadata[] {
   return routes;
 }
 
-function generateAppMetadata(rootDir: string): AppMetadata {
+async function generateAppMetadata(rootDir: string): Promise<AppMetadata> {
   const components: ComponentMetadata[] = [];
-  const routes = analyzeRoutes(path.join(rootDir, 'components', 'routes.tsx'));
   const project = new Project();
+  const routes = analyzeRoutes(project, rootDir);
 
-  function analyzeDir(dir: string) {
+  async function analyzeDir(dir: string) {
     const files = fs.readdirSync(dir);
     for (const file of files) {
       const filePath = path.join(dir, file);
       if (fs.statSync(filePath).isDirectory()) {
-        analyzeDir(filePath);
+        await analyzeDir(filePath);
       } else if (file.endsWith('.tsx') || file.endsWith('.jsx')) {
-        const metadata = analyzeComponent(filePath, project);
+        const metadata = await analyzeComponent(filePath, project);
         if (metadata.name) {
           components.push(metadata);
         }
@@ -225,15 +212,15 @@ function generateAppMetadata(rootDir: string): AppMetadata {
     }
   }
 
-  analyzeDir(path.join(rootDir, 'components'));
+  await analyzeDir(path.join(rootDir, 'src', 'app'));
 
   return { components, routes };
 }
 
-function generateMetadataFile(rootDir: string) {
-  const metadata = generateAppMetadata(rootDir);
+async function generateMetadataFile(rootDir: string) {
+  const metadata = await generateAppMetadata(rootDir);
   
-  const outputDir = path.join(rootDir, 'app', 'api', 'parse', 'metadata');
+  const outputDir = path.join(rootDir, 'src', 'app', 'api', 'parse', 'metadata');
   const outputPath = path.join(outputDir, 'app-metadata.json');
 
   if (!fs.existsSync(outputDir)) {
@@ -245,6 +232,3 @@ function generateMetadataFile(rootDir: string) {
 }
 
 export { generateAppMetadata, generateMetadataFile };
-
-// Usage
-// generateMetadataFile('/path/to/your/project');

@@ -14,6 +14,7 @@ import platform
 import re
 from typing import List, Optional, TypedDict
 from dotenv import load_dotenv
+from urllib.parse import urlparse
 
 from langchain_core.messages import BaseMessage, SystemMessage
 from langchain_core.output_parsers import StrOutputParser
@@ -53,6 +54,7 @@ class AgentState(TypedDict):
     prediction: Prediction # another class defined above
     scratchpad: List[BaseMessage] # acts as the memory for the agent
     observation: str
+    current_url: str
 
 ###############
 # AGENT TOOLS #
@@ -160,8 +162,14 @@ async def go_back(state: AgentState):
 
 async def to_google(state: AgentState):
     page = state["page"]
-    await page.goto("https://www.google.com/")
-    return "Navigated to google.com."
+    await page.goto("https://google.com")
+    return "Navigated to Google."
+
+async def to_home(state: AgentState):
+    page = state["page"]
+    await page.goto("https://tour-guide-liard.vercel.app/")
+    return "Navigated to home page."
+
 
 # Define mark_page function, THIS MARKS BOUNDING BOXES.
 # done with the mark_page.js file
@@ -203,8 +211,8 @@ async def mark_page(page):
 # Define agent functions
 async def annotate(state):
     marked_page = await mark_page.with_retry().ainvoke(state["page"])
-    # Don't unmark the page here
-    return {**state, **marked_page}
+    current_url = state["page"].url
+    return {**state, **marked_page, "current_url": current_url}
 
 
 # define function that takes a state parameter
@@ -279,45 +287,45 @@ def update_scratchpad(state: AgentState):
 # prompt = hub.pull("wfh/web-voyager")
 
 custom_prompt = ChatPromptTemplate.from_messages([
-    ("system", """Imagine you are onboarding personnel, just like humans. Now you need to complete a task. In each iteration, you will receive an Observation that includes a screenshot of a webpage and some texts. This screenshot will feature Numerical Labels placed in the TOP LEFT corner of each Web Element. Carefully analyze the visual information to identify the Numerical Label corresponding to the Web Element that requires interaction, then follow the guidelines and choose one of the following actions:
+    ("system", """You are a web navigation assistant. Your task is to guide the user to the Hookalotti page on the Stools & Co website. 
+    In each iteration, you will receive an Observation that includes a screenshot of a webpage, some texts, and the current URL. 
+    This screenshot will feature Numerical Labels placed in the TOP LEFT corner of each Web Element. 
+    Carefully analyze the visual information and the current URL to determine your next action.
 
-1. Click a Web Element.
-2. Delete existing content in a textbox and then type content.
-3. Scroll up or down.
-4. Wait 
-5. Go back
-7. Return to google to start over.
-8. Respond with the final answer
+    Current goal: Navigate to the Hookalotti page.
 
-Correspondingly, Action should STRICTLY follow the format:
+    If the current URL contains 'hookalotti', you have reached the target page. Respond with ANSWER in this case.
 
-- Click [Numerical_Label] 
-- Type [Numerical_Label]; [Content] 
-- Scroll [Numerical_Label or WINDOW]; [up or down] 
-- Wait 
-- GoBack
-- Google
-- ANSWER; [content]
+    Choose one of the following actions:
+    1. Click a Web Element.
+    2. Delete existing content in a textbox and then type content.
+    3. Scroll up or down.
+    4. Wait 
+    5. Go back
+    6. Return to the Stools & Co home page to start over.
+    7. Respond with the final answer
 
-Key Guidelines You MUST follow:
+    Action should STRICTLY follow the format:
+    - Click [Numerical_Label] 
+    - Type [Numerical_Label]; [Content] 
+    - Scroll [Numerical_Label or WINDOW]; [up or down] 
+    - Wait 
+    - GoBack
+    - Home
+    - ANSWER; [content]
 
-* Action guidelines *
-1) Execute only one action per iteration.
-2) When clicking or typing, ensure to select the correct bounding box.
-3) Numeric labels lie in the top-left corner of their corresponding bounding boxes and are colored the same.
+    Key Guidelines:
+    1) Execute only one action per iteration.
+    2) When clicking or typing, ensure to select the correct bounding box.
+    3) Numeric labels lie in the top-left corner of their corresponding bounding boxes and are colored the same.
+    4) When you have reached the Hookalotti page or completed the task, immediately respond with ANSWER and do not perform any further actions.
+    5) Pay close attention to the current URL to determine if you've reached the Hookalotti page.
 
-* Web Browsing Guidelines *
-1) Don't interact with useless web elements like Login, Sign-in, donation that appear in Webpages
-2) Select strategically to minimize time wasted.
-
-Your reply should strictly follow the format:
-
-Thought: {{Your brief thoughts (briefly summarize the info that will help ANSWER)}}
-Action: {{One Action format you choose}}
-Then the User will provide:
-Observation: {{A labeled screenshot Given by User}}"""),
+    Your reply should strictly follow the format:
+    Thought: {{Your brief thoughts}}
+    Action: {{One Action format you choose}}"""),
     MessagesPlaceholder(variable_name="scratchpad"),
-    ("human", "{input}\n\n{bbox_descriptions}"),
+    ("human", "{input}\n\n{bbox_descriptions}\n\nCurrent URL: {current_url}"),
 ])
 
 # Replace the existing prompt with the custom one
@@ -357,7 +365,7 @@ tools = {
     "Scroll": scroll,
     "Wait": wait,
     "GoBack": go_back,
-    "Google": to_google,
+    "Home": to_home, 
 }
 
 # Add nodes for each tool and connect them to the scratchpad update
@@ -373,7 +381,7 @@ for node_name, tool in tools.items():
 # Function to select the next action based on the agent's prediction
 def select_tool(state: AgentState):
     action = state["prediction"]["action"]
-    if action == "ANSWER":
+    if action.startswith("ANSWER"):
         return END  # End the process if the action is to answer
     if action == "retry":
         return "agent"  # Go back to the agent if a retry is needed
@@ -393,6 +401,8 @@ from pinecone import Pinecone
 from pinecone import Pinecone, ServerlessSpec
 from openai import OpenAI
 from typing import List
+import openai
+from tenacity import retry, stop_after_attempt, wait_random_exponential, retry_if_exception_type
 
 # Initialize Pinecone
 pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
@@ -421,12 +431,30 @@ except Exception as e:
 # Initialize OpenAI client
 openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+@retry(
+    wait=wait_random_exponential(min=1, max=60),
+    stop=stop_after_attempt(6),
+    retry=retry_if_exception_type(openai.RateLimitError)
+)
+def create_embedding_with_retry(text: str) -> List[float]:
+    try:
+        response = openai_client.embeddings.create(
+            input=text,
+            model="text-embedding-ada-002"
+        )
+        return response.data[0].embedding
+    except openai.RateLimitError as e:
+        print(f"Rate limit error: {e}")
+        raise
+    except openai.APIError as e:
+        print(f"API error: {e}")
+        if "billing_not_active" in str(e):
+            print("Please check your OpenAI account billing status at https://platform.openai.com/account/billing")
+            raise ValueError("OpenAI account is not active") from e
+        raise
+
 def create_embedding(text: str) -> List[float]:
-    response = openai_client.embeddings.create(
-        input=text,
-        model="text-embedding-ada-002"
-    )
-    return response.data[0].embedding
+    return create_embedding_with_retry(text)
 
 def upsert_to_pinecone(file_path: str, file_content: str):
     embedding = create_embedding(file_content)
@@ -448,9 +476,8 @@ def query_pinecone(query: str, top_k: int = 5):
     
     return results
 
-# Function to load and index Firecrawl docs
-def index_firecrawl_docs(directory: str):
-    print(f"Indexing Firecrawl docs from {directory}...")
+def index_documents(directory: str):
+    print(f"Indexing documents from {directory}...")
     for root, _, files in os.walk(directory):
         for file in files:
             if file.endswith(('.md', '.json')):
@@ -458,7 +485,14 @@ def index_firecrawl_docs(directory: str):
                 with open(file_path, 'r') as f:
                     content = f.read()
                 upsert_to_pinecone(file_path, content)
-    print("Indexing complete.")
+    print(f"Indexing complete for {directory}")
+
+def index_single_file(file_path: str):
+    print(f"Indexing single file: {file_path}")
+    with open(file_path, 'r') as f:
+        content = f.read()
+    upsert_to_pinecone(file_path, content)
+    print(f"Indexing complete for {file_path}")
 
 
 """
@@ -475,7 +509,7 @@ async def run_agent():
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=False)
         page = await browser.new_page()
-        await page.goto("https://www.google.com")
+        await page.goto("https://tour-guide-liard.vercel.app/")  # Start at the tour guide website
 
         async def call_agent(question: str, page, max_steps: int = 150):
             # Query Pinecone for relevant information
@@ -494,6 +528,7 @@ async def run_agent():
                     "page": page,
                     "input": augmented_input,
                     "scratchpad": [],
+                    "current_url": page.url,
                 },
                 {
                     "recursion_limit": max_steps,
@@ -534,11 +569,12 @@ async def run_agent():
                     instruction = "Please wait for a moment while the page loads."
                 elif action == "GoBack":
                     instruction = "Please go back to the previous page."
-                elif action == "Google":
-                    instruction = "Let's start over. Please go to Google's homepage."
-                elif "ANSWER" in action:
-                    instruction = f"Great! We've found the answer: {action_input[0]}"
+                elif action == "Home":
+                    instruction = "Let's go back to the Stools & Co home page."
+                elif action.startswith("ANSWER"):
+                    instruction = f"Great! We've completed the task. Here's the answer: {action_input[0]}"
                     final_answer = action_input[0]
+                    break  # Exit the loop when we get an ANSWER
                 else:
                     instruction = f"Now, let's {action} {action_input}"
 
@@ -558,7 +594,7 @@ async def run_agent():
         questions = [
             # "Could you explain the WebVoyager paper (on arxiv)?",
             # "Please explain the today's XKCD comic for me. Why is it funny?",
-            "What are the latest blog posts from langchain?",
+            "How do I get to the Hookalotti page?",
             # "Could you check google maps to see when i should leave to get to SFO by 7 o'clock? starting from SF downtown.",
         ]
 
@@ -570,30 +606,26 @@ async def run_agent():
 
         await browser.close()
 
-# Function to load and index Firecrawl docs
-def index_firecrawl_docs(directory: str):
-    for root, _, files in os.walk(directory):
-        for file in files:
-            if file.endswith(('.md', '.json')):
-                file_path = os.path.join(root, file)
-                with open(file_path, 'r') as f:
-                    content = f.read()
-                upsert_to_pinecone(file_path, content)
-
 import asyncio
 
-# Asynchronous function to run the indexing and the agent
 async def main():
     try:
-        # Index Firecrawl docs first
-        index_firecrawl_docs('/path/to/firecrawl/docs')
+        # Index Firecrawl docs
+        index_documents('src/app/api/metadata/firecrawl.md')
+        
+        # Index the app-metadata.json file
+        index_single_file('src/app/sdk/metadata/app-metadata.json')
         
         # Then run the agent
         await run_agent()
-    except ValueError as ve:
-        print(f"Error: {str(ve)}")
+    except openai.AuthenticationError:
+        print("Authentication error: Please check your OpenAI API key.")
+    except openai.APIError as e:
+        print(f"OpenAI API error: {e}")
     except Exception as e:
         print(f"An unexpected error occurred: {str(e)}")
+        import traceback
+        traceback.print_exc()
 
 # Main execution block
 if __name__ == "__main__":

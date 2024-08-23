@@ -1,0 +1,235 @@
+{
+  "components": [
+    {
+      "name": "Card",
+      "props": [
+        {
+          "name": "title",
+          "type": "any"
+        },
+        {
+          "name": "footer",
+          "type": "any"
+        },
+        {
+          "name": "children",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/(account)/account/page.tsx",
+      "snippet": "import { PropsWithChildren, ReactNode } from 'react';\nimport Link from 'next/link';\nimport { redirect } from 'next/navigation';\n\nimport { Button } from '@/components/ui/button';",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "handleOAuthClick",
+      "props": [
+        {
+          "name": "mode",
+          "type": "any"
+        },
+        {
+          "name": "signInWithOAuth",
+          "type": "any"
+        },
+        {
+          "name": "signInWithEmail",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/(auth)/auth-ui.tsx",
+      "snippet": "'use client';\n\nimport { FormEvent, useState } from 'react';\nimport Image from 'next/image';\nimport Link from 'next/link';",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "RootLayout",
+      "props": [
+        {
+          "name": "children",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/(auth)/signup/layout.tsx",
+      "snippet": "import { PropsWithChildren } from 'react';\nimport type { Metadata } from 'next';\nimport { Montserrat, Montserrat_Alternates } from 'next/font/google';\n\nimport { Toaster } from '@/components/ui/toaster';",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Modules"
+    },
+    {
+      "name": "SignUp",
+      "props": [],
+      "description": "",
+      "dependencies": [
+        "../auth-actions",
+        "../auth-ui"
+      ],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/(auth)/signup/page.tsx",
+      "snippet": "import { redirect } from 'next/navigation';\n\nimport { getSession } from '@/features/account/controllers/get-session';\nimport { getSubscription } from '@/features/account/controllers/get-subscription';\n",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "FlowchartLayout",
+      "props": [
+        {
+          "name": "children",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/flowchart/layout.tsx",
+      "snippet": "import { PropsWithChildren } from 'react';\nimport { Montserrat, Montserrat_Alternates } from 'next/font/google';\n\nimport { cn } from '@/utils/cn';\n",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "checkUser",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/flowchart/page.tsx",
+      "snippet": "'use client';\n\nimport { useEffect, useState } from 'react';\nimport { useRouter, useSearchParams } from 'next/navigation';\nimport { AnimatePresence,motion } from 'framer-motion';",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "RootLayout",
+      "props": [
+        {
+          "name": "children",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [
+        "./navigation"
+      ],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/layout.tsx",
+      "snippet": "import { PropsWithChildren } from 'react';\nimport type { Metadata } from 'next';\nimport { Montserrat, Montserrat_Alternates } from 'next/font/google';\n\nimport { Toaster } from '@/components/ui/toaster';",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Modules"
+    },
+    {
+      "name": "Navigation",
+      "props": [],
+      "description": "",
+      "dependencies": [
+        "./(auth)/auth-actions"
+      ],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/navigation.tsx",
+      "snippet": "import Link from 'next/link';\nimport { IoMenu } from 'react-icons/io5';\n\nimport { AccountMenu } from '@/components/account-menu';\nimport { Button } from '@/components/ui/button';",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "Home",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/page.tsx",
+      "snippet": "import React from 'react';\nimport Image from \"next/image\";\nimport Link from \"next/link\";\nimport { redirect } from 'next/navigation';\n",
+      "stateManagement": [],
+      "interfaces": [
+        "Product"
+      ],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "PricingPage",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/pricing/page.tsx",
+      "snippet": "import { PricingSection } from '@/features/pricing/components/pricing-section';\n\nexport default async function PricingPage() {\n  return <PricingSection isPricingPage />;\n}",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "None"
+    },
+    {
+      "name": "PrivatePage",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/private/page.tsx",
+      "snippet": "// TESTING\n\nimport { redirect } from 'next/navigation'\n\nimport { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "None"
+    },
+    {
+      "name": "ProductPage",
+      "props": [
+        {
+          "name": "product",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/product/[slug]/ProductPage.tsx",
+      "snippet": "'use client'\n\nimport React, { useState } from 'react';\nimport Image from 'next/image';\nimport Link from 'next/link';",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    },
+    {
+      "name": "Page",
+      "props": [
+        {
+          "name": "params",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [
+        "./ProductPage"
+      ],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/product/[slug]/page.tsx",
+      "snippet": "import { notFound } from 'next/navigation';\n\nimport { products } from '@/data/products';\n\nimport ProductPage from './ProductPage';",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "None"
+    },
+    {
+      "name": "generateMetadataFile",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/sdk/sdk.tsx",
+      "snippet": "import * as fs from 'fs';\nimport * as path from 'path';\nimport { Node, Project, PropertyAssignment, SourceFile, SyntaxKind } from 'ts-morph';\n\nimport * as parser from '@babel/parser';",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Classes"
+    }
+  ],
+  "routes": []
+}

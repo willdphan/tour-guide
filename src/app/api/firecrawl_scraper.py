@@ -1,3 +1,5 @@
+# python src/app/api/firecrawl_scraper.py
+
 from firecrawl import FirecrawlApp
 import os
 import json
@@ -10,10 +12,10 @@ api_key = os.getenv('FIRECRAWL_API_KEY')
 
 app = FirecrawlApp(api_key=api_key)
 
-content = app.scrape_url("https://docs.firecrawl.dev")
+content = app.scrape_url("https://tour-guide-liard.vercel.app/")
 
 # Define the output file path
-output_file = "/Users/williamphan/Desktop/tour/app/api/parse/metadata/firecrawl.md"
+output_file = "src/app/api/metadata/firecrawl.md"
 
 # Ensure the directory exists
 os.makedirs(os.path.dirname(output_file), exist_ok=True)
