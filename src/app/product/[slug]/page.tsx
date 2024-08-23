@@ -1,5 +1,7 @@
 import { notFound } from 'next/navigation';
+
 import { products } from '@/data/products';
+
 import ProductPage from './ProductPage';
 
 export async function generateStaticParams() {

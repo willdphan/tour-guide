@@ -1,8 +1,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { Node, Project, PropertyAssignment, SourceFile,SyntaxKind } from 'ts-morph';
+
 import * as parser from '@babel/parser';
 import traverse from '@babel/traverse';
-import { Project, SyntaxKind, Node, PropertyAssignment, SourceFile } from 'ts-morph';
 
 interface ComponentMetadata {
   name: string;

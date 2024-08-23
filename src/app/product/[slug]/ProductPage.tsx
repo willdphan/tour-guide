@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { StarIcon, PlusIcon, MailIcon, CheckIcon } from 'lucide-react'
+import { CheckIcon,MailIcon, PlusIcon, StarIcon } from 'lucide-react'
 
 export default function ProductPage({ product }) {
   const [selectedOption, setSelectedOption] = useState('pot')

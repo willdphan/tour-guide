@@ -1,9 +1,9 @@
 import React from 'react';
-import Link from "next/link";
 import Image from "next/image";
-import { products } from '@/data/products';
-
+import Link from "next/link";
 import { redirect } from 'next/navigation';
+
+import { products } from '@/data/products';
 
 const Home: React.FC = async () => {
 
