@@ -128,15 +128,28 @@ async def run_agent(question: str):
 
     await page.close()
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 @app.get("/run-agent/")
 async def api_run_agent(question: str):
+    logger.debug(f"Received question: {question}")
+
     async def event_generator():
-        async for step in run_agent(question):
-            yield step
-        yield "data: [DONE]\n\n"
+        try:
+            async for step_json in run_agent(question):
+                logger.debug(f"Yielding step: {step_json}")
+                yield step_json  # The 'data:' prefix is already included in run_agent
+            logger.debug("Yielding [DONE]")
+            yield "data: [DONE]\n\n"
+        except Exception as e:
+            logger.error(f"Error in event_generator: {str(e)}")
+            logger.error(traceback.format_exc())
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
 
+    logger.debug("Returning StreamingResponse")
     return StreamingResponse(event_generator(), media_type="text/event-stream")
-
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

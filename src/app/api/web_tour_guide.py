@@ -7,6 +7,7 @@ Original file is located at
     https://colab.research.google.com/github/albeorla/google-collab-notebooks/blob/main/web_voyager.ipynb
 """
 
+import json
 import os
 import asyncio
 import base64
@@ -54,6 +55,29 @@ class AgentState(TypedDict):
     prediction: Prediction # another class defined above
     scratchpad: List[BaseMessage] # acts as the memory for the agent
     observation: str
+    current_url: str
+
+from pydantic import BaseModel
+from typing import List, Optional
+
+class ScreenLocation(BaseModel):
+    x: float
+    y: float
+    width: float
+    height: float
+
+class Step(BaseModel):
+    thought: str
+    action: str
+    instruction: str
+    element_description: Optional[str] = None
+    screen_location: Optional[dict] = None
+    hover_before_action: bool = False
+    text_input: Optional[str] = None
+
+class AgentResponse(BaseModel):
+    steps: List[Step]
+    final_answer: Optional[str] = None
     current_url: str
 
 ###############
@@ -505,106 +529,169 @@ The reason why the augmented input attached to the question is because:
 """
 
 # Main function to run the agent
-async def run_agent():
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=False)
-        page = await browser.new_page()
-        await page.goto("https://tour-guide-liard.vercel.app/")  # Start at the tour guide website
+import logging
 
-        async def call_agent(question: str, page, max_steps: int = 150):
-            # Query Pinecone for relevant information
-            pinecone_results = query_pinecone(question)
-            relevant_info = "\n".join([result['metadata']['content'] for result in pinecone_results['matches']])
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
-            print("\nRelevant information used for augmented input:")
-            print(relevant_info[:500] + "..." if len(relevant_info) > 500 else relevant_info)
+import logging
 
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
-            # Augment the input with relevant information from Pinecone, this is done with Firecrawl and sdk docs
-            augmented_input = f"{question}\n\nRelevant information from Firecrawl docs:\n{relevant_info}"
+import logging
+import json
+from pydantic import BaseModel
 
-            event_stream = graph.astream(
-                {
-                    "page": page,
-                    "input": augmented_input,
-                    "scratchpad": [],
-                    "current_url": page.url,
-                },
-                {
-                    "recursion_limit": max_steps,
-                },
-            )
-            final_answer = None
-            step_count = 1
-            async for event in event_stream:
-                if "agent" not in event:
-                    continue
-                state = event["agent"]  # Get the current state from the event
-                pred = event["agent"].get("prediction") or {}
-                action = pred.get("action")
-                action_input = pred.get("args")
-                thought = event["agent"].get("output", "").split("Thought:", 1)[-1].split("Action:", 1)[0].strip()
-                
-                print(f"\nStep {step_count}:")
-                print(f"Tour Guide: Here's what I'm thinking - {thought}")
-                
-                instruction = ""
-                if action == "Click":
-                    bbox = state["bboxes"][int(action_input[0])]
-                    element_description = bbox.get("ariaLabel") or bbox.get("text") or f"element of type {bbox.get('type')}"
-                    instruction = f"Please click on the {element_description}."
-                elif action == "Type":
-                    bbox = state["bboxes"][int(action_input[0])]
-                    element_description = bbox.get("ariaLabel") or bbox.get("text") or f"input field of type {bbox.get('type')}"
-                    instruction = f"Please type '{action_input[1]}' into the {element_description}."
-                elif action == "Scroll":
-                    direction = "up" if action_input[1].lower() == "up" else "down"
-                    if action_input[0].upper() == "WINDOW":
-                        instruction = f"Please scroll {direction} on the page."
-                    else:
-                        bbox = state["bboxes"][int(action_input[0])]
-                        element_description = bbox.get("ariaLabel") or bbox.get("text") or f"element of type {bbox.get('type')}"
-                        instruction = f"Please scroll {direction} in the {element_description}."
-                elif action == "Wait":
-                    instruction = "Please wait for a moment while the page loads."
-                elif action == "GoBack":
-                    instruction = "Please go back to the previous page."
-                elif action == "Home":
-                    instruction = "Let's go back to the Stools & Co home page."
-                elif action.startswith("ANSWER"):
-                    instruction = f"Great! We've completed the task. Here's the answer: {action_input[0]}"
-                    final_answer = action_input[0]
-                    break  # Exit the loop when we get an ANSWER
-                else:
-                    instruction = f"Now, let's {action} {action_input}"
+from pydantic import BaseModel
+from typing import Optional
+from pydantic import BaseModel
+from typing import Optional
 
-                print(f"Tour Guide: {instruction}")
-                
-                user_input = input("Press Enter when you've completed this step, or type 'skip' to move on: ")
-                if user_input.lower() == 'skip':
-                    print("Tour Guide: Alright, let's move on to the next step.")
-                
-                step_count += 1
-                
-                if final_answer:
-                    break
-            return final_answer
+class ScreenLocation(BaseModel):
+    x: float
+    y: float
+    width: float
+    height: float
+
+class Step(BaseModel):
+    thought: str
+    action: str
+    instruction: str
+    element_description: Optional[str] = None
+    screen_location: Optional[ScreenLocation] = None
+    hover_before_action: bool = False
+    text_input: Optional[str] = None
+import json
+import logging
+from pydantic import BaseModel
+from typing import Optional, Dict
+
+logger = logging.getLogger(__name__)
+
+class ScreenLocation(BaseModel):
+    x: float
+    y: float
+    width: float
+    height: float
+
+class Step(BaseModel):
+    thought: str
+    action: str
+    instruction: str
+    element_description: Optional[str] = None
+    screen_location: Optional[ScreenLocation] = None
+    hover_before_action: bool = False
+    text_input: Optional[str] = None
+
+async def run_agent(question: str):
+    global browser
+    page = await browser.new_page()
+    await page.goto("http://localhost:3000/")
+    logger.debug(f"Navigated to http://localhost:3000/")
+
+    # Query Pinecone for relevant information
+    pinecone_results = query_pinecone(question)
+    relevant_info = "\n".join([result['metadata']['content'] for result in pinecone_results['matches']])
+
+    # Augment the input with relevant information from Pinecone
+    augmented_input = f"{question}\n\nRelevant information from Firecrawl docs:\n{relevant_info}"
+
+    event_stream = graph.astream(
+        {
+            "page": page,
+            "input": augmented_input,
+            "scratchpad": [],
+            "current_url": page.url,
+        },
+        {
+            "recursion_limit": 150,
+        },
+    )
+
+    async for event in event_stream:
+        logger.debug(f"Raw event: {event}")
+        if "agent" not in event:
+            logger.debug("Skipping non-agent event")
+            continue
         
+        state = event["agent"]
+        pred = state.get("prediction") or {}
+        action = pred.get("action")
+        action_input = pred.get("args")
+        thought = state.get("output", "").split("Thought:", 1)[-1].split("Action:", 1)[0].strip()
 
-        questions = [
-            # "Could you explain the WebVoyager paper (on arxiv)?",
-            # "Please explain the today's XKCD comic for me. Why is it funny?",
-            "How do I get to the Hookalotti page?",
-            # "Could you check google maps to see when i should leave to get to SFO by 7 o'clock? starting from SF downtown.",
-        ]
+        logger.debug(f"Action: {action}, Action Input: {action_input}")
+        logger.debug(f"Thought: {thought}")
+        logger.debug(f"State bboxes: {state.get('bboxes')}")
 
-        for question in questions:
-            res = await call_agent(question, page)
-            print(f"Question: {question}")
+        instruction = ""
+        element_description = None
+        screen_location = None
+        hover_before_action = False
+        text_input = None
 
-            print(f"Final response: {res}\n")
+        try:
+            if action in ["Click", "Type", "Scroll"]:
+                if not action_input:
+                    logger.error(f"No action input for {action}")
+                else:
+                    bbox_id = int(action_input[0])
+                    bboxes = state.get("bboxes")
+                    if not bboxes:
+                        logger.error("No bboxes in state")
+                    elif bbox_id >= len(bboxes):
+                        logger.error(f"Invalid bbox_id {bbox_id}, max is {len(bboxes) - 1}")
+                    else:
+                        bbox: Dict = bboxes[bbox_id]
+                        element_description = bbox.get("ariaLabel") or bbox.get("text") or f"element of type {bbox.get('type')}"
+                        screen_location = ScreenLocation(
+                            x=bbox["x"],
+                            y=bbox["y"],
+                            width=bbox["width"],
+                            height=bbox["height"]
+                        )
+                        hover_before_action = True
 
-        await browser.close()
+                        if action == "Click":
+                            instruction = f"Click on the {element_description}."
+                        elif action == "Type":
+                            instruction = f"Type '{action_input[1]}' into the {element_description}."
+                            text_input = action_input[1]
+                        elif action == "Scroll":
+                            direction = "up" if action_input[1].lower() == "up" else "down"
+                            instruction = f"Scroll {direction} in the {element_description}."
+            elif action == "Wait":
+                instruction = "Wait for a moment while the page loads."
+            elif action == "GoBack":
+                instruction = "Go back to the previous page."
+            elif action == "Home":
+                instruction = "Go back to the Stools & Co home page."
+            elif action.startswith("ANSWER"):
+                instruction = f"Task completed. Answer: {action_input[0]}"
+            else:
+                instruction = f"{action} {action_input}"
+        except Exception as e:
+            logger.error(f"Error processing action: {str(e)}")
+
+        step = Step(
+            thought=thought,
+            action=action,
+            instruction=instruction,
+            element_description=element_description,
+            screen_location=screen_location,
+            hover_before_action=hover_before_action,
+            text_input=text_input
+        )
+        step_json = step.json()
+        logger.debug(f"Yielding step: {step_json}")
+        yield f"data: {step_json}\n\n"
+
+        if action.startswith("ANSWER"):
+            break
+
+    await page.close()
+    logger.debug("Page closed")
 
 import asyncio
 
