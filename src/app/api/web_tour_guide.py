@@ -24,7 +24,7 @@ from langchain_core.runnables import RunnablePassthrough, RunnableLambda, chain 
 from langchain_openai import ChatOpenAI
 from langchain import hub
 from langgraph.graph import END, StateGraph
-from playwright.async_api import Page, async_playwright
+from playwright.async_api import Page
 
 # Load environment variables
 load_dotenv()
@@ -48,7 +48,7 @@ class Prediction(TypedDict):
     args: Optional[List[str]]
 
 class AgentState(TypedDict):
-    page: Page # single page in browser, provides ways to interact with web pages
+    page: Page  # This will now represent the Playwright page object
     input: str
     img: str
     bboxes: List[BBox]  # list of bounding boxes
@@ -86,114 +86,79 @@ class AgentResponse(BaseModel):
 
 # Define tools
 async def click(state: AgentState):
-    page = state["page"] # grab the page in browser
-    # grab the action string list, args determined by agent b4 called
+    page: Page = state["page"]
     click_args = state["prediction"]["args"]
-    # if click_args above doesn't exist, click_args is expected to have one argument
     if click_args is None or len(click_args) != 1:
         return f"Failed to click bounding box labeled as number {click_args}"
-    # accesses first element in click_args list, converts to int. alr decided what to click
     bbox_id = int(click_args[0])
-    # access specific bounding box information
     try:
         bbox = state["bboxes"][bbox_id]
     except:
         return f"Error: no bbox for : {bbox_id}"
-    # grab x and y coordinates
     x, y = bbox["x"], bbox["y"]
-    # page.mouse.click() from playwrite object
+    
     await page.mouse.click(x, y)
-    return f"Clicked {bbox_id}" # returns a string
+    
+    return f"Clicked {bbox_id}"
 
 async def type_text(state: AgentState):
-    # Get the page object from the state
-    page = state["page"]
-    # Get the typing arguments from the state
+    page: Page = state["page"]
     type_args = state["prediction"]["args"]
-    # Check if the arguments are valid
     if type_args is None or len(type_args) != 2:
         return f"Failed to type in element from bounding box labeled as number {type_args}"
-    # Get the bounding box ID
     bbox_id = int(type_args[0])
-    # Get the bounding box information
     bbox = state["bboxes"][bbox_id]
-    # Extract x and y coordinates from the bounding box
     x, y = bbox["x"], bbox["y"]
-    # Get the text to be typed
     text_content = type_args[1]
-    # Click on the element at the specified coordinates
+    
     await page.mouse.click(x, y)
-    # Determine the "Select All" keyboard shortcut based on the operating system
-    select_all = "Meta+A" if platform.system() == "Darwin" else "Control+A"
-    # Select all existing text in the element
-    await page.keyboard.press(select_all)
-    # Delete the selected text
-    await page.keyboard.press("Backspace")
-    # Type the new text content
     await page.keyboard.type(text_content)
-    # Press Enter to submit the input
     await page.keyboard.press("Enter")
-    # Return a success message
+    
     return f"Typed {text_content} and submitted"
 
-
 async def scroll(state: AgentState):
-    page = state["page"]
+    page: Page = state["page"]
     scroll_args = state["prediction"]["args"]
     if scroll_args is None or len(scroll_args) != 2:
         return "Failed to scroll due to incorrect arguments."
 
-    # unpack scroll arguments into target and direction
     target, direction = scroll_args
 
-    # check if the scroll target is the entire window
     if target.upper() == "WINDOW":
-        # set scroll amount for window scrolling
         scroll_amount = 500
-        # determine scroll direction based on 'up' or 'down'
         scroll_direction = -scroll_amount if direction.lower() == "up" else scroll_amount
-        # execute javascript to scroll the window
         await page.evaluate(f"window.scrollBy(0, {scroll_direction})")
     else:
-        # set scroll amount for element scrolling
         scroll_amount = 200
-        # convert target to integer for bounding box lookup
         target_id = int(target)
-        # get bounding box for the target element
         bbox = state["bboxes"][target_id]
-        # extract x and y coordinates from bounding box
         x, y = bbox["x"], bbox["y"]
-        # determine scroll direction based on 'up' or 'down'
         scroll_direction = -scroll_amount if direction.lower() == "up" else scroll_amount
-        # move mouse to the target element
         await page.mouse.move(x, y)
-        # perform scroll action on the element
         await page.mouse.wheel(0, scroll_direction)
 
     return f"Scrolled {direction} in {'window' if target.upper() == 'WINDOW' else 'element'}"
 
 async def wait(state: AgentState):
     sleep_time = 5
-    # asyncio allows other funcs to continue while waiting
     await asyncio.sleep(sleep_time)
     return f"Waited for {sleep_time}s."
 
 async def go_back(state: AgentState):
-    page = state["page"]
-    # playwright function
+    page: Page = state["page"]
     await page.go_back()
     return f"Navigated back a page to {page.url}."
 
 async def to_google(state: AgentState):
-    page = state["page"]
+    page: Page = state["page"]
     await page.goto("https://google.com")
     return "Navigated to Google."
 
 async def to_home(state: AgentState):
-    page = state["page"]
+    page: Page = state["page"]
     await page.goto("https://tour-guide-liard.vercel.app/")
     return "Navigated to home page."
-
 
 # Define mark_page function, THIS MARKS BOUNDING BOXES.
 # done with the mark_page.js file
@@ -205,25 +170,21 @@ with open("/Users/williamphan/Desktop/tour/app/api/parse/mark_page.js") as f:
 # a way to wrap a function with another function, adding functionality before 
 # or after the wrapped function executes
 @chain_decorator
-# asynchronous function to mark elements on the page
-async def mark_page(page):
-    # execute the marking script on the page
+async def mark_page(page: Page):
+    # Execute the marking script on the page
     await page.evaluate(mark_page_script)
-    # try to mark the page up to 10 times
+    
+    # Try to mark the page up to 10 times
     for _ in range(10):
         try:
-            # execute the markPage function and get bounding boxes
             bboxes = await page.evaluate("markPage()")
-            # exit loop if successful
             break
         except:
-            # wait for 3 seconds before retrying
             await asyncio.sleep(2)
-    # take a screenshot of the marked page
+    
+    # Take a screenshot of the marked page
     screenshot = await page.screenshot()
-    # # remove the markings from the page
-    # await page.evaluate("unmarkPage()")
-    # return the screenshot and bounding boxes
+    
     return {
         # encode the screenshot as base64
         "img": base64.b64encode(screenshot).decode(),
@@ -231,13 +192,11 @@ async def mark_page(page):
         "bboxes": bboxes,
     }
 
-
 # Define agent functions
 async def annotate(state):
     marked_page = await mark_page.with_retry().ainvoke(state["page"])
     current_url = state["page"].url
     return {**state, **marked_page, "current_url": current_url}
-
 
 # define function that takes a state parameter
 def format_descriptions(state):
@@ -259,7 +218,6 @@ def format_descriptions(state):
     # return updated state with new bbox_descriptions
     return {**state, "bbox_descriptions": bbox_descriptions}
 
-
 def parse(text: str) -> dict:
     action_prefix = "Action: "
     if not text.strip().split("\n")[-1].startswith(action_prefix):
@@ -276,7 +234,6 @@ def parse(text: str) -> dict:
     if action_input is not None:
         action_input = [inp.strip().strip("[]") for inp in action_input.strip().split(";")]
     return {"action": action, "args": action_input}
-
 
 """
 crucial for maintaining the agent's "memory" and providing it with a structured history of its interactions. This history is vital for the agent to perform complex, multi-step tasks on web pages, as it allows the agent to reference past actions, understand the current context, and make more informed decisions about what to do next.
@@ -367,7 +324,6 @@ agent = annotate | RunnablePassthrough.assign(
 
 # Set up/initialize the graph, pass in the agent state
 graph_builder = StateGraph(AgentState)
-
 
 # define node
 graph_builder.add_node("agent", agent)
@@ -518,7 +474,6 @@ def index_single_file(file_path: str):
     upsert_to_pinecone(file_path, content)
     print(f"Indexing complete for {file_path}")
 
-
 """
 The system takes context from all the markdown and JSON files (via Pinecone), and it also uses GPT-4. It's not solely using GPT-4, but rather combining the power of vector search (Pinecone) with the language understanding and generation capabilities of GPT-4.
 
@@ -585,9 +540,8 @@ class Step(BaseModel):
     text_input: Optional[str] = None
 
 async def run_agent(question: str):
-    global browser
-    page = await browser.new_page()
-    await page.goto("http://localhost:3000/")
+    browserbase = Browserbase()
+    page = await asyncio.to_thread(browserbase.load, "http://localhost:3000/")
     logger.debug(f"Navigated to http://localhost:3000/")
 
     # Query Pinecone for relevant information
@@ -599,10 +553,10 @@ async def run_agent(question: str):
 
     event_stream = graph.astream(
         {
-            "page": page,
+            "page": browserbase,
             "input": augmented_input,
             "scratchpad": [],
-            "current_url": page.url,
+            "current_url": browserbase.current_url,
         },
         {
             "recursion_limit": 150,
@@ -690,7 +644,6 @@ async def run_agent(question: str):
         if action.startswith("ANSWER"):
             break
 
-    await page.close()
     logger.debug("Page closed")
 
 import asyncio
