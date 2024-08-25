@@ -62,7 +62,7 @@ async def shutdown_event():
 async def run_agent(question: str):
     global browser
     page = await browser.new_page()
-    await page.goto("https://tour-guide-liard.vercel.app/")
+    await page.goto("http://localhost:3000/")
 
     # Query Pinecone for relevant information
     pinecone_results = query_pinecone(question)
