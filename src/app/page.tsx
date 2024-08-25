@@ -7,7 +7,6 @@ import { products } from '@/data/products';
 
 const Home: React.FC = async () => {
 
-
   interface Product {
     id: number
     name: string

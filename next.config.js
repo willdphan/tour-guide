@@ -1,8 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    typescript: {
-      ignoreBuildErrors: true,
-    },
-  }
-  
-  module.exports = nextConfig
+  reactStrictMode: true,
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'http://127.0.0.1:8000/api/:path*', // Proxy to Backend
+      },
+    ]
+  },
+}
+
+export default nextConfig;
