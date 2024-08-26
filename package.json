@@ -21,6 +21,8 @@
   "dependencies": {
     "@babel/parser": "^7.25.4",
     "@babel/traverse": "^7.25.4",
+    "@liveblocks/client": "^2.5.2",
+    "@liveblocks/react": "^2.5.2",
     "@radix-ui/react-collapsible": "1.0.3",
     "@radix-ui/react-dialog": "1.0.5",
     "@radix-ui/react-dropdown-menu": "2.0.6",

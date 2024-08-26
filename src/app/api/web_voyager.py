@@ -65,19 +65,23 @@ async def click(state: AgentState):
     click_args = state["prediction"]["args"]
     # if click_args above doesn't exist, click_args is expected to have one argument
     if click_args is None or len(click_args) != 1:
-        return f"Failed to click bounding box labeled as number {click_args}"
+        # If we can't click, return the current mouse position
+        mouse_position = await page.evaluate("({x: window.mouseX, y: window.mouseY})")
+        return f"Failed to click bounding box", mouse_position['x'], mouse_position['y']
     # accesses first element in click_args list, converts to int. alr decided what to click
     bbox_id = int(click_args[0])
     # access specific bounding box information
     try:
         bbox = state["bboxes"][bbox_id]
     except:
-        return f"Error: no bbox for : {bbox_id}"
+        # If bbox doesn't exist, return the current mouse position
+        mouse_position = await page.evaluate("({x: window.mouseX, y: window.mouseY})")
+        return f"Error: no bbox for : {bbox_id}", mouse_position['x'], mouse_position['y']
     # grab x and y coordinates
     x, y = bbox["x"], bbox["y"]
     # page.mouse.click() from playwrite object
     await page.mouse.click(x, y)
-    return f"Clicked {bbox_id}" # returns a string
+    return f"Clicked {bbox_id}", x, y
 
 async def type_text(state: AgentState):
     # Get the page object from the state
@@ -108,7 +112,7 @@ async def type_text(state: AgentState):
     # Press Enter to submit the input
     await page.keyboard.press("Enter")
     # Return a success message
-    return f"Typed {text_content} and submitted"
+    return f"Typed {text_content} and submitted", x, y
 
 
 async def scroll(state: AgentState):
@@ -128,6 +132,7 @@ async def scroll(state: AgentState):
         scroll_direction = -scroll_amount if direction.lower() == "up" else scroll_amount
         # execute javascript to scroll the window
         await page.evaluate(f"window.scrollBy(0, {scroll_direction})")
+        return f"Scrolled {direction} in window", window.innerWidth / 2, scroll_direction
     else:
         # set scroll amount for element scrolling
         scroll_amount = 200
@@ -143,25 +148,30 @@ async def scroll(state: AgentState):
         await page.mouse.move(x, y)
         # perform scroll action on the element
         await page.mouse.wheel(0, scroll_direction)
-
-    return f"Scrolled {direction} in {'window' if target.upper() == 'WINDOW' else 'element'}"
+        return f"Scrolled {direction} in element", x, y
 
 async def wait(state: AgentState):
     sleep_time = 5
     # asyncio allows other funcs to continue while waiting
     await asyncio.sleep(sleep_time)
-    return f"Waited for {sleep_time}s."
+    # Get the current mouse position
+    mouse_position = await state["page"].evaluate("({x: window.mouseX, y: window.mouseY})")
+    return f"Waited for {sleep_time}s", mouse_position['x'], mouse_position['y']
 
 async def go_back(state: AgentState):
     page = state["page"]
     # playwright function
     await page.go_back()
-    return f"Navigated back a page to {page.url}."
+    # Get the dimensions of the viewport
+    viewport_size = page.viewport_size
+    return f"Navigated back a page to {page.url}", viewport_size['width'] / 2, viewport_size['height'] / 2
 
 async def to_google(state: AgentState):
     page = state["page"]
     await page.goto("https://www.google.com/")
-    return "Navigated to google.com."
+    # Get the dimensions of the viewport
+    viewport_size = page.viewport_size
+    return "Navigated to google.com", viewport_size['width'] / 2, viewport_size['height'] / 2
 
 # Define mark_page function, THIS MARKS BOUNDING BOXES.
 # done with the mark_page.js file
@@ -342,109 +352,66 @@ graph = graph_builder.compile()
 #############
 
 # Main function to run the agent
-import asyncio
-from playwright.async_api import Page
-
 async def run_agent():
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=False)
         page = await browser.new_page()
         await page.goto("https://www.google.com")
 
-        async def call_agent(question: str, page: Page, max_steps: int = 150):
-            pinecone_results = query_pinecone(question)
-            relevant_info = "\n".join([result['metadata']['content'] for result in pinecone_results['matches']])
-            augmented_input = f"{question}\n\nRelevant information from Firecrawl docs:\n{relevant_info}"
-
-            state = {
-                "page": page,
-                "input": augmented_input,
-                "scratchpad": [],
-            }
-
-            step_count = 1
-            last_content = await page.content()
-
-            print(f"\nQuestion: {question}")
-            print("Tour Guide: Let's start by observing the current page.")
-
-            while step_count <= max_steps:
-                # Wait for page changes
-                try:
-                    await page.wait_for_function(
-                        "document.body.innerHTML !== arguments[0]",
-                        last_content,
-                        timeout=30000
-                    )
-                except:
-                    print("No page changes detected. Continuing...")
-
-                # Update last_content
-                last_content = await page.content()
-
-                # Observe the current page state
-                state = await annotate(state)
-                state = format_descriptions(state)
-
-                # Get agent's next action
-                agent_output = await agent.ainvoke(state)
-                pred = agent_output.get("prediction") or {}
+        async def call_agent(question: str, page, max_steps: int = 150):
+            event_stream = graph.astream(
+                {
+                    "page": page,
+                    "input": question,
+                    "scratchpad": [],
+                },
+                {
+                    "recursion_limit": max_steps,
+                },
+            )
+            final_answer = None
+            actions_with_coordinates = []
+            async for event in event_stream:
+                if "agent" not in event:
+                    continue
+                pred = event["agent"].get("prediction") or {}
                 action = pred.get("action")
                 action_input = pred.get("args")
-                thought = agent_output.get("output", "").split("Thought:", 1)[-1].split("Action:", 1)[0].strip()
-
-                print(f"\nStep {step_count}:")
-                print(f"Tour Guide: Here's what I'm observing - {thought}")
-
-                if "ANSWER" in action:
-                    print(f"Tour Guide: I've found the answer: {action_input[0]}")
-                    return action_input[0]
-
-                instruction = get_instruction(action, action_input, state)
-                print(f"Tour Guide: {instruction}")
-
-                # Wait for the user to perform the action
-                await asyncio.sleep(1)  # Small delay to prevent rapid-fire instructions
                 
-                step_count += 1
-
-            return "Max steps reached without finding an answer."
+                x, y = None, None
+                if action in tools:
+                    observation, x, y = await tools[action](event["agent"])
+                else:
+                    # For actions not in tools (like ANSWER), use current mouse position
+                    mouse_position = await page.evaluate("({x: window.mouseX, y: window.mouseY})")
+                    x, y = mouse_position['x'], mouse_position['y']
+                    observation = f"{action}: {action_input}"
+                
+                actions_with_coordinates.append({"action": action, "args": action_input, "x": x, "y": y})
+                
+                print(f"{action}: {action_input} at (x: {x}, y: {y})")
+                if "ANSWER" in action:
+                    final_answer = action_input[0]
+                    break
+            return final_answer, actions_with_coordinates
 
         questions = [
+            # "Could you explain the WebVoyager paper (on arxiv)?",
+            # "Please explain the today's XKCD comic for me. Why is it funny?",
             "What are the latest blog posts from langchain?",
+            # "Could you check google maps to see when i should leave to get to SFO by 7 o'clock? starting from SF downtown.",
         ]
 
         for question in questions:
-            res = await call_agent(question, page)
-            print(f"Final response: {res}\n")
+            res, actions = await call_agent(question, page)
+            print(f"Question: {question}")
+            print(f"Final response: {res}")
+            print("Actions with coordinates:")
+            for action in actions:
+                print(f"  {action['action']}: {action['args']} at (x: {action['x']}, y: {action['y']})")
+            print()
 
         await browser.close()
-
-def get_instruction(action, action_input, state):
-    if action == "Click":
-        bbox = state["bboxes"][int(action_input[0])]
-        element_description = bbox.get("ariaLabel") or bbox.get("text") or f"element of type {bbox.get('type')}"
-        return f"Please click on the {element_description}."
-    elif action == "Type":
-        bbox = state["bboxes"][int(action_input[0])]
-        element_description = bbox.get("ariaLabel") or bbox.get("text") or f"input field of type {bbox.get('type')}"
-        return f"Please type '{action_input[1]}' into the {element_description}."
-    elif action == "Scroll":
-        direction = "up" if action_input[1].lower() == "up" else "down"
-        if action_input[0].upper() == "WINDOW":
-            return f"Please scroll {direction} on the page."
-        else:
-            bbox = state["bboxes"][int(action_input[0])]
-            element_description = bbox.get("ariaLabel") or bbox.get("text") or f"element of type {bbox.get('type')}"
-            return f"Please scroll {direction} in the {element_description}."
-    elif action == "Wait":
-        return "Please wait for a moment while the page loads."
-    elif action == "GoBack":
-        return "Please go back to the previous page."
-    elif action == "Google":
-        return "Let's start over. Please go to Google's homepage."
-    else:
-        return f"Please {action} {action_input}"
 
 # Run the agent
 if __name__ == "__main__":

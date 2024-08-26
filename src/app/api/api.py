@@ -32,13 +32,20 @@ openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 app = FastAPI()
 
-class Question(BaseModel):
-    text: str
+class ScreenLocation(BaseModel):
+    x: float
+    y: float
+    width: float
+    height: float
 
 class Step(BaseModel):
     thought: str
     action: str
     instruction: str
+    element_description: Optional[str] = None
+    screen_location: Optional[ScreenLocation] = None
+    hover_before_action: bool = False
+    text_input: Optional[str] = None
 
 # Global variable to store the browser instance
 browser = None
@@ -60,18 +67,13 @@ async def shutdown_event():
 async def run_agent(question: str):
     global browser
     
-    # Create a new page
     page = await browser.new_page()
     
     try:
-        # Navigate to the page
-        await page.goto("http://localhost:3000/", timeout=60000)  # Increase timeout to 60 seconds
+        await page.goto("http://localhost:3000/", timeout=60000)
         
-        # Query Pinecone for relevant information
         pinecone_results = query_pinecone(question)
         relevant_info = "\n".join([result['metadata']['content'] for result in pinecone_results['matches']])
-
-        # Augment the input with relevant information from Pinecone
         augmented_input = f"{question}\n\nRelevant information from Firecrawl docs:\n{relevant_info}"
 
         event_stream = graph.astream(
@@ -96,22 +98,32 @@ async def run_agent(question: str):
             thought = state.get("output", "").split("Thought:", 1)[-1].split("Action:", 1)[0].strip()
 
             instruction = ""
-            if action == "Click":
-                bbox = state["bboxes"][int(action_input[0])]
-                element_description = bbox.get("ariaLabel") or bbox.get("text") or f"element of type {bbox.get('type')}"
-                instruction = f"Click on the {element_description}."
-            elif action == "Type":
-                bbox = state["bboxes"][int(action_input[0])]
-                element_description = bbox.get("ariaLabel") or bbox.get("text") or f"input field of type {bbox.get('type')}"
-                instruction = f"Type '{action_input[1]}' into the {element_description}."
-            elif action == "Scroll":
-                direction = "up" if action_input[1].lower() == "up" else "down"
-                if action_input[0].upper() == "WINDOW":
-                    instruction = f"Scroll {direction} on the page."
-                else:
-                    bbox = state["bboxes"][int(action_input[0])]
+            element_description = None
+            screen_location = None
+            hover_before_action = False
+            text_input = None
+
+            if action in ["Click", "Type", "Scroll"]:
+                if action_input and len(action_input) > 0:
+                    bbox_id = int(action_input[0])
+                    bbox = state["bboxes"][bbox_id]
                     element_description = bbox.get("ariaLabel") or bbox.get("text") or f"element of type {bbox.get('type')}"
-                    instruction = f"Scroll {direction} in the {element_description}."
+                    screen_location = ScreenLocation(
+                        x=bbox["x"],
+                        y=bbox["y"],
+                        width=bbox.get("width", 0),
+                        height=bbox.get("height", 0)
+                    )
+                    hover_before_action = True
+
+                    if action == "Click":
+                        instruction = f"Click on the {element_description}."
+                    elif action == "Type":
+                        text_input = action_input[1]
+                        instruction = f"Type '{text_input}' into the {element_description}."
+                    elif action == "Scroll":
+                        direction = "up" if action_input[1].lower() == "up" else "down"
+                        instruction = f"Scroll {direction} in the {element_description}."
             elif action == "Wait":
                 instruction = "Wait for a moment while the page loads."
             elif action == "GoBack":
@@ -123,7 +135,15 @@ async def run_agent(question: str):
             else:
                 instruction = f"{action} {action_input}"
 
-            step = Step(thought=thought, action=action, instruction=instruction)
+            step = Step(
+                thought=thought,
+                action=action,
+                instruction=instruction,
+                element_description=element_description,
+                screen_location=screen_location.dict() if screen_location else None,
+                hover_before_action=hover_before_action,
+                text_input=text_input
+            )
             yield f"data: {json.dumps(step.dict())}\n\n"
 
             if action.startswith("ANSWER"):

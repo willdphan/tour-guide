@@ -538,10 +538,9 @@ class Step(BaseModel):
     screen_location: Optional[ScreenLocation] = None
     hover_before_action: bool = False
     text_input: Optional[str] = None
-
 async def run_agent(question: str):
     browserbase = Browserbase()
-    page = await asyncio.to_thread(browserbase.load, "http://localhost:3000/")
+    await asyncio.to_thread(browserbase.load, "http://localhost:3000/")
     logger.debug(f"Navigated to http://localhost:3000/")
 
     # Query Pinecone for relevant information
@@ -562,6 +561,9 @@ async def run_agent(question: str):
             "recursion_limit": 150,
         },
     )
+
+    steps = []
+    final_answer = None
 
     async for event in event_stream:
         logger.debug(f"Raw event: {event}")
@@ -597,7 +599,7 @@ async def run_agent(question: str):
                     elif bbox_id >= len(bboxes):
                         logger.error(f"Invalid bbox_id {bbox_id}, max is {len(bboxes) - 1}")
                     else:
-                        bbox: Dict = bboxes[bbox_id]
+                        bbox = bboxes[bbox_id]
                         element_description = bbox.get("ariaLabel") or bbox.get("text") or f"element of type {bbox.get('type')}"
                         screen_location = ScreenLocation(
                             x=bbox["x"],
@@ -609,20 +611,27 @@ async def run_agent(question: str):
 
                         if action == "Click":
                             instruction = f"Click on the {element_description}."
+                            await asyncio.to_thread(browserbase.click, bbox["x"], bbox["y"])
                         elif action == "Type":
                             instruction = f"Type '{action_input[1]}' into the {element_description}."
                             text_input = action_input[1]
+                            await asyncio.to_thread(browserbase.type, bbox["x"], bbox["y"], action_input[1])
                         elif action == "Scroll":
                             direction = "up" if action_input[1].lower() == "up" else "down"
                             instruction = f"Scroll {direction} in the {element_description}."
+                            await asyncio.to_thread(browserbase.scroll, bbox["x"], bbox["y"], direction)
             elif action == "Wait":
                 instruction = "Wait for a moment while the page loads."
+                await asyncio.sleep(5)
             elif action == "GoBack":
                 instruction = "Go back to the previous page."
+                await asyncio.to_thread(browserbase.go_back)
             elif action == "Home":
                 instruction = "Go back to the Stools & Co home page."
+                await asyncio.to_thread(browserbase.load, "http://localhost:3000/")
             elif action.startswith("ANSWER"):
                 instruction = f"Task completed. Answer: {action_input[0]}"
+                final_answer = action_input[0]
             else:
                 instruction = f"{action} {action_input}"
         except Exception as e:
@@ -637,14 +646,18 @@ async def run_agent(question: str):
             hover_before_action=hover_before_action,
             text_input=text_input
         )
-        step_json = step.json()
-        logger.debug(f"Yielding step: {step_json}")
-        yield f"data: {step_json}\n\n"
-
-        if action.startswith("ANSWER"):
+        steps.append(step)
+        
+        if final_answer:
             break
 
-    logger.debug("Page closed")
+    logger.debug("Agent run completed")
+    
+    return AgentResponse(
+        steps=steps,
+        final_answer=final_answer,
+        current_url=browserbase.current_url
+    )
 
 import asyncio
 
