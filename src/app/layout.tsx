@@ -5,7 +5,6 @@ import { Montserrat, Montserrat_Alternates } from 'next/font/google';
 
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/utils/cn';
-import AgentGuide from "@/components/tourguide";
 import dynamic from 'next/dynamic';
 
 import '@/styles/globals.css';
@@ -34,7 +33,7 @@ export default function RootLayout({ children }: PropsWithChildren) {
           <main className='relative flex-1'>
             <div className='relative h-full'>
               {children}
-              <AgentGuide />
+          
             </div>
           </main>
         </div>

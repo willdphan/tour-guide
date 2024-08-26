@@ -6,8 +6,6 @@ import {
   RoomProvider,
   ClientSideSuspense,
 } from "@liveblocks/react/suspense";
-import React from 'react';
-
 
 export function Room({ children }: { children: ReactNode }) {
   return (

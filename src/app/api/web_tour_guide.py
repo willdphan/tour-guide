@@ -538,6 +538,8 @@ class Step(BaseModel):
     screen_location: Optional[ScreenLocation] = None
     hover_before_action: bool = False
     text_input: Optional[str] = None
+
+
 async def run_agent(question: str):
     browserbase = Browserbase()
     await asyncio.to_thread(browserbase.load, "http://localhost:3000/")
@@ -562,13 +564,8 @@ async def run_agent(question: str):
         },
     )
 
-    steps = []
-    final_answer = None
-
     async for event in event_stream:
-        logger.debug(f"Raw event: {event}")
         if "agent" not in event:
-            logger.debug("Skipping non-agent event")
             continue
         
         state = event["agent"]
@@ -576,10 +573,6 @@ async def run_agent(question: str):
         action = pred.get("action")
         action_input = pred.get("args")
         thought = state.get("output", "").split("Thought:", 1)[-1].split("Action:", 1)[0].strip()
-
-        logger.debug(f"Action: {action}, Action Input: {action_input}")
-        logger.debug(f"Thought: {thought}")
-        logger.debug(f"State bboxes: {state.get('bboxes')}")
 
         instruction = ""
         element_description = None
@@ -589,33 +582,27 @@ async def run_agent(question: str):
 
         try:
             if action in ["Click", "Type", "Scroll"]:
-                if not action_input:
-                    logger.error(f"No action input for {action}")
-                else:
+                if action_input:
                     bbox_id = int(action_input[0])
                     bboxes = state.get("bboxes")
-                    if not bboxes:
-                        logger.error("No bboxes in state")
-                    elif bbox_id >= len(bboxes):
-                        logger.error(f"Invalid bbox_id {bbox_id}, max is {len(bboxes) - 1}")
-                    else:
+                    if bboxes and bbox_id < len(bboxes):
                         bbox = bboxes[bbox_id]
                         element_description = bbox.get("ariaLabel") or bbox.get("text") or f"element of type {bbox.get('type')}"
-                        screen_location = ScreenLocation(
-                            x=bbox["x"],
-                            y=bbox["y"],
-                            width=bbox["width"],
-                            height=bbox["height"]
-                        )
+                        screen_location = {
+                            "x": bbox["x"],
+                            "y": bbox["y"],
+                            "width": bbox.get("width", 0),
+                            "height": bbox.get("height", 0)
+                        }
                         hover_before_action = True
 
                         if action == "Click":
                             instruction = f"Click on the {element_description}."
                             await asyncio.to_thread(browserbase.click, bbox["x"], bbox["y"])
                         elif action == "Type":
-                            instruction = f"Type '{action_input[1]}' into the {element_description}."
                             text_input = action_input[1]
-                            await asyncio.to_thread(browserbase.type, bbox["x"], bbox["y"], action_input[1])
+                            instruction = f"Type '{text_input}' into the {element_description}."
+                            await asyncio.to_thread(browserbase.type, bbox["x"], bbox["y"], text_input)
                         elif action == "Scroll":
                             direction = "up" if action_input[1].lower() == "up" else "down"
                             instruction = f"Scroll {direction} in the {element_description}."
@@ -631,33 +618,26 @@ async def run_agent(question: str):
                 await asyncio.to_thread(browserbase.load, "http://localhost:3000/")
             elif action.startswith("ANSWER"):
                 instruction = f"Task completed. Answer: {action_input[0]}"
-                final_answer = action_input[0]
             else:
                 instruction = f"{action} {action_input}"
         except Exception as e:
             logger.error(f"Error processing action: {str(e)}")
 
-        step = Step(
-            thought=thought,
-            action=action,
-            instruction=instruction,
-            element_description=element_description,
-            screen_location=screen_location,
-            hover_before_action=hover_before_action,
-            text_input=text_input
-        )
-        steps.append(step)
-        
-        if final_answer:
+        yield {
+            "thought": thought,
+            "action": action,
+            "instruction": instruction,
+            "element_description": element_description,
+            "screen_location": screen_location,
+            "hover_before_action": hover_before_action,
+            "text_input": text_input
+        }
+
+        if action.startswith("ANSWER"):
             break
 
-    logger.debug("Agent run completed")
-    
-    return AgentResponse(
-        steps=steps,
-        final_answer=final_answer,
-        current_url=browserbase.current_url
-    )
+    browserbase.close()
+
 
 import asyncio
 

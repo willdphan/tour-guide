@@ -159,24 +159,31 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-@app.get("/run-agent/")
+@app.get("/api/run-agent/")
 async def api_run_agent(question: str):
-    logger.debug(f"Received question: {question}")
-
     async def event_generator():
         try:
-            async for step_json in run_agent(question):
-                logger.debug(f"Yielding step: {step_json}")
-                yield step_json  # The 'data:' prefix is already included in run_agent
-            logger.debug("Yielding [DONE]")
+            async for step in run_agent(question):
+                yield f"data: {json.dumps(step)}\n\n"
             yield "data: [DONE]\n\n"
         except Exception as e:
-            logger.error(f"Error in event_generator: {str(e)}")
-            logger.error(traceback.format_exc())
+            print(f"Error in event_generator: {str(e)}")
+            print(traceback.format_exc())
             yield f"data: {json.dumps({'error': str(e)})}\n\n"
 
-    logger.debug("Returning StreamingResponse")
     return StreamingResponse(event_generator(), media_type="text/event-stream")
+
+async def run_agent(question: str):
+    # Your agent logic here
+    # This is a placeholder, replace with your actual agent logic
+    steps = [
+        {"thought": "", "action": "Click", "instruction": f"Click on the result for '{question}'.", "element_description": "Search result", "screen_location": {"x": 500, "y": 300, "width": 100, "height": 30}, "hover_before_action": True, "text_input": None},
+        {"thought": "", "action": "ANSWER;", "instruction": f"Task completed. Answer: Found information about {question}.", "element_description": None, "screen_location": None, "hover_before_action": False, "text_input": None}
+    ]
+
+    for step in steps:
+        await asyncio.sleep(1)  # Simulate some processing time
+        yield step
 
 if __name__ == "__main__":
     import uvicorn
