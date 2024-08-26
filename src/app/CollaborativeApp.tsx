@@ -3,7 +3,7 @@
 import { useOthers, useRoom, useSelf, useUpdateMyPresence } from "@liveblocks/react";
 import { useState, useEffect } from "react";
 
-const Cursor = ({ x, y, color }) => {
+const Cursor = ({ x, y, color }: { x: number, y: number, color: string }) => {
   return (
     <svg
       style={{
@@ -41,7 +41,7 @@ export function CollaborativeApp({ children }) {
 
   useEffect(() => {
     console.log('Setting up EventSource');
-    const eventSource = new EventSource('/api/run_agent?question=find%20title');
+    const eventSource = new EventSource('/api/run_agent?question=');
 
     eventSource.onmessage = (event) => {
       console.log('Received event:', event);
