@@ -1,27 +1,32 @@
 import { NextResponse } from 'next/server';
+import { runAgent } from '../pythonBridge';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const question = searchParams.get('question');
 
+  if (!question) {
+    return NextResponse.json({ error: 'Question is required' }, { status: 400 });
+  }
+
   const stream = new ReadableStream({
     async start(controller) {
       const encoder = new TextEncoder();
 
-      // Your agent logic here
-      // This is a placeholder, replace with your actual agent logic
-      const steps = [
-        {"thought": "", "action": "Click", "instruction": "Click on the Hookalotti.", "element_description": "Hookalotti", "screen_location": {"x": 1051.421875, "y": 648.0, "width": 0.0, "height": 0.0}, "hover_before_action": true, "text_input": null},
-        {"thought": "", "action": "ANSWER;", "instruction": "Task completed. Answer: Reached the Hookalotti page.", "element_description": null, "screen_location": null, "hover_before_action": false, "text_input": null}
-      ];
+      try {
+        const agentIterator = await runAgent(question);
+        
+        for await (const step of agentIterator) {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify(step)}\n\n`));
+        }
 
-      for (const step of steps) {
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify(step)}\n\n`));
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate delay
+        controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+      } catch (error) {
+        console.error('Error in agent execution:', error);
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: 'Agent execution failed' })}\n\n`));
+      } finally {
+        controller.close();
       }
-
-      controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-      controller.close();
     },
   });
 

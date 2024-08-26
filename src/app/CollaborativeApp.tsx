@@ -40,9 +40,11 @@ export function CollaborativeApp({ children }) {
   const [currentStep, setCurrentStep] = useState(null);
 
   useEffect(() => {
-    const eventSource = new EventSource('/api/run_agent?question=find%20harolitto');
+    console.log('Setting up EventSource');
+    const eventSource = new EventSource('/api/run_agent?question=find%20title');
 
     eventSource.onmessage = (event) => {
+      console.log('Received event:', event);
       if (event.data === "[DONE]") {
         console.log("Stream ended");
         eventSource.close();
@@ -51,7 +53,7 @@ export function CollaborativeApp({ children }) {
 
       try {
         const data = JSON.parse(event.data);
-        console.log("Received data:", data);
+        console.log("Parsed data:", data);
         setCurrentStep(data);
 
         if (data.screen_location) {
@@ -59,6 +61,7 @@ export function CollaborativeApp({ children }) {
             x: data.screen_location.x,
             y: data.screen_location.y,
           };
+          console.log("Updating cursor position:", newPosition);
           setHighlightPosition(newPosition);
           setShowHighlight(true);
 
@@ -82,6 +85,7 @@ export function CollaborativeApp({ children }) {
     };
 
     return () => {
+      console.log('Closing EventSource');
       eventSource.close();
     };
   }, [updateMyPresence]);
