@@ -1,4 +1,4 @@
-import React from 'react';
+
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from 'next/navigation';
@@ -7,7 +7,7 @@ import { products } from '@/data/products';
 import { Room } from "./Room";
 import { CollaborativeApp } from "./CollaborativeApp";
 
-const Home: React.FC = async () => {
+export default function Page() {
 
   interface Product {
     id: number
@@ -33,7 +33,7 @@ const products: Product[] = [
 
   return (
     <Room>
-      <CollaborativeApp>
+     
         <div className="flex flex-col w-full min-h-screen">
           <header className="flex flex-col sm:flex-row items-center justify-between w-full px-4 py-2 ">
             <nav className="flex items-center space-x-2 mb-0 sm:mb-0 ">
@@ -89,7 +89,8 @@ const products: Product[] = [
 </div>
           </main>
         </div>
-      </CollaborativeApp>
+      <CollaborativeApp/>
     </Room>
   );
 };
+ 
