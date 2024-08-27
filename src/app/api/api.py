@@ -3,6 +3,8 @@ import os
 from pathlib import Path
 import traceback
 
+from fastapi.middleware.cors import CORSMiddleware
+
 # Add the project root to the Python path
 project_root = Path(__file__).resolve().parents[3]
 sys.path.append(str(project_root))
@@ -22,6 +24,15 @@ from src.app.api.web_tour_guide import run_agent as web_tour_guide_run_agent
 load_dotenv()
 
 app = FastAPI()
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Allow your frontend origin
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all methods
+    allow_headers=["*"],  # Allow all headers
+)
 
 @app.get("/api/run-agent/")
 async def api_run_agent(question: str):

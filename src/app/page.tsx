@@ -89,8 +89,7 @@ const products: Product[] = [
 </div>
           </main>
         </div>
-      <CollaborativeApp children={undefined}/>
+      <CollaborativeApp/>
     </Room>
   );
 };
- 
