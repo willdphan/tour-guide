@@ -15,7 +15,7 @@ function Cursor({ x, y, color }: { x: number; y: number; color: string }) {
         position: "absolute",
         left: x,
         top: y,
-        transition: "all 0.75s ease",
+        transition: "all 1s ease",
         transform: "translateX(-50%) translateY(-50%)",
         pointerEvents: "none",
         zIndex: 1000,
@@ -45,7 +45,7 @@ function RoomContent({ children }: { children: ReactNode }) {
 
   const fetchData = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/run-agent/?question=Go%20to%20the%20hookalotto%20page', {
+      const response = await fetch('http://localhost:8000/api/run-agent/?question=Go%20to%20the%20hookalotto%20page%20and%20press%20+Add', {
         method: 'GET',
         headers: {
           'Accept': 'text/event-stream',

@@ -643,6 +643,13 @@ async def run_agent(question: str):
                                 }
                                 hover_before_action = True
 
+                                # Move cursor to the target location
+                                await page.mouse.move(bbox["x"], bbox["y"])
+                                
+                                # Add a delay after moving the cursor
+                                await asyncio.sleep(2)
+                                logger.debug("Waited for 2 seconds after moving cursor")
+
                                 if action == "Click":
                                     instruction = f"Click on the {element_description}."
                                     await page.mouse.click(bbox["x"], bbox["y"])
@@ -654,7 +661,6 @@ async def run_agent(question: str):
                                 elif action == "Scroll":
                                     direction = "up" if action_input[1].lower() == "up" else "down"
                                     instruction = f"Scroll {direction} in the {element_description}."
-                                    await page.mouse.move(bbox["x"], bbox["y"])
                                     await page.mouse.wheel(0, -100 if direction == "up" else 100)
                     elif action == "Wait":
                         instruction = "Wait for a moment while the page loads."
