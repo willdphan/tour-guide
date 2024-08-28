@@ -8,6 +8,7 @@ import {
 } from "@liveblocks/react/suspense";
 import { useMyPresence, useOthers, useSelf, useUpdateMyPresence } from "@liveblocks/react";
 import { LiveObject } from "@liveblocks/client";
+import SpotLightSearch from '@/components/SpotLightSearch';
 
 function Cursor({ x, y, color }: { x: number; y: number; color: string }) {
   return (
@@ -61,98 +62,82 @@ function RoomContent({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, [updateMyPresence]);
 
-  const runAgent = useCallback(async () => {
-    if (isAgentRunning || !userQuery.trim()) return;
-    setIsAgentRunning(true);
-
-    try {
-      const currentUrl = window.location.href;
-      console.log(`Current URL: ${currentUrl}`); // Debug log
-
-      const response = await fetch(`/api/run-agent`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'text/event-stream',
-        },
-        body: JSON.stringify({
-          question: userQuery,
-          currentUrl: currentUrl
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-
-      while (true) {
-        const { value, done } = await reader!.read();
-        if (done) break;
-        
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n\n');
-        
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const jsonData = line.slice(6); // Remove 'data: ' prefix
-            if (jsonData === '[DONE]') {
-              console.log('Stream completed');
-              break;
-            }
-            try {
-              const parsedData = JSON.parse(jsonData);
-              console.log('Received data:', parsedData);
-              
-              if (parsedData.screen_location) {
-                const { x, y } = parsedData.screen_location;
-                console.log(`Updating agent cursor position to: (${x}, ${y})`);
-                setAgentCursor({ x, y });
-                
-                updateMyPresenceFn({
-                  cursor: { x, y },
-                  isAgent: true,
-                });
-
-                // Simulate the agent's action
-                simulateAgentAction(parsedData);
-              }
-            } catch (error) {
-              console.error('Error parsing JSON:', error);
-            }
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    } finally {
-      setIsAgentRunning(false);
-    }
-  }, [updateMyPresenceFn, isAgentRunning, userQuery]);
-
   const simulateAgentAction = useCallback((action: any) => {
-    if (action.action === 'Click') {
-      const element = document.elementFromPoint(action.screen_location.x, action.screen_location.y);
-      if (element) {
-        (element as HTMLElement).click();
-      }
-    } else if (action.action === 'Type') {
-      const element = document.elementFromPoint(action.screen_location.x, action.screen_location.y);
-      if (element instanceof HTMLInputElement) {
-        element.value = action.text_input;
-        element.dispatchEvent(new Event('input', { bubbles: true }));
-      }
-    } else if (action.action === 'Scroll') {
-      window.scrollTo({
-        top: action.screen_location.y,
-        behavior: 'smooth'
+    console.log('Simulating action:', action);
+
+    const moveMouseTo = (x: number, y: number) => {
+      // Update the cursor position
+      setAgentCursor({ x, y });
+      updateMyPresenceFn({
+        cursor: { x, y },
+        isAgent: true,
       });
-    } else if (action.action === 'Back') {
-      window.history.back();
+    };
+
+    const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+    switch (action.action) {
+      case 'Click':
+        if (action.screen_location) {
+          moveMouseTo(action.screen_location.x, action.screen_location.y);
+          wait(2000).then(() => {
+            const element = document.elementFromPoint(action.screen_location.x, action.screen_location.y);
+            if (element) {
+              (element as HTMLElement).click();
+            }
+          });
+        }
+        break;
+
+      case 'Type':
+        if (action.screen_location && action.text_input) {
+          moveMouseTo(action.screen_location.x, action.screen_location.y);
+          wait(2000).then(() => {
+            const element = document.elementFromPoint(action.screen_location.x, action.screen_location.y);
+            if (element instanceof HTMLInputElement) {
+              element.value = action.text_input;
+              element.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+          });
+        }
+        break;
+
+      case 'Scroll':
+        if (action.screen_location) {
+          moveMouseTo(action.screen_location.x, action.screen_location.y);
+          wait(2000).then(() => {
+            const direction = action.instruction.toLowerCase().includes('up') ? -1 : 1;
+            window.scrollBy(0, direction * 100);
+          });
+        }
+        break;
+
+      case 'Wait':
+        // Just wait for 5 seconds
+        wait(5000);
+        break;
+
+      case 'GoBack':
+        window.history.back();
+        break;
+
+      case 'Home':
+        console.log('Navigating to home page');
+        window.location.href = 'http://localhost:3000/';
+        break;
+
+      case 'ANSWER':
+        console.log('Task completed. Answer:', action.instruction);
+        // You might want to display this answer somewhere in your UI
+        break;
+
+      default:
+        console.log('Unknown action:', action.action, action.instruction);
     }
-    // Add more action types as needed
+  }, [setAgentCursor, updateMyPresenceFn]);
+
+  const handleSearch = useCallback((selectedItem: { title: string, description: string }) => {
+    setUserQuery(selectedItem.title);
   }, []);
 
   return (
@@ -182,22 +167,11 @@ function RoomContent({ children }: { children: ReactNode }) {
           gap: '10px',
         }}
       >
-        <input
-          type="text"
-          value={userQuery}
-          onChange={(e) => setUserQuery(e.target.value)}
-          placeholder="Enter your query"
-          style={{
-            padding: '5px',
-            width: '200px',
-          }}
+        <SpotLightSearch 
+          onSelect={handleSearch}
+          updateMyPresenceFn={updateMyPresenceFn}
+          simulateAgentAction={simulateAgentAction}
         />
-        <button 
-          onClick={runAgent} 
-          disabled={isAgentRunning || !userQuery.trim()}
-        >
-          {isAgentRunning ? 'Agent Running...' : 'Run Agent'}
-        </button>
       </div>
       {children}
     </div>

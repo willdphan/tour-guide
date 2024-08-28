@@ -587,7 +587,7 @@ class Step(BaseModel):
 async def run_agent(question: str, start_url: str):
     print(f"run_agent called with question: {question}, start_url: {start_url}")
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=False)
+        browser = await p.chromium.launch(headless=True)
         page = await browser.new_page()
         try:
             print(f"Navigating to start_url: {start_url}")

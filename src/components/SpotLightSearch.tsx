@@ -1,10 +1,16 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Command } from '@/components/ui/command'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Search } from 'lucide-react'
+
+interface SpotLightSearchProps {
+    onSelect: (selectedItem: { title: string; description: string }) => void;
+    updateMyPresenceFn: (presence: { cursor: { x: number; y: number }, isAgent: boolean }) => void;
+    simulateAgentAction: (action: any) => void;
+  }
 
 const mockSearchResults = [
   { id: 1, title: 'Arnold Circus Stool', description: 'Iconic stool design by Martino Gamper' },
@@ -17,7 +23,8 @@ const mockSearchResults = [
   { id: 8, title: 'Our Story', description: 'Learn about the heritage of Stools & Co.' },
 ]
 
-export default function Component() {
+const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPresenceFn, simulateAgentAction }) => {
+  const [agentCursor, setAgentCursor] = useState({ x: 0, y: 0 });
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
 
@@ -39,15 +46,75 @@ export default function Component() {
       result.description.toLowerCase().includes(search.toLowerCase())
   )
 
+  const handleKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
+    console.log('Key pressed:', e.key);
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      console.log('Enter key pressed, search query:', search);
+      try {
+        const currentUrl = window.location.href;
+        console.log(`Current URL: ${currentUrl}`);
+
+        const response = await fetch(`/api/run-agent`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'text/event-stream',
+          },
+          body: JSON.stringify({
+            question: search,
+            currentUrl: currentUrl
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+
+        while (true) {
+          const { value, done } = await reader!.read();
+          if (done) break;
+          
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n\n');
+          
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const jsonData = line.slice(6); // Remove 'data: ' prefix
+              if (jsonData === '[DONE]') {
+                console.log('Stream completed');
+                break;
+              }
+              try {
+                const parsedData = JSON.parse(jsonData);
+                console.log('Received data:', parsedData);
+                
+                // Simulate the agent's action
+                simulateAgentAction(parsedData);
+              } catch (error) {
+                console.error('Error parsing JSON:', error);
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching search results:', error);
+      }
+    }
+  }
+
   return (
     <>
       <Button
         variant="ghost"
-        className="relative w-full justify-start text-base text-black sm:pr-12 md:w-64 lg:w-80 font-serif"
+        className="hidden relative w-full justify-start text-base text-black sm:pr-12 md:w-64 lg:w-80 font-serif"
         onClick={() => setOpen(true)}
       >
-        <Search className="mr-2 h-4 w-4 shrink-0" />
-        <span className="text-gray-500">Search stools, hooks, and more...</span>
+        {/* <Search className="mr-2 h-4 w-4 shrink-0" /> */}
+        {/* <span className="text-gray-500">Search stools, hooks, and more...</span> */}
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="overflow-hidden p-0 bg-[#f5f0e8] border border-[#e0d9c7] shadow-lg max-w-2xl">
@@ -58,6 +125,7 @@ export default function Component() {
                 className="flex h-11 w-full rounded-md bg-transparent py-3 text-base outline-none placeholder:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50 font-serif"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={handleKeyDown}
                 placeholder="Search Stools & Co. products..."
               />
             </div>
@@ -69,6 +137,7 @@ export default function Component() {
                   onClick={() => {
                     console.log(`Selected: ${result.title}`)
                     setOpen(false)
+                    onSelect(result)
                   }}
                 >
                   <div className="font-medium text-black">{result.title}</div>
@@ -87,3 +156,5 @@ export default function Component() {
     </>
   )
 }
+
+export default SpotLightSearch
