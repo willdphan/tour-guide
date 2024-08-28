@@ -354,7 +354,7 @@ custom_prompt = ChatPromptTemplate.from_messages([
 
 # Replace the existing prompt with the custom one
 prompt = custom_prompt
-llm = ChatOpenAI(model="gpt-4-turbo-2024-04-09", max_tokens=4096)
+llm = ChatOpenAI(model="gpt-4o-mini", max_tokens=4096)
 agent = annotate | RunnablePassthrough.assign(
     # | is used to chain operations together in order
     # StrOutputParser() parses into string, parse processes stirng output into structured format.
@@ -484,7 +484,7 @@ def upsert_to_pinecone(file_path: str, file_content: str):
     embedding = create_embedding(file_content)
     index.upsert(vectors=[(file_path, embedding, {"content": file_content})])
 
-def query_pinecone(query: str, top_k: int = 5):
+def query_pinecone(query: str, top_k: int = 3):
     query_embedding = create_embedding(query)
     # Print the query and its embedding
     print(f"Query: {query}")
