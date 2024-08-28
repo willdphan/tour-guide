@@ -1,12 +1,13 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ReactNode } from "react";
 import {
   LiveblocksProvider,
   RoomProvider,
   ClientSideSuspense,
 } from "@liveblocks/react/suspense";
-import { useMyPresence, useOthers } from "@liveblocks/react";
+import { useMyPresence, useOthers, useSelf, useUpdateMyPresence } from "@liveblocks/react";
+import { LiveObject } from "@liveblocks/client";
 
 function Cursor({ x, y, color }: { x: number; y: number; color: string }) {
   return (
@@ -39,11 +40,30 @@ function Cursor({ x, y, color }: { x: number; y: number; color: string }) {
 }
 
 function RoomContent({ children }: { children: ReactNode }) {
-  const [apiData, setApiData] = useState<any[]>([]);
   const [myPresence, updateMyPresence] = useMyPresence();
+  const updateMyPresenceFn = useUpdateMyPresence();
   const others = useOthers();
+  const self = useSelf();
+  const myId = self?.id;
 
-  const fetchData = async () => {
+  const [agentCursor, setAgentCursor] = useState({ x: 0, y: 0 });
+  const [isAgentRunning, setIsAgentRunning] = useState(false);
+
+  useEffect(() => {
+    const handleMouseMove = (event: MouseEvent) => {
+      updateMyPresence({
+        cursor: { x: event.clientX, y: event.clientY },
+      });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, [updateMyPresence]);
+
+  const runAgent = useCallback(async () => {
+    if (isAgentRunning) return;
+    setIsAgentRunning(true);
+
     try {
       const response = await fetch('http://localhost:8000/api/run-agent/?question=Go%20to%20the%20hookalotto%20page%20and%20press%20+Add', {
         method: 'GET',
@@ -76,15 +96,19 @@ function RoomContent({ children }: { children: ReactNode }) {
             try {
               const parsedData = JSON.parse(jsonData);
               console.log('Received data:', parsedData);
-              setApiData(prevData => [...prevData, parsedData]);
               
-              // Update cursor position if screen_location is available
               if (parsedData.screen_location) {
                 const { x, y } = parsedData.screen_location;
-                console.log(`Updating cursor position to: (${x}, ${y})`);
-                updateMyPresence({
+                console.log(`Updating agent cursor position to: (${x}, ${y})`);
+                setAgentCursor({ x, y });
+                
+                updateMyPresenceFn({
                   cursor: { x, y },
+                  isAgent: true,
                 });
+
+                // Simulate the agent's action
+                simulateAgentAction(parsedData);
               }
             } catch (error) {
               console.error('Error parsing JSON:', error);
@@ -94,48 +118,61 @@ function RoomContent({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error('Error fetching data:', error);
+    } finally {
+      setIsAgentRunning(false);
     }
-  };
+  }, [updateMyPresenceFn, isAgentRunning]);
 
-  // Add mouse move event listener to update cursor position
-  useEffect(() => {
-    const handleMouseMove = (event: MouseEvent) => {
-      updateMyPresence({
-        cursor: { x: event.clientX, y: event.clientY },
+  const simulateAgentAction = useCallback((action: any) => {
+    if (action.action === 'Click') {
+      const element = document.elementFromPoint(action.screen_location.x, action.screen_location.y);
+      if (element) {
+        (element as HTMLElement).click();
+      }
+    } else if (action.action === 'Type') {
+      const element = document.elementFromPoint(action.screen_location.x, action.screen_location.y);
+      if (element instanceof HTMLInputElement) {
+        element.value = action.text_input;
+        element.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    } else if (action.action === 'Scroll') {
+      window.scrollTo({
+        top: action.screen_location.y,
+        behavior: 'smooth'
       });
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, [updateMyPresence]);
+    }
+    // Add more action types as needed
+  }, []);
 
   return (
     <div style={{ position: "relative", width: "100%", height: "100vh", overflow: "hidden" }}>
-      {myPresence.cursor && (
-        <Cursor x={myPresence.cursor.x} y={myPresence.cursor.y} color="#0000FF" />
-      )}
       {others.map(({ connectionId, presence }) => 
-        presence.cursor && (
+        presence.cursor && connectionId !== myId && (
           <Cursor 
             key={connectionId} 
             x={presence.cursor.x} 
             y={presence.cursor.y} 
-            color="#FF0000" 
+            color={presence.isAgent ? "#00FF00" : "#FF0000"} 
           />
         )
       )}
-      <button onClick={fetchData}>Run Agent</button>
-      <div>
-        {apiData.map((data, index) => (
-          <div key={index}>
-            <h3>Step {index + 1}</h3>
-            <p>Action: {data.action}</p>
-            <p>Instruction: {data.instruction}</p>
-            <p>Element: {data.element_description}</p>
-            <p>Coordinates: ({data.screen_location?.x}, {data.screen_location?.y})</p>
-          </div>
-        ))}
-      </div>
+      <Cursor 
+        x={agentCursor.x} 
+        y={agentCursor.y} 
+        color="#00FF00" 
+      />
+      <button 
+        onClick={runAgent} 
+        disabled={isAgentRunning}
+        style={{
+          position: 'absolute',
+          top: '10px',
+          left: '10px',
+          zIndex: 1000,
+        }}
+      >
+        {isAgentRunning ? 'Agent Running...' : 'Run Agent'}
+      </button>
       {children}
     </div>
   );
@@ -144,9 +181,14 @@ function RoomContent({ children }: { children: ReactNode }) {
 export function Room({ children }: { children: ReactNode }) {
   return (
     <LiveblocksProvider publicApiKey={"pk_dev_JHXXlhVbiyY12zGe6mVyVYyAZKm7leqR36yvH_1rY_0Cxxk25HAFapwtmrkUzZz8"}>
-      <RoomProvider id="my-room" initialPresence={{
-              cursor: null
-          }}>
+      <RoomProvider id="tour" initialStorage={{
+        // ✅ This is a client component, so everything works!
+        session: new LiveObject(),
+      }} initialPresence={{
+        cursorType: '',
+        cursor: null,
+        isAgent: false
+      }}>
         <ClientSideSuspense fallback={<div>Loading…</div>}>
           {() => <RoomContent>{children}</RoomContent>}
         </ClientSideSuspense>

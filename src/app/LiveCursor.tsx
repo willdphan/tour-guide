@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { useMyPresence, useOthers } from "@liveblocks/react";
+import { useMyPresence, useOthers, useSelf } from "@liveblocks/react";
 
 function Cursor({ x, y, color }: { x: number; y: number; color: string }) {
     return (
@@ -33,36 +33,42 @@ function Cursor({ x, y, color }: { x: number; y: number; color: string }) {
     );
   }
 
-export function LiveCursor() {
-  const [myPresence, updateMyPresence] = useMyPresence();
-  const others = useOthers();
+  export function LiveCursor() {
+    const [myPresence, updateMyPresence] = useMyPresence();
+    const others = useOthers();
+    const { id: myConnectionId } = useSelf();
 
-  useEffect(() => {
-    const handleMouseMove = (event: MouseEvent) => {
-      updateMyPresence({
-        cursor: { x: event.clientX, y: event.clientY },
-      });
-    };
+    useEffect(() => {
+      const handleMouseMove = (event: MouseEvent) => {
+        updateMyPresence({
+          cursor: { x: event.clientX, y: event.clientY },
+        });
+      };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, [updateMyPresence]);
+      window.addEventListener('mousemove', handleMouseMove);
+      return () => window.removeEventListener('mousemove', handleMouseMove);
+    }, [updateMyPresence]);
 
-  return (
-    <>
-      {myPresence.cursor && (
-        <Cursor x={myPresence.cursor.x} y={myPresence.cursor.y} color="#0000FF" />
-      )}
-      {others.map(({ connectionId, presence }) => 
-        presence.cursor && (
-          <Cursor 
-            key={connectionId} 
-            x={presence.cursor.x} 
-            y={presence.cursor.y} 
-            color="#FF0000" 
-          />
-        )
-      )}
-    </>
-  );
-}
+    console.log('My connection ID:', myConnectionId);
+    console.log('Others:', others);
+
+    return (
+      <>
+        {others
+          .filter((other) => other.connectionId !== 'tour' && other.connectionId !== myConnectionId)
+          .map((other) => {
+            if (other.presence.cursor) {
+              return (
+                <Cursor
+                  key={other.connectionId}
+                  x={other.presence.cursor.x}
+                  y={other.presence.cursor.y}
+                  color="blue"
+                />
+              );
+            }
+            return null;
+          })}
+      </>
+    );
+  }

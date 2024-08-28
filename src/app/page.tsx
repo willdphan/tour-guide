@@ -1,4 +1,3 @@
-
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from 'next/navigation';
@@ -6,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { products } from '@/data/products';
 import { Room } from "./Room";
 import { CollaborativeApp } from "./CollaborativeApp";
+import { LiveCursor } from "./LiveCursor";  // Add this import
 
 export default function Page() {
 

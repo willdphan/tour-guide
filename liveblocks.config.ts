@@ -8,6 +8,7 @@ declare global {
       cursorType: string;
       // Example, real-time cursor coordinates
       cursor: { x: number; y: number } | null;
+      isAgent?: boolean;
     };
 
     // The Storage tree for the room, for useMutation, useStorage, etc.
@@ -49,3 +50,8 @@ declare global {
 }
 
 export {};
+
+type Presence = {
+  cursor: { x: number; y: number } | null;
+  isAgent?: boolean;
+};

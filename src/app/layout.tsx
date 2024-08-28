@@ -31,17 +31,19 @@ export default function RootLayout({ children }: PropsWithChildren) {
   return (
     <html lang='en'>
       <body className={cn('font-sans antialiased', montserrat.variable, montserratAlternates.variable)}>
-        <Room>
+    
           <div className='m-auto flex h-full max-w-[1440px] flex-col'>
             <main className='relative flex-1'>
               <div className='relative h-full'>
+              <Room>
                 {children}
+                </Room>
               </div>
             </main>
           </div>
           <Toaster />
           <Analytics />
-        </Room>
+       
       </body>
     </html>
   );

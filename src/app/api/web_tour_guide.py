@@ -586,7 +586,7 @@ class Step(BaseModel):
 
 async def run_agent(question: str):
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=False)
+        browser = await p.chromium.launch(headless=True)
         page = await browser.new_page()
         try:
             await page.goto("http://localhost:3000/", timeout=60000)
