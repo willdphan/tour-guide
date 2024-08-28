@@ -50,6 +50,8 @@ function RoomContent({ children }: { children: ReactNode }) {
   const [agentCursor, setAgentCursor] = useState({ x: 0, y: 0 });
   const [isAgentRunning, setIsAgentRunning] = useState(false);
   const [userQuery, setUserQuery] = useState('');
+  const [userCursorColor, setUserCursorColor] = useState("#FF0000");
+  const [agentCursorColor, setAgentCursorColor] = useState("#00FF00");
 
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
@@ -140,6 +142,22 @@ function RoomContent({ children }: { children: ReactNode }) {
     setUserQuery(selectedItem.title);
   }, []);
 
+  const updateCursorColors = useCallback((newUserColor: string, newAgentColor: string) => {
+    setUserCursorColor(newUserColor);
+    setAgentCursorColor(newAgentColor);
+  }, []);
+
+  useEffect(() => {
+    // Change colors after a short delay to ensure it's not overwritten
+    const timer = setTimeout(() => {
+      setUserCursorColor("#0000FF"); // Change to blue
+      setAgentCursorColor("#FFA500"); // Change to orange
+      console.log("Cursor colors updated:", userCursorColor, agentCursorColor);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <div style={{ position: "relative", width: "100%", height: "100vh", overflow: "hidden" }}>
       {others.map(({ connectionId, presence }) => 
@@ -148,14 +166,14 @@ function RoomContent({ children }: { children: ReactNode }) {
             key={connectionId} 
             x={presence.cursor.x} 
             y={presence.cursor.y} 
-            color={presence.isAgent ? "#00FF00" : "#FF0000"} 
+            color={presence.isAgent ? agentCursorColor : userCursorColor} 
           />
         )
       )}
       <Cursor 
         x={agentCursor.x} 
         y={agentCursor.y} 
-        color="#00FF00" 
+        color={agentCursorColor} 
       />
       <div
         style={{

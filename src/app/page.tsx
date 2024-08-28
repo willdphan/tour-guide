@@ -25,7 +25,7 @@ const products: Product[] = [
   { id: 2, name: "Arnoldino Stool", price: 30, weight: "500g",servings: "22 servings",image: "/test.png", slug: "arnoldino-stool" },
   { id: 3, name: "Hookalotti", price: 40, weight: "500g",servings: "22 servings",image: "/test.png", slug: "hookalotti" },
   // Add more products as needed
-  { id: 4, name: "Hookalotti", price: 40, weight: "500g",servings: "22 servings",image: "/test.png", slug: "hookalotti" },
+  { id: 4, name: "Chicken", price: 40, weight: "500g",servings: "22 servings",image: "/test.png", slug: "hookalotti" },
   // Add more products as needed
   { id: 5, name: "Hookalotti", price: 40, weight: "500g", servings: "22 servings",image: "/test.png", slug: "hookalotti" },
   // Add more products as needed
@@ -38,9 +38,9 @@ const products: Product[] = [
           <Link href="#" className="text-xs font-semibold" prefetch={false}>
             Stools & Co
           </Link>
-          <Link href="#" className="text-sm" prefetch={false}>
+          {/* <Link href="#" className="text-sm" prefetch={false}>
             Products
-          </Link>
+          </Link> */}
         </nav>
         <nav className="flex items-center space-x-2">
           <Link href="#" className="text-sm" prefetch={false}>
