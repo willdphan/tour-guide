@@ -6,6 +6,8 @@ import { Montserrat, Montserrat_Alternates } from 'next/font/google';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/utils/cn';
 import dynamic from 'next/dynamic';
+import { Room } from './Room';
+
 
 import '@/styles/globals.css';
 
@@ -29,16 +31,17 @@ export default function RootLayout({ children }: PropsWithChildren) {
   return (
     <html lang='en'>
       <body className={cn('font-sans antialiased', montserrat.variable, montserratAlternates.variable)}>
-        <div className='m-auto flex h-full max-w-[1440px] flex-col'>
-          <main className='relative flex-1'>
-            <div className='relative h-full'>
-              {children}
-          
-            </div>
-          </main>
-        </div>
-        <Toaster />
-        <Analytics />
+        <Room>
+          <div className='m-auto flex h-full max-w-[1440px] flex-col'>
+            <main className='relative flex-1'>
+              <div className='relative h-full'>
+                {children}
+              </div>
+            </main>
+          </div>
+          <Toaster />
+          <Analytics />
+        </Room>
       </body>
     </html>
   );
