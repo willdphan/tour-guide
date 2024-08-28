@@ -48,6 +48,7 @@ function RoomContent({ children }: { children: ReactNode }) {
 
   const [agentCursor, setAgentCursor] = useState({ x: 0, y: 0 });
   const [isAgentRunning, setIsAgentRunning] = useState(false);
+  const [userQuery, setUserQuery] = useState('');
 
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
@@ -61,15 +62,23 @@ function RoomContent({ children }: { children: ReactNode }) {
   }, [updateMyPresence]);
 
   const runAgent = useCallback(async () => {
-    if (isAgentRunning) return;
+    if (isAgentRunning || !userQuery.trim()) return;
     setIsAgentRunning(true);
 
     try {
-      const response = await fetch('http://localhost:8000/api/run-agent/?question=Go%20to%20the%20hookalotto%20page%20and%20press%20+Add', {
-        method: 'GET',
+      const currentUrl = window.location.href;
+      console.log(`Current URL: ${currentUrl}`); // Debug log
+
+      const response = await fetch(`/api/run-agent`, {
+        method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           'Accept': 'text/event-stream',
         },
+        body: JSON.stringify({
+          question: userQuery,
+          currentUrl: currentUrl
+        })
       });
 
       if (!response.ok) {
@@ -121,7 +130,7 @@ function RoomContent({ children }: { children: ReactNode }) {
     } finally {
       setIsAgentRunning(false);
     }
-  }, [updateMyPresenceFn, isAgentRunning]);
+  }, [updateMyPresenceFn, isAgentRunning, userQuery]);
 
   const simulateAgentAction = useCallback((action: any) => {
     if (action.action === 'Click') {
@@ -140,6 +149,8 @@ function RoomContent({ children }: { children: ReactNode }) {
         top: action.screen_location.y,
         behavior: 'smooth'
       });
+    } else if (action.action === 'Back') {
+      window.history.back();
     }
     // Add more action types as needed
   }, []);
@@ -161,18 +172,33 @@ function RoomContent({ children }: { children: ReactNode }) {
         y={agentCursor.y} 
         color="#00FF00" 
       />
-      <button 
-        onClick={runAgent} 
-        disabled={isAgentRunning}
+      <div
         style={{
           position: 'absolute',
           top: '10px',
           left: '10px',
           zIndex: 1000,
+          display: 'flex',
+          gap: '10px',
         }}
       >
-        {isAgentRunning ? 'Agent Running...' : 'Run Agent'}
-      </button>
+        <input
+          type="text"
+          value={userQuery}
+          onChange={(e) => setUserQuery(e.target.value)}
+          placeholder="Enter your query"
+          style={{
+            padding: '5px',
+            width: '200px',
+          }}
+        />
+        <button 
+          onClick={runAgent} 
+          disabled={isAgentRunning || !userQuery.trim()}
+        >
+          {isAgentRunning ? 'Agent Running...' : 'Run Agent'}
+        </button>
+      </div>
       {children}
     </div>
   );

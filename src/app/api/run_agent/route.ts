@@ -1,36 +1,35 @@
-import { NextResponse } from 'next/server';
-import { runAgent } from '../pythonBridge';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const question = searchParams.get('question');
+export async function POST(request: NextRequest) {
+  const body = await request.json();
+  const { question, currentUrl } = body;
 
-  if (!question) {
-    return NextResponse.json({ error: 'Question is required' }, { status: 400 });
+  console.log(`Next.js API: question = ${question}, currentUrl = ${currentUrl}`);
+
+  if (!question || !currentUrl) {
+    return NextResponse.json({ error: 'Question and currentUrl are required' }, { status: 400 });
   }
 
-  const stream = new ReadableStream({
-    async start(controller) {
-      const encoder = new TextEncoder();
+  const apiUrl = `http://127.0.0.1:8000/api/run-agent/`;
 
-      try {
-        const agentIterator = await runAgent(question);
-        
-        for await (const step of agentIterator) {
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify(step)}\n\n`));
-        }
+  console.log(`Calling FastAPI URL: ${apiUrl}`);
 
-        controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-      } catch (error) {
-        console.error('Error in agent execution:', error);
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: 'Agent execution failed' })}\n\n`));
-      } finally {
-        controller.close();
-      }
+  const response = await fetch(apiUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'text/event-stream',
     },
+    body: JSON.stringify({ question, currentUrl }),
   });
 
-  return new NextResponse(stream, {
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('FastAPI error:', errorText);
+    return NextResponse.json({ error: 'FastAPI error', details: errorText }, { status: response.status });
+  }
+
+  return new NextResponse(response.body, {
     headers: {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',

@@ -5,6 +5,7 @@ import traceback
 
 from fastapi.middleware.cors import CORSMiddleware
 
+
 # Add the project root to the Python path
 project_root = Path(__file__).resolve().parents[3]
 sys.path.append(str(project_root))
@@ -16,6 +17,7 @@ from typing import List, Optional
 import asyncio
 from dotenv import load_dotenv
 import json
+from fastapi import FastAPI, Query
 
 # Import the run_agent function from web_tour_guide.py
 from src.app.api.web_tour_guide import run_agent as web_tour_guide_run_agent
@@ -34,11 +36,19 @@ app.add_middleware(
     allow_headers=["*"],  # Allow all headers
 )
 
-@app.get("/api/run-agent/")
-async def api_run_agent(question: str):
+class AgentRequest(BaseModel):
+    question: str
+    currentUrl: str
+
+@app.post("/api/run-agent/")
+async def api_run_agent(request: AgentRequest):
+    print(f"Received question: {request.question}")
+    print(f"Received currentUrl: {request.currentUrl}")
+    
     async def event_generator():
         try:
-            async for step in web_tour_guide_run_agent(question):
+            print(f"Starting web_tour_guide_run_agent with start_url: {request.currentUrl}")
+            async for step in web_tour_guide_run_agent(request.question, request.currentUrl):
                 yield f"data: {json.dumps(step)}\n\n"
             yield "data: [DONE]\n\n"
         except Exception as e:

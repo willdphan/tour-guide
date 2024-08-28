@@ -37,6 +37,7 @@ function Cursor({ x, y, color }: { x: number; y: number; color: string }) {
     const [myPresence, updateMyPresence] = useMyPresence();
     const others = useOthers();
     const { id: myConnectionId } = useSelf();
+    const [agentCursor, setAgentCursor] = useState<{ x: number; y: number } | null>(null);
 
     useEffect(() => {
       const handleMouseMove = (event: MouseEvent) => {
@@ -49,13 +50,19 @@ function Cursor({ x, y, color }: { x: number; y: number; color: string }) {
       return () => window.removeEventListener('mousemove', handleMouseMove);
     }, [updateMyPresence]);
 
-    console.log('My connection ID:', myConnectionId);
-    console.log('Others:', others);
+    useEffect(() => {
+      const agentUser = others.find(other => other.presence.isAgent);
+      if (agentUser && agentUser.presence.cursor) {
+        setAgentCursor(agentUser.presence.cursor);
+      } else {
+        setAgentCursor(null);
+      }
+    }, [others]);
 
     return (
       <>
         {others
-          .filter((other) => other.connectionId !== 'tour' && other.connectionId !== myConnectionId)
+          .filter((other) => other.connectionId !== 'tour' && other.connectionId !== myConnectionId && !other.presence.isAgent)
           .map((other) => {
             if (other.presence.cursor) {
               return (
@@ -69,6 +76,13 @@ function Cursor({ x, y, color }: { x: number; y: number; color: string }) {
             }
             return null;
           })}
+        {agentCursor && (
+          <Cursor
+            x={agentCursor.x}
+            y={agentCursor.y}
+            color="red"
+          />
+        )}
       </>
     );
   }

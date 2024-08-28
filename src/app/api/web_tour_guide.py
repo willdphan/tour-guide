@@ -584,14 +584,16 @@ class Step(BaseModel):
     hover_before_action: bool = False
     text_input: Optional[str] = None
 
-async def run_agent(question: str):
+async def run_agent(question: str, start_url: str):
+    print(f"run_agent called with question: {question}, start_url: {start_url}")
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
+        browser = await p.chromium.launch(headless=False)
         page = await browser.new_page()
         try:
-            await page.goto("http://localhost:3000/", timeout=60000)
-            logger.debug(f"Navigated to http://localhost:3000/")
-
+            print(f"Navigating to start_url: {start_url}")
+            await page.goto(start_url, timeout=60000)
+            logger.debug(f"Navigated to {start_url}")
+            
             # Query Pinecone for relevant information
             pinecone_results = query_pinecone(question)
             relevant_info = "\n".join([result['metadata']['content'] for result in pinecone_results['matches']])
