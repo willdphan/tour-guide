@@ -7,7 +7,7 @@ import { Montserrat, Montserrat_Alternates } from 'next/font/google';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/utils/cn';
 
-import { Room } from './Room';
+import { Room } from 'src/app/Room';
 
 import '@/styles/globals.css';
 
