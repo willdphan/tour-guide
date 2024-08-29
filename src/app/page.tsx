@@ -3,9 +3,8 @@ import Link from "next/link";
 import { redirect } from 'next/navigation';
 
 import { products } from '@/data/products';
-import { Room } from "./Room";
+
 import { CollaborativeApp } from "./CollaborativeApp";
-import { LiveCursor } from "./LiveCursor";  // Add this import
 
 export default function Page() {
 
@@ -25,7 +24,7 @@ const products: Product[] = [
   { id: 2, name: "Arnoldino Stool", price: 30, weight: "500g",servings: "22 servings",image: "/test.png", slug: "arnoldino-stool" },
   { id: 3, name: "Hookalotti", price: 40, weight: "500g",servings: "22 servings",image: "/test.png", slug: "hookalotti" },
   // Add more products as needed
-  { id: 4, name: "Chicken", price: 40, weight: "500g",servings: "22 servings",image: "/test.png", slug: "hookalotti" },
+  { id: 4, name: "Chicken", price: 40, weight: "500g",servings: "22 servings",image: "/test.png", slug: "Chicken" },
   // Add more products as needed
   { id: 5, name: "Hookalotti", price: 40, weight: "500g", servings: "22 servings",image: "/test.png", slug: "hookalotti" },
   // Add more products as needed
@@ -72,12 +71,13 @@ const products: Product[] = [
                     alt={product.name}
                     layout="fill"
                     objectFit="cover" />
-                  <div className="absolute bottom-0 left-0 p-4 text-black ">
+                  <div className="absolute bottom-0 left-0 p-4 text-black bg-white bg-opacity-75 w-full">
                     <h3 className="text-xl font-semibold pb-1">{product.name}</h3>
-                    <div className='flex space-x-2'> <p className="text-md">${product.price}</p>
+                    <div className='flex space-x-2'>
+                      <p className="text-md">${product.price}</p>
                       <span>|</span>
-                      <p className="text-md">${product.servings}</p></div>
-
+                      <p className="text-md">{product.servings}</p>
+                    </div>
                   </div>
                 </div>
               </Link>

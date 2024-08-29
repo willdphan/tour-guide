@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useEffect,useState } from 'react';
+
 import { useMyPresence, useOthers, useSelf } from "@liveblocks/react";
 
 function Cursor({ x, y, color }: { x: number; y: number; color: string }) {

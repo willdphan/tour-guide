@@ -671,7 +671,7 @@ async def run_agent(question: str, start_url: str):
                         instruction = "Go back to the previous page."
                         await page.go_back()
                     elif action == "Home":
-                        instruction = "Go back to the Stools & Co home page."
+                        instruction = "Go back to home page."
                         await page.goto("http://localhost:3000/")
                     elif action.startswith("ANSWER"):
                         instruction = f"Task completed. Answer: {action_input[0]}"

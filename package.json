@@ -38,6 +38,7 @@
     "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/ssr": "0.1.0",
     "@supabase/supabase-js": "^2.45.2",
+    "@types/glob": "^8.1.0",
     "@types/recharts": "^1.8.29",
     "@vercel/analytics": "1.1.1",
     "axios": "^1.7.2",
@@ -47,6 +48,7 @@
     "cmdk": "1.0.0",
     "cors": "^2.8.5",
     "framer-motion": "^11.3.21",
+    "glob": "^11.0.0",
     "lodash": "^4.17.21",
     "lucide-react": "0.309.0",
     "next": "^14.2.6",
@@ -70,8 +72,9 @@
     "@testing-library/jest-dom": "^6.5.0",
     "@testing-library/react": "^16.0.0",
     "@types/babel__traverse": "^7.20.6",
+    "@types/js-yaml": "^4.0.9",
     "@types/lodash": "^4.17.7",
-    "@types/node": "^22.5.0",
+    "@types/node": "^22.5.1",
     "@types/react": "^18.3.4",
     "@types/react-dom": "^18.3.0",
     "autoprefixer": "10.4.14",
@@ -88,6 +91,6 @@
     "prettier-plugin-tailwindcss": "0.3.0",
     "supabase": "1.145.4",
     "ts-node": "^10.9.2",
-    "typescript": "^5.3.3"
+    "typescript": "^5.5.4"
   }
 }

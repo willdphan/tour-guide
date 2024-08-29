@@ -2,7 +2,12 @@
 
 import { generateMetadataFile } from './sdk';
 
-// Use the current directory as the project root
-const projectRoot = process.cwd();
+async function main() {
+  try {
+    await generateMetadataFile(process.cwd());
+  } catch (error) {
+    console.error('An error occurred:', error);
+  }
+}
 
-generateMetadataFile(projectRoot);
+main();

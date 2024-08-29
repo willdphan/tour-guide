@@ -1,14 +1,15 @@
 "use client";
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback,useEffect, useState } from 'react';
 import { ReactNode } from "react";
+
+import SpotLightSearch from '@/components/SpotLightSearch';
+import { LiveObject } from "@liveblocks/client";
+import { useMyPresence, useOthers, useSelf, useUpdateMyPresence } from "@liveblocks/react";
 import {
+  ClientSideSuspense,
   LiveblocksProvider,
   RoomProvider,
-  ClientSideSuspense,
 } from "@liveblocks/react/suspense";
-import { useMyPresence, useOthers, useSelf, useUpdateMyPresence } from "@liveblocks/react";
-import { LiveObject } from "@liveblocks/client";
-import SpotLightSearch from '@/components/SpotLightSearch';
 
 function Cursor({ x, y, color }: { x: number; y: number; color: string }) {
   return (
@@ -108,8 +109,27 @@ function RoomContent({ children }: { children: ReactNode }) {
         if (action.screen_location) {
           moveMouseTo(action.screen_location.x, action.screen_location.y);
           wait(2000).then(() => {
-            const direction = action.instruction.toLowerCase().includes('up') ? -1 : 1;
-            window.scrollBy(0, direction * 100);
+            const instruction = action.instruction.toLowerCase();
+            let scrollX = 0;
+            let scrollY = 0;
+
+            if (instruction.includes('up')) {
+              scrollY = -100;
+            } else if (instruction.includes('down')) {
+              scrollY = 100;
+            } else if (instruction.includes('left')) {
+              scrollX = -100;
+            } else if (instruction.includes('right')) {
+              scrollX = 100;
+            }
+
+            // Find the scrollable container
+            const scrollableContainer = document.querySelector('.overflow-x-auto');
+            if (scrollableContainer) {
+              scrollableContainer.scrollBy(scrollX, scrollY);
+            } else {
+              window.scrollBy(scrollX, scrollY);
+            }
           });
         }
         break;

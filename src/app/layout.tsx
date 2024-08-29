@@ -1,13 +1,13 @@
 'use client'
 
 import { PropsWithChildren } from 'react';
+import dynamic from 'next/dynamic';
 import { Montserrat, Montserrat_Alternates } from 'next/font/google';
 
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/utils/cn';
-import dynamic from 'next/dynamic';
-import { Room } from './Room';
 
+import { Room } from './Room';
 
 import '@/styles/globals.css';
 

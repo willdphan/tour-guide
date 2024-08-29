@@ -124,30 +124,38 @@ async def scroll(state: AgentState):
     # unpack scroll arguments into target and direction
     target, direction = scroll_args
 
-    # check if the scroll target is the entire window
-    if target.upper() == "WINDOW":
-        # set scroll amount for window scrolling
-        scroll_amount = 500
-        # determine scroll direction based on 'up' or 'down'
-        scroll_direction = -scroll_amount if direction.lower() == "up" else scroll_amount
-        # execute javascript to scroll the window
-        await page.evaluate(f"window.scrollBy(0, {scroll_direction})")
-        return f"Scrolled {direction} in window", window.innerWidth / 2, scroll_direction
+    # set scroll amount
+    scroll_amount = 500
+
+    # determine scroll direction and axis
+    if direction.lower() == "up":
+        scroll_x, scroll_y = 0, -scroll_amount
+    elif direction.lower() == "down":
+        scroll_x, scroll_y = 0, scroll_amount
+    elif direction.lower() == "left":
+        scroll_x, scroll_y = -scroll_amount, 0
+    elif direction.lower() == "right":
+        scroll_x, scroll_y = scroll_amount, 0
     else:
-        # set scroll amount for element scrolling
-        scroll_amount = 200
+        return "Invalid scroll direction."
+
+    if target.upper() == "WINDOW":
+        # execute javascript to scroll the window
+        await page.evaluate(f"window.scrollBy({scroll_x}, {scroll_y})")
+        # Get the viewport size
+        viewport_size = await page.evaluate("({width: window.innerWidth, height: window.innerHeight})")
+        return f"Scrolled {direction} in window", viewport_size['width'] / 2, viewport_size['height'] / 2
+    else:
         # convert target to integer for bounding box lookup
         target_id = int(target)
         # get bounding box for the target element
         bbox = state["bboxes"][target_id]
         # extract x and y coordinates from bounding box
         x, y = bbox["x"], bbox["y"]
-        # determine scroll direction based on 'up' or 'down'
-        scroll_direction = -scroll_amount if direction.lower() == "up" else scroll_amount
         # move mouse to the target element
         await page.mouse.move(x, y)
         # perform scroll action on the element
-        await page.mouse.wheel(0, scroll_direction)
+        await page.mouse.wheel(scroll_x, scroll_y)
         return f"Scrolled {direction} in element", x, y
 
 async def wait(state: AgentState):
@@ -286,7 +294,7 @@ def update_scratchpad(state: AgentState):
 
 # Set up the agent
 prompt = hub.pull("wfh/web-voyager")
-llm = ChatOpenAI(model="gpt-4-turbo-2024-04-09", max_tokens=4096)
+llm = ChatOpenAI(model="gpt-4o-mini", max_tokens=4096)
 agent = annotate | RunnablePassthrough.assign(
     # | is used to chain operations together in order
     # StrOutputParser() parses into string, parse processes stirng output into structured format.
@@ -398,7 +406,8 @@ async def run_agent():
         questions = [
             # "Could you explain the WebVoyager paper (on arxiv)?",
             # "Please explain the today's XKCD comic for me. Why is it funny?",
-            "What are the latest blog posts from langchain?",
+            # "What are the latest blog posts from langchain?",
+            "Look for the 10th result of the word fish on google.",
             # "Could you check google maps to see when i should leave to get to SFO by 7 o'clock? starting from SF downtown.",
         ]
 

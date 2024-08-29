@@ -1,5 +1,5 @@
-import { PythonShell } from 'python-shell';
 import path from 'path';
+import { PythonShell } from 'python-shell';
 
 export async function runAgent(question: string): Promise<AsyncIterableIterator<any>> {
   console.log('runAgent called with question:', question);

@@ -9,6 +9,7 @@ import { PricingCard } from '@/features/pricing/components/price-card';
 import { getProducts } from '@/features/pricing/controllers/get-products';
 import { Price, ProductWithPrices } from '@/features/pricing/types';
 
+// Import the necessary types
 export default async function AccountPage() {
   const [session, subscription, products] = await Promise.all([getSession(), getSubscription(), getProducts()]);
 
@@ -21,12 +22,16 @@ export default async function AccountPage() {
 
   if (subscription) {
     for (const product of products) {
-      for (const price of product.prices) {
-        if (price.id === subscription.price_id) {
-          userProduct = product;
-          userPrice = price;
+      if (product.prices) { // Add a check to ensure prices exists
+        for (const price of product.prices) {
+          if (price.id === subscription.price_id) {
+            userProduct = product;
+            userPrice = price;
+            break;
+          }
         }
       }
+      if (userProduct) break;
     }
   }
 
