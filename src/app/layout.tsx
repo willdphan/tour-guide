@@ -6,10 +6,7 @@ import { Montserrat, Montserrat_Alternates } from 'next/font/google';
 
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/utils/cn';
-
-// Update this line
-import { Room } from '../../src/app/Room';
-
+import { Room } from '@/app/Room';
 import '@/styles/globals.css';
 
 const Analytics = dynamic(() => 
