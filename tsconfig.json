@@ -3,6 +3,7 @@
     "target": "es5",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
+    "types": ["node", "react"],
     "skipLibCheck": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
@@ -13,7 +14,6 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
-    "types": ["node", "react"],
     "typeRoots": ["./node_modules/@types"],
     "incremental": true,
     
@@ -29,6 +29,6 @@
       "@/components/*": ["src/components/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/**/*.ts", "src/**/*.tsx", "src/*"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/**/*.ts", "src/**/*.tsx", "src/*", ],
   "exclude": ["node_modules"]
 }
