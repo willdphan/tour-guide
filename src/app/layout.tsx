@@ -8,7 +8,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/utils/cn';
 
 // Update this line
-import { Room } from '@/app/Room';
+import { Room } from './Room';
 
 import '@/styles/globals.css';
 
