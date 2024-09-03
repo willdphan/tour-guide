@@ -1,4 +1,5 @@
-// npx ts-node src/app/sdk/run_sdk.tsx
+// npx ts-node src/app/sdk/run_sdk.
+// npx tsx /Users/williamphan/Desktop/tourguide/src/app/sdk/run_sdk.ts
 
 import { generateMetadataFile } from './sdk';
 

@@ -58,6 +58,11 @@ class AgentState(TypedDict):
     scratchpad: List[BaseMessage] # acts as the memory for the agent
     observation: str
     current_url: str
+    action_history: List[dict]  # New field to store action history
+    page_height: int  # Full page height
+    viewport_height: int  # Visible viewport height
+    html_content: str
+    text_content: str
 
 from pydantic import BaseModel
 
@@ -145,36 +150,49 @@ async def scroll(state: AgentState):
     page = state["page"]
     scroll_args = state["prediction"]["args"]
     if scroll_args is None or len(scroll_args) != 2:
-        return "Failed to scroll due to incorrect arguments."
+        return "Failed to scroll due to incorrect arguments. Please specify target and direction."
 
-    # unpack scroll arguments into target and direction
     target, direction = scroll_args
 
-    # check if the scroll target is the entire window
     if target.upper() == "WINDOW":
-        # set scroll amount for window scrolling
-        scroll_amount = 500
-        # determine scroll direction based on 'up' or 'down'
-        scroll_direction = -scroll_amount if direction.lower() == "up" else scroll_amount
-        # execute javascript to scroll the window
-        await page.evaluate(f"window.scrollBy(0, {scroll_direction})")
+        vertical_scroll_amount = 500
+        horizontal_scroll_amount = 300
+        if direction.lower() == "up":
+            scroll_x, scroll_y = 0, -vertical_scroll_amount
+        elif direction.lower() == "down":
+            scroll_x, scroll_y = 0, vertical_scroll_amount
+        elif direction.lower() == "left":
+            scroll_x, scroll_y = -horizontal_scroll_amount, 0
+        elif direction.lower() == "right":
+            scroll_x, scroll_y = horizontal_scroll_amount, 0
+        else:
+            return f"Invalid scroll direction: {direction}"
+        await page.evaluate(f"window.scrollBy({scroll_x}, {scroll_y})")
     else:
-        # set scroll amount for element scrolling
-        scroll_amount = 200
-        # convert target to integer for bounding box lookup
-        target_id = int(target)
-        # get bounding box for the target element
-        bbox = state["bboxes"][target_id]
-        # extract x and y coordinates from bounding box
-        x, y = bbox["x"], bbox["y"]
-        # determine scroll direction based on 'up' or 'down'
-        scroll_direction = -scroll_amount if direction.lower() == "up" else scroll_amount
-        # move mouse to the target element
-        await page.mouse.move(x, y)
-        # perform scroll action on the element
-        await page.mouse.wheel(0, scroll_direction)
+        try:
+            target_id = int(target)
+            bbox = state["bboxes"][target_id]
+            x, y = bbox["x"], bbox["y"]
+            vertical_scroll_amount = 200
+            horizontal_scroll_amount = 100
+            if direction.lower() == "up":
+                delta_x, delta_y = 0, -vertical_scroll_amount
+            elif direction.lower() == "down":
+                delta_x, delta_y = 0, vertical_scroll_amount
+            elif direction.lower() == "left":
+                delta_x, delta_y = -horizontal_scroll_amount, 0
+            elif direction.lower() == "right":
+                delta_x, delta_y = horizontal_scroll_amount, 0
+            else:
+                return f"Invalid scroll direction: {direction}"
+            await page.mouse.move(x, y)
+            await page.mouse.wheel(delta_x, delta_y)
+        except ValueError:
+            return f"Invalid target for scrolling: {target}"
+        except IndexError:
+            return f"Invalid bounding box ID: {target}"
 
-    return f"Scrolled {direction} in {'window' if target.upper() == 'WINDOW' else 'element'}"
+    return f"Scrolled {direction} in {'window' if target.upper() == 'WINDOW' else f'element {target}'}"
 
 async def wait(state: AgentState):
     sleep_time = 5
@@ -202,7 +220,7 @@ async def to_home(state: AgentState):
 # Define mark_page function, THIS MARKS BOUNDING BOXES.
 # done with the mark_page.js file
 # Read mark_page.js
-with open("/Users/williamphan/Desktop/tour/app/api/parse/mark_page.js") as f:
+with open("/Users/williamphan/Desktop/tourguide/src/app/api/mark_page.js") as f:
     mark_page_script = f.read()
 
 # decorator for chaining operations
@@ -211,28 +229,30 @@ with open("/Users/williamphan/Desktop/tour/app/api/parse/mark_page.js") as f:
 @chain_decorator
 # asynchronous function to mark elements on the page
 async def mark_page(page):
-    # execute the marking script on the page
     await page.evaluate(mark_page_script)
-    # try to mark the page up to 10 times
     for _ in range(10):
         try:
-            # execute the markPage function and get bounding boxes
             bboxes = await page.evaluate("markPage()")
-            # exit loop if successful
             break
         except:
-            # wait for 3 seconds before retrying
             await asyncio.sleep(2)
-    # take a screenshot of the marked page
     screenshot = await page.screenshot()
-    # # remove the markings from the page
-    # await page.evaluate("unmarkPage()")
-    # return the screenshot and bounding boxes
+    page_height = await page.evaluate("() => document.documentElement.scrollHeight")
+    viewport_height = await page.evaluate("() => window.innerHeight")
+    
+    # Get HTML content
+    html_content = await page.content()
+    
+    # Extract text content
+    text_content = await page.evaluate("() => document.body.innerText")
+    
     return {
-        # encode the screenshot as base64
         "img": base64.b64encode(screenshot).decode(),
-        # return the bounding boxes
         "bboxes": bboxes,
+        "page_height": page_height,
+        "viewport_height": viewport_height,
+        "html_content": html_content,
+        "text_content": text_content,
     }
 
 
@@ -260,8 +280,17 @@ def format_descriptions(state):
         labels.append(f'{i} (<{el_type}/>): "{text}"')
     # create a string of all labels, joined by newlines
     bbox_descriptions = "\nValid Bounding Boxes:\n" + "\n".join(labels)
-    # return updated state with new bbox_descriptions
-    return {**state, "bbox_descriptions": bbox_descriptions}
+    
+    # Format action history
+    action_history = state.get("action_history", [])
+    formatted_history = "\n".join([f"{a['step']}. {a['action']} {a['args']} (URL: {a['url']})" for a in action_history])
+    
+    page_info = f"Page height: {state['page_height']}px, Viewport height: {state['viewport_height']}px"
+    
+    # Include a summary of the text content
+    text_summary = state['text_content'][:500] + "..." if len(state['text_content']) > 500 else state['text_content']
+    
+    return {**state, "bbox_descriptions": bbox_descriptions, "action_history": formatted_history, "page_info": page_info, "text_summary": text_summary}
 
 
 def parse(text: str) -> dict:
@@ -289,6 +318,7 @@ crucial for maintaining the agent's "memory" and providing it with a structured 
 def update_scratchpad(state: AgentState):
     # Get the existing scratchpad from the state, if any
     old = state.get("scratchpad")
+    action_history = state.get("action_history", [])
     
     if old:
         # If there's an existing scratchpad, get its content
@@ -305,10 +335,21 @@ def update_scratchpad(state: AgentState):
     
     # Add the new observation to the text, with the current step number
     txt += f"\n{step}. {state['observation']}"
-
+    
+    # Add the current action to the history
+    action_history.append({
+        "step": step,
+        "action": state['prediction']['action'],
+        "args": state['prediction']['args'],
+        "url": state['current_url']
+    })
+    
+    # Limit the history to the last 10 actions
+    action_history = action_history[-10:]
+    
     # Return updated state with new scratchpad content
     # The scratchpad is a list containing a single SystemMessage
-    return {**state, "scratchpad": [SystemMessage(content=txt)]}
+    return {**state, "scratchpad": [SystemMessage(content=txt)], "action_history": action_history}
 
 # Set up the agent
 # https://smith.langchain.com/hub/wfh/web-voyager?organizationId=2fe448c8-5ad1-583b-96a3-e1a7e2c8b466
@@ -318,14 +359,14 @@ custom_prompt = ChatPromptTemplate.from_messages([
     ("system", """You are a web navigation assistant. Your task is to guide the user based on their specific query or request. 
     In each iteration, you will receive an Observation that includes a screenshot of a webpage, some texts, and the current URL. 
     This screenshot will feature Numerical Labels placed in the TOP LEFT corner of each Web Element. 
-    Carefully analyze the visual information and the current URL to determine your next action.
+    Carefully analyze the visual information, HTML content, and the current URL to determine your next action.
 
     Current goal: {input}
 
     Choose one of the following actions:
     1. Click a Web Element.
     2. Delete existing content in a textbox and then type content.
-    3. Scroll up or down.
+    3. Scroll up, down, left, or right to explore parts of the page that might not be visible.
     4. Wait 
     5. Go back
     6. Return to the home page to start over.
@@ -334,7 +375,7 @@ custom_prompt = ChatPromptTemplate.from_messages([
     Action should STRICTLY follow the format:
     - Click [Numerical_Label] 
     - Type [Numerical_Label]; [Content] 
-    - Scroll [Numerical_Label or WINDOW]; [up or down] 
+    - Scroll [Numerical_Label or WINDOW]; [up or down or left or right] 
     - Wait 
     - GoBack
     - Home
@@ -345,13 +386,18 @@ custom_prompt = ChatPromptTemplate.from_messages([
     2) When clicking or typing, ensure to select the correct bounding box.
     3) Numeric labels lie in the top-left corner of their corresponding bounding boxes and are colored the same.
     4) When you have completed the task or cannot proceed further, respond with ANSWER and do not perform any further actions.
-    5) Pay close attention to the current URL and page content to determine if you've reached the desired page or information.
+    5) Pay close attention to the current URL, page content, and HTML structure to determine if you've reached the desired page or information.
+    6) Avoid repeating the same action multiple times in a row.
+    7) If you find yourself in a loop, try a different approach or consider ending the task.
+    8) Remember to scroll to explore parts of the page that might not be initially visible.
+    9) When scrolling, always specify both the target (WINDOW or a Numerical_Label) and the direction (up, down, left, or right).
+    10) Analyze the text content of the page to make informed decisions.
 
     Your reply should strictly follow the format:
     Thought: {{Your brief thoughts}}
     Action: {{One Action format you choose}}"""),
     MessagesPlaceholder(variable_name="scratchpad"),
-    ("human", "{input}\n\n{bbox_descriptions}\n\nCurrent URL: {current_url}"),
+    ("human", "{input}\n\n{bbox_descriptions}\n\nCurrent URL: {current_url}\n\nPage Info: {page_info}\n\nText Content Summary:\n{text_summary}\n\nAction History:\n{action_history}"),
 ])
 
 # Replace the existing prompt with the custom one
@@ -589,7 +635,7 @@ class Step(BaseModel):
 async def run_agent(question: str, start_url: str):
     print(f"run_agent called with question: {question}, start_url: {start_url}")
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
+        browser = await p.chromium.launch(headless=False)
         page = await browser.new_page()
         try:
             print(f"Navigating to start_url: {start_url}")
@@ -609,6 +655,9 @@ async def run_agent(question: str, start_url: str):
                     "input": augmented_input,
                     "scratchpad": [],
                     "current_url": page.url,
+                    "action_history": [],  # Initialize empty action history
+                    "html_content": "",  # This will be populated by mark_page
+                    "text_content": "",  # This will be populated by mark_page
                 },
                 {
                     "recursion_limit": 150,
@@ -624,6 +673,12 @@ async def run_agent(question: str, start_url: str):
                 action = pred.get("action")
                 action_input = pred.get("args")
                 thought = state.get("output", "").split("Thought:", 1)[-1].split("Action:", 1)[0].strip()
+
+                # Check if the current action is a repeat of the last action
+                action_history = state.get("action_history", [])
+                if action_history and action_history[-1]["action"] == action and action_history[-1]["args"] == action_input:
+                    logger.warning("Repeated action detected. Skipping.")
+                    continue
 
                 instruction = ""
                 element_description = None

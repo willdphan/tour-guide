@@ -1,50 +1,239 @@
 {
   "components": [
     {
-      "name": "MessageBox",
+      "name": "middleware",
+      "props": [],
+      "description": "",
+      "dependencies": [
+        "./libs/supabase/supabase-middleware-client"
+      ],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/middleware.ts",
+      "snippet": "import type { NextRequest } from 'next/server';\n\nimport { supabaseMiddlewareClient } from './libs/supabase/supabase-middleware-client';\n\nexport async function middleware(req: NextRequest) {",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "None",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "getServerSideProps",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/utils/withAuth.tsx",
+      "snippet": "import { GetServerSideProps } from 'next'; // Importing the GetServerSideProps type from Next.js for server-side rendering.\nimport { redirect } from 'next/navigation'; // Importing the redirect function from Next.js for navigation.\n\nimport { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client'; // Importing the function to create a Supabase client for server-side use.\n",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "None",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "toDateTime",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/utils/to-date-time.ts",
+      "snippet": "export function toDateTime(secs: number) {\n  var t = new Date('1970-01-01T00:30:00Z'); // Unix epoch start.\n  t.setSeconds(secs);\n  return t;\n}",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "None",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "getURL",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/utils/get-url.ts",
+      "snippet": "export const getURL = (path: string = '') => {\n  // Check if NEXT_PUBLIC_SITE_URL is set and non-empty. Set this to your site URL in production env.\n  let url = \n  process.env.NEXT_PUBLIC_VERCEL_URL\n  ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "None",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "getEnvVar",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/utils/get-env-var.ts",
+      "snippet": "export function getEnvVar(varValue: string | undefined, varName: string): string {\n  if (varValue === undefined) throw new ReferenceError(`Reference to undefined env var: ${varName}`);\n  return varValue;\n}\n",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "None",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "cn",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/utils/cn.ts",
+      "snippet": "import { type ClassValue, clsx } from 'clsx';\nimport { twMerge } from 'tailwind-merge';\n\nexport function cn(...inputs: ClassValue[]) {\n  return twMerge(clsx(inputs));",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "None",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "createSupabaseServerClient",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/libs/supabase/supabase-server-client.ts",
+      "snippet": "// ref: https://github.com/vercel/next.js/blob/canary/examples/with-supabase/utils/supabase/server.ts\n\n// WHEN TO USE: \n// ENABLE ACCESS TO DATA BASED ON THE USERS PERMISSIONS (HANDLES DATA REQUETS)\n// FETCHES NEEDED DATA FOR THE PAGE (RETURNS DATA TO THE USER)",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "None",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "supabaseMiddlewareClient",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/libs/supabase/supabase-middleware-client.ts",
+      "snippet": "// ref: https://github.com/vercel/next.js/blob/canary/examples/with-supabase/utils/supabase/middleware.ts\n\n// CHECKS FOR AUTHENTICATION\n// REDIRECTS TO LOGIN PAGE IF NOT AUTHENTICATED\n// KEEPS USERS LOGGED IN AS THEY MOVE AROUND YOUR WEBSITE",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "None",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "upsertProduct",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/features/pricing/controllers/upsert-product.ts",
+      "snippet": "import Stripe from 'stripe';\n\nimport { supabaseAdminClient } from '@/libs/supabase/supabase-admin';\nimport type { Database } from '@/libs/supabase/types';\n",
+      "stateManagement": [],
+      "interfaces": [
+        "Product"
+      ],
+      "testFile": null,
+      "stylingApproach": "None",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "upsertPrice",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/features/pricing/controllers/upsert-price.ts",
+      "snippet": "import Stripe from 'stripe';\n\nimport { supabaseAdminClient } from '@/libs/supabase/supabase-admin';\nimport type { Database } from '@/libs/supabase/types';\n",
+      "stateManagement": [],
+      "interfaces": [
+        "Price"
+      ],
+      "testFile": null,
+      "stylingApproach": "None",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "getProducts",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/features/pricing/controllers/get-products.ts",
+      "snippet": "import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';\n\nexport async function getProducts() {\n  const supabase = createSupabaseServerClient();\n",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "None",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "PricingSection",
       "props": [
         {
-          "name": "output",
-          "type": "TSStringKeyword"
+          "name": "isPricingPage",
+          "type": "any"
         }
       ],
       "description": "",
       "dependencies": [
-        "./ui/card"
+        "../actions/create-checkout-action"
       ],
-      "filePath": "/Users/williamphan/Desktop/tour/components/MessageBox.tsx",
-      "snippet": "import { Card } from './ui/card';\nimport ReactMarkdown from 'react-markdown';\n\nexport default function MessageBox(props: { output: string }) {\n  const { output } = props;",
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/features/pricing/components/pricing-section.tsx",
+      "snippet": "import Image from 'next/image';\n\nimport { PricingCard } from '@/features/pricing/components/price-card';\nimport { getProducts } from '@/features/pricing/controllers/get-products';\n",
       "stateManagement": [],
       "interfaces": [],
       "testFile": null,
-      "stylingApproach": "CSS Classes"
+      "stylingApproach": "CSS Classes",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
     },
     {
-      "name": "MessageBox",
+      "name": "PricingSwitch",
       "props": [
         {
-          "name": "output",
-          "type": "TSStringKeyword"
-        }
-      ],
-      "description": "",
-      "dependencies": [],
-      "filePath": "/Users/williamphan/Desktop/tour/components/MessageBoxChat.tsx",
-      "snippet": "import { Card } from '@/components/ui/card';\nimport ReactMarkdown from 'react-markdown';\n\nexport default function MessageBox(props: { output: string }) {\n  const { output } = props;",
-      "stateManagement": [],
-      "interfaces": [],
-      "testFile": null,
-      "stylingApproach": "CSS Classes"
-    },
-    {
-      "name": "TextBlock",
-      "props": [
-        {
-          "name": "text",
+          "name": "product",
           "type": "any"
         },
         {
-          "name": "editable",
+          "name": "price",
+          "type": "any"
+        },
+        {
+          "name": "createCheckoutAction",
+          "type": "any"
+        },
+        {
+          "name": "text",
           "type": "any"
         },
         {
@@ -53,380 +242,366 @@
         }
       ],
       "description": "",
-      "dependencies": [],
-      "filePath": "/Users/williamphan/Desktop/tour/components/TextBlock.tsx",
-      "snippet": "interface Props {\n  text: string;\n  editable?: boolean;\n  onChange?: (value: string) => void;\n}",
-      "stateManagement": [],
-      "interfaces": [
-        "Props"
-      ],
-      "testFile": null,
-      "stylingApproach": "CSS Classes"
-    },
-    {
-      "name": "AudioProgressBar",
-      "props": [],
-      "description": "",
-      "dependencies": [],
-      "filePath": "/Users/williamphan/Desktop/tour/components/audio/AudioProgressBar.tsx",
-      "snippet": "import { cn } from '@/lib/utils';\nimport * as SliderPrimitive from '@radix-ui/react-slider';\nimport * as React from 'react';\n\nconst Slider = React.forwardRef<",
-      "stateManagement": [],
-      "interfaces": [],
-      "testFile": null,
-      "stylingApproach": "CSS Classes"
-    },
-    {
-      "name": "VolumeInput",
-      "props": [
-        {
-          "name": "volume",
-          "type": "any"
-        },
-        {
-          "name": "onVolumeChange",
-          "type": "any"
-        }
-      ],
-      "description": "",
-      "dependencies": [],
-      "filePath": "/Users/williamphan/Desktop/tour/components/audio/VolumeInput.tsx",
-      "snippet": "import { cn } from '@/lib/utils';\n// import { Slider } from '../ui/slider';\nimport * as SliderPrimitive from '@radix-ui/react-slider';\nimport * as React from 'react';\n",
-      "stateManagement": [],
-      "interfaces": [
-        "VolumeInputProps"
-      ],
-      "testFile": null,
-      "stylingApproach": "CSS Classes"
-    },
-    {
-      "name": "handleProgressChange",
-      "props": [
-        {
-          "name": "src",
-          "type": "TSAnyKeyword"
-        },
-        {
-          "name": "handleClick",
-          "type": "TSAnyKeyword"
-        },
-        {
-          "name": "loading",
-          "type": "TSAnyKeyword"
-        }
-      ],
-      "description": "",
       "dependencies": [
-        "../ui/button",
-        "../ui/card",
-        "./AudioProgressBar",
-        "./VolumeInput"
+        "../models/product-metadata",
+        "../types"
       ],
-      "filePath": "/Users/williamphan/Desktop/tour/components/audio/index.tsx",
-      "snippet": "import { Button } from '../ui/button';\nimport { Card } from '../ui/card';\nimport AudioProgressBar from './AudioProgressBar';\nimport VolumeInput from './VolumeInput';\nimport * as React from 'react';",
-      "stateManagement": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/features/pricing/components/price-card.tsx",
+      "snippet": "'use client';\n\nimport { useMemo, useState } from 'react';\nimport Link from 'next/link';\nimport { IoCheckmark } from 'react-icons/io5';",
+      "stateManagement": [
+        "useState",
+        "useMemo"
+      ],
       "interfaces": [],
       "testFile": null,
-      "stylingApproach": "CSS Classes"
+      "stylingApproach": "CSS Classes",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [
+        "onChange",
+        "onClick",
+        "onValueChange"
+      ],
+      "lifecycleMethods": [],
+      "customHooks": []
     },
     {
-      "name": "AuthUI",
-      "props": [],
+      "name": "createCheckoutAction",
+      "props": [
+        {
+          "name": "price",
+          "type": "any"
+        }
+      ],
       "description": "",
       "dependencies": [],
-      "filePath": "/Users/williamphan/Desktop/tour/components/auth/AuthUI.tsx",
-      "snippet": "'use client';\n\nimport { useSupabase } from '@/app/supabase-provider';\nimport { getURL } from '@/utils/helpers';\nimport { Auth } from '@supabase/auth-ui-react';",
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/features/pricing/actions/create-checkout-action.ts",
+      "snippet": "'use server';\n\nimport { redirect } from 'next/navigation';\n\nimport { getOrCreateCustomer } from '@/features/account/controllers/get-or-create-customer';",
       "stateManagement": [],
       "interfaces": [],
       "testFile": null,
-      "stylingApproach": "CSS Classes"
+      "stylingApproach": "None",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
     },
     {
-      "name": "DefaultAuthLayout",
+      "name": "WelcomeEmail",
       "props": [],
       "description": "",
       "dependencies": [
-        "../ui/button"
+        "./tailwind.config"
       ],
-      "filePath": "/Users/williamphan/Desktop/tour/components/auth/index.tsx",
-      "snippet": "'use client';\n\nimport { Button } from '../ui/button';\nimport Footer from '@/components/footer/FooterAuthDefault';\nimport { useTheme } from 'next-themes';",
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/features/emails/welcome.tsx",
+      "snippet": "import { Body, Button, Container, Head, Heading, Html, Link, Preview, Section, Text } from '@react-email/components';\nimport { Tailwind } from '@react-email/tailwind';\n\nimport tailwindConfig from './tailwind.config';\n",
       "stateManagement": [],
-      "interfaces": [
-        "DefaultAuthLayoutProps"
-      ],
+      "interfaces": [],
       "testFile": null,
-      "stylingApproach": "CSS Classes"
+      "stylingApproach": "CSS Classes",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
     },
     {
-      "name": "CardMenu",
+      "name": "copyBillingDetailsToCustomer",
       "props": [
         {
-          "name": "transparent",
-          "type": "TSBooleanKeyword"
-        },
-        {
-          "name": "vertical",
-          "type": "TSBooleanKeyword"
-        }
-      ],
-      "description": "",
-      "dependencies": [
-        "../ui/button"
-      ],
-      "filePath": "/Users/williamphan/Desktop/tour/components/card/CardMenu.tsx",
-      "snippet": "import { Button } from '../ui/button';\nimport {\n  DropdownMenu,\n  DropdownMenuContent,\n  DropdownMenuGroup,",
-      "stateManagement": [],
-      "interfaces": [],
-      "testFile": null,
-      "stylingApproach": "CSS Classes"
-    },
-    {
-      "name": "ExampleChart",
-      "props": [],
-      "description": "",
-      "dependencies": [],
-      "filePath": "/Users/williamphan/Desktop/tour/components/charts/LineChart/index.tsx",
-      "snippet": "'use client';\n\n// if you use app dir, don't forget this line\nimport dynamic from 'next/dynamic';\n",
-      "stateManagement": [],
-      "interfaces": [],
-      "testFile": null,
-      "stylingApproach": "None"
-    },
-    {
-      "name": "handleChange",
-      "props": [],
-      "description": "",
-      "dependencies": [],
-      "filePath": "/Users/williamphan/Desktop/tour/components/dashboard/ai-chat/index.tsx",
-      "snippet": "'use client';\n\n/*eslint-disable*/\nimport MessageBoxChat from '@/components/MessageBoxChat';\nimport DashboardLayout from '@/components/layout';",
-      "stateManagement": [],
-      "interfaces": [
-        "Subscription",
-        "Product",
-        "Price",
-        "ProductWithPrices",
-        "PriceWithProduct",
-        "SubscriptionWithProduct",
-        "Props"
-      ],
-      "testFile": null,
-      "stylingApproach": "CSS Classes"
-    },
-    {
-      "name": "OverallRevenue",
-      "props": [],
-      "description": "",
-      "dependencies": [],
-      "filePath": "/Users/williamphan/Desktop/tour/components/dashboard/main/cards/MainChart.tsx",
-      "snippet": "'use client';\n\nimport LineChart from '@/components/charts/LineChart';\nimport { Card } from '@/components/ui/card';\nimport { lineChartDataMain, lineChartOptionsMain } from '@/variables/charts';",
-      "stateManagement": [],
-      "interfaces": [],
-      "testFile": null,
-      "stylingApproach": "CSS Classes"
-    },
-    {
-      "name": "ComprehensiveDashboard",
-      "props": [
-        {
-          "name": "tableData",
-          "type": "any"
-        }
-      ],
-      "description": "",
-      "dependencies": [],
-      "filePath": "/Users/williamphan/Desktop/tour/components/dashboard/main/cards/MainDashboardTable.tsx",
-      "snippet": "import React from 'react';\nimport {\n  Area,\n  AreaChart,\n  Bar,",
-      "stateManagement": [],
-      "interfaces": [
-        "RowObj"
-      ],
-      "testFile": null,
-      "stylingApproach": "CSS Classes"
-    },
-    {
-      "name": "redirectToCustomerPortal",
-      "props": [],
-      "description": "",
-      "dependencies": [],
-      "filePath": "/Users/williamphan/Desktop/tour/components/dashboard/main/index.tsx",
-      "snippet": "/*eslint-disable*/\n'use client';\n\nimport MainChart from '@/components/dashboard/main/cards/MainChart';\nimport MainDashboardTable from '@/components/dashboard/main/cards/MainDashboardTable';",
-      "stateManagement": [],
-      "interfaces": [
-        "Subscription",
-        "Product",
-        "Price",
-        "ProductWithPrices",
-        "PriceWithProduct",
-        "SubscriptionWithProduct",
-        "Props"
-      ],
-      "testFile": null,
-      "stylingApproach": "CSS Classes"
-    },
-    {
-      "name": "Footer",
-      "props": [],
-      "description": "",
-      "dependencies": [],
-      "filePath": "/Users/williamphan/Desktop/tour/components/footer/FooterAdmin.tsx",
-      "snippet": "'use client';\n\n/*eslint-disable*/\n\nexport default function Footer() {",
-      "stateManagement": [],
-      "interfaces": [],
-      "testFile": null,
-      "stylingApproach": "CSS Classes"
-    },
-    {
-      "name": "Footer",
-      "props": [],
-      "description": "",
-      "dependencies": [],
-      "filePath": "/Users/williamphan/Desktop/tour/components/footer/FooterAuthDefault.tsx",
-      "snippet": "'use client';\n\nexport default function Footer() {\n  return (\n    <div className=\"z-[3] flex flex-col items-center justify-between pb-[30px] md:px-0 lg:flex-row\">",
-      "stateManagement": [],
-      "interfaces": [],
-      "testFile": null,
-      "stylingApproach": "CSS Classes"
-    },
-    {
-      "name": "GitHub",
-      "props": [],
-      "description": "",
-      "dependencies": [],
-      "filePath": "/Users/williamphan/Desktop/tour/components/icons/GitHub.tsx",
-      "snippet": "const GitHub = ({ ...props }) => {\n  return (\n    <svg\n      width=\"24\"\n      height=\"24\"",
-      "stateManagement": [],
-      "interfaces": [],
-      "testFile": null,
-      "stylingApproach": "None"
-    },
-    {
-      "name": "Logo",
-      "props": [
-        {
-          "name": "className",
-          "type": "any"
-        }
-      ],
-      "description": "",
-      "dependencies": [],
-      "filePath": "/Users/williamphan/Desktop/tour/components/icons/Logo.tsx",
-      "snippet": "const Logo = ({ className = '', ...props }) => (\n  <svg\n    width=\"32\"\n    height=\"32\"\n    viewBox=\"0 0 32 32\"",
-      "stateManagement": [],
-      "interfaces": [],
-      "testFile": null,
-      "stylingApproach": "CSS Classes"
-    },
-    {
-      "name": "DashboardLayout",
-      "props": [],
-      "description": "",
-      "dependencies": [],
-      "filePath": "/Users/williamphan/Desktop/tour/components/layout/index.tsx",
-      "snippet": "import Footer from '@/components/footer/FooterAdmin';\nimport Navbar from '@/components/navbar/NavbarAdmin';\nimport { routes } from '@/components/routes';\nimport Sidebar from '@/components/sidebar/Sidebar';\nimport { Toaster } from '@/components/ui/toaster';",
-      "stateManagement": [],
-      "interfaces": [
-        "Subscription",
-        "Product",
-        "Price",
-        "ProductWithPrices",
-        "PriceWithProduct",
-        "SubscriptionWithProduct",
-        "Props"
-      ],
-      "testFile": null,
-      "stylingApproach": "CSS Classes"
-    },
-    {
-      "name": "InnerContent",
-      "props": [],
-      "description": "",
-      "dependencies": [],
-      "filePath": "/Users/williamphan/Desktop/tour/components/layout/innerContent.tsx",
-      "snippet": "import React from 'react';\n\nexport default function InnerContent(props) {\n  const { children, extra, ...rest } = props;\n  return (",
-      "stateManagement": [],
-      "interfaces": [],
-      "testFile": null,
-      "stylingApproach": "CSS Classes"
-    },
-    {
-      "name": "NavLink",
-      "props": [
-        {
-          "name": "className",
+          "name": "subscriptionId",
           "type": "any"
         },
+        {
+          "name": "customerId",
+          "type": "any"
+        },
+        {
+          "name": "isCreateAction",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/features/account/controllers/upsert-user-subscription.ts",
+      "snippet": "import Stripe from 'stripe';\n\nimport { stripeAdmin } from '@/libs/stripe/stripe-admin';\nimport { supabaseAdminClient } from '@/libs/supabase/supabase-admin';\nimport type { Database } from '@/libs/supabase/types';",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "None",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "getUser",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/features/account/controllers/get-user.ts",
+      "snippet": "import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';\n\nexport async function getUser() {\n  const supabase = createSupabaseServerClient();\n",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "None",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "getSubscription",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/features/account/controllers/get-subscription.ts",
+      "snippet": "import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';\n\nexport async function getSubscription() {\n  const supabase = createSupabaseServerClient();\n",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "None",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "getSession",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/features/account/controllers/get-session.ts",
+      "snippet": "import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';\n\nexport async function getSession() {\n  const supabase = createSupabaseServerClient();\n",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "None",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "getOrCreateCustomer",
+      "props": [
+        {
+          "name": "userId",
+          "type": "any"
+        },
+        {
+          "name": "email",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/features/account/controllers/get-or-create-customer.ts",
+      "snippet": "import { stripeAdmin } from '@/libs/stripe/stripe-admin';\nimport { supabaseAdminClient } from '@/libs/supabase/supabase-admin';\n\nexport async function getOrCreateCustomer({ userId, email }: { userId: string; email: string }) {\n  const { data, error } = await supabaseAdminClient",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "None",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "getCustomerId",
+      "props": [
+        {
+          "name": "userId",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/features/account/controllers/get-customer-id.ts",
+      "snippet": "import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';\n\nexport async function getCustomerId({ userId }: { userId: string }) {\n  const { data, error } = await supabaseAdminClient\n    .from('customers')",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "None",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "SexyBoarder",
+      "props": [
         {
           "name": "children",
           "type": "any"
         },
         {
-          "name": "styles",
+          "name": "className",
           "type": "any"
         },
         {
-          "name": "borderRadius",
+          "name": "offset",
           "type": "any"
         }
       ],
       "description": "",
       "dependencies": [],
-      "filePath": "/Users/williamphan/Desktop/tour/components/link/NavLink.tsx",
-      "snippet": "'use client';\n\nimport NextLink, { LinkProps as NextLinkProps } from 'next/link';\nimport { CSSProperties, PropsWithChildren, useMemo } from 'react';\n",
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/components/sexy-boarder.tsx",
+      "snippet": "import { cn } from '@/utils/cn';\n\nexport function SexyBoarder({\n  children,\n  className,",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Classes",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "Profile",
+      "props": [
+        {
+          "name": "chartFullyRendered",
+          "type": "any"
+        },
+        {
+          "name": "user",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/components/profile.tsx",
+      "snippet": "import React from 'react';\nimport { motion } from 'framer-motion';\n\ninterface ProfileProps {\n  chartFullyRendered: boolean;",
       "stateManagement": [],
       "interfaces": [
-        "NavLinkProps"
+        "ProfileProps"
       ],
       "testFile": null,
-      "stylingApproach": "CSS Classes"
+      "stylingApproach": "CSS Classes",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
     },
     {
-      "name": "changeNavbar",
-      "props": [
-        {
-          "name": "brandText",
-          "type": "TSStringKeyword"
-        },
-        {
-          "name": "userDetails",
-          "type": "TSUnionType"
-        },
-        {
-          "name": "onOpen",
-          "type": "TSFunctionType"
-        }
-      ],
+      "name": "renderActiveComponent",
+      "props": [],
       "description": "",
       "dependencies": [
-        "./NavbarLinksAdmin"
+        "./Counter",
+        "./profile"
       ],
-      "filePath": "/Users/williamphan/Desktop/tour/components/navbar/NavbarAdmin.tsx",
-      "snippet": "'use client';\n\n/* eslint-disable */\nimport AdminNavbarLinks from './NavbarLinksAdmin';\nimport NavLink from '@/components/link/NavLink';",
-      "stateManagement": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/components/navigation-menu.tsx",
+      "snippet": "\"use client\"\n\nimport * as React from \"react\"\nimport { useState } from \"react\"\nimport Link from \"next/link\"",
+      "stateManagement": [
+        "useState"
+      ],
       "interfaces": [],
       "testFile": null,
-      "stylingApproach": "CSS Classes"
+      "stylingApproach": "CSS Classes",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [
+        "onClick",
+        "onClick"
+      ],
+      "lifecycleMethods": [],
+      "customHooks": []
     },
     {
-      "name": "HeaderLinks",
+      "name": "fetchFlowcharts",
       "props": [
         {
-          "name": "userDetails",
-          "type": "TSUnionType"
+          "name": "onLoadFlowchart",
+          "type": "any"
         }
       ],
       "description": "",
       "dependencies": [],
-      "filePath": "/Users/williamphan/Desktop/tour/components/navbar/NavbarLinksAdmin.tsx",
-      "snippet": "'use client';\n\nimport { useSupabase } from '@/app/supabase-provider';\nimport { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';\nimport { Button } from '@/components/ui/button';",
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/components/history.tsx",
+      "snippet": "import React, { useEffect,useState } from 'react';\n\nimport { createClientComponentClient } from '@supabase/auth-helpers-nextjs';\n\ninterface Flowchart {",
+      "stateManagement": [
+        "useState",
+        "useState",
+        "useState",
+        "useEffect"
+      ],
+      "interfaces": [
+        "Flowchart",
+        "HistoryProps"
+      ],
+      "testFile": null,
+      "stylingApproach": "CSS Classes",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [
+        "onClick"
+      ],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "Hero",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/components/hero.tsx",
+      "snippet": "import React, { useEffect,useState } from 'react';\nimport Link from 'next/link';\n\nconst testimonials = [\n  {",
+      "stateManagement": [
+        "useState",
+        "useState",
+        "useState",
+        "useEffect"
+      ],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Classes",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "HeroSpline",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/components/hero-spline.tsx",
+      "snippet": "import dynamic from 'next/dynamic';\n\nimport Spline from '@splinetool/react-spline';\n\n// // Dynamically import the Spline component with SSR disabled",
       "stateManagement": [],
       "interfaces": [],
       "testFile": null,
-      "stylingApproach": "CSS Classes"
+      "stylingApproach": "CSS Classes",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
     },
     {
-      "name": "handleCheckout",
+      "name": "getMinMaxCoordinates",
       "props": [
         {
-          "name": "session",
+          "name": "probability",
+          "type": "any"
+        },
+        {
+          "name": "index",
+          "type": "any"
+        },
+        {
+          "name": "isSelected",
           "type": "any"
         },
         {
@@ -434,449 +609,314 @@
           "type": "any"
         },
         {
-          "name": "products",
+          "name": "node",
           "type": "any"
         },
         {
-          "name": "subscription",
+          "name": "onClose",
+          "type": "any"
+        },
+        {
+          "name": "initialSituation",
+          "type": "any"
+        },
+        {
+          "name": "initialAction",
+          "type": "any"
+        },
+        {
+          "name": "showChart",
+          "type": "any"
+        },
+        {
+          "name": "onChartRendered",
+          "type": "any"
+        },
+        {
+          "name": "updateNumberOfOutcomes",
+          "type": "any"
+        },
+        {
+          "name": "updateTreeData",
+          "type": "any"
+        },
+        {
+          "name": "selectedFlowchart",
           "type": "any"
         }
       ],
       "description": "",
       "dependencies": [
-        "../footer/FooterWebsite",
-        "../ui/badge",
-        "../ui/button"
+        "./Counter",
+        "./history"
       ],
-      "filePath": "/Users/williamphan/Desktop/tour/components/pricing/index.tsx",
-      "snippet": "'use client';\n\n// @ts-nocheck\n// Custom components\nimport { FooterWebsite } from '../footer/FooterWebsite';",
-      "stateManagement": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/components/flowchart.tsx",
+      "snippet": "'use client';\nimport React, { useCallback, useEffect, useMemo,useRef, useState } from 'react';\nimport { Router, useRouter } from 'next/router';\nimport { AnimatePresence,motion } from 'framer-motion';\nimport debounce from 'lodash/debounce';",
+      "stateManagement": [
+        "useState",
+        "useState",
+        "useState",
+        "useState",
+        "useState",
+        "useState",
+        "useState",
+        "useState",
+        "useState",
+        "useState",
+        "useState",
+        "useEffect",
+        "useCallback",
+        "useMemo",
+        "useEffect",
+        "useEffect",
+        "useCallback",
+        "useCallback",
+        "useState",
+        "useState",
+        "useEffect",
+        "useState",
+        "useState",
+        "useState",
+        "useState",
+        "useState",
+        "useState",
+        "useState",
+        "useState",
+        "useState",
+        "useCallback",
+        "useCallback",
+        "useCallback",
+        "useEffect",
+        "useCallback",
+        "useCallback",
+        "useCallback",
+        "useCallback",
+        "useCallback",
+        "useCallback",
+        "useCallback"
+      ],
       "interfaces": [
-        "Subscription",
-        "Product",
-        "Price",
-        "ProductWithPrices",
-        "PriceWithProduct",
-        "SubscriptionWithProduct",
-        "Props"
+        "ComponentProps",
+        "PopupNode",
+        "FullScreenPopupProps",
+        "FlowChartProps",
+        "Outcome",
+        "NodeType",
+        "TreeNode"
       ],
       "testFile": null,
-      "stylingApproach": "CSS Classes"
+      "stylingApproach": "CSS Classes",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [
+        "onClick",
+        "onSubmit",
+        "onChange",
+        "onClick",
+        "onLoadFlowchart",
+        "onClick",
+        "onClick",
+        "onClick",
+        "onClick",
+        "onChartRendered",
+        "onClick",
+        "onClick",
+        "onDoubleClick",
+        "onMouseDown",
+        "onSubmit",
+        "onClick",
+        "onClose",
+        "onClick",
+        "onClick"
+      ],
+      "lifecycleMethods": [],
+      "customHooks": []
     },
     {
-      "name": "renderView",
+      "name": "handleLogoutClick",
       "props": [
         {
-          "name": "style",
-          "type": "any"
-        },
-        {
-          "name": "style",
-          "type": "any"
-        },
-        {
-          "name": "style",
+          "name": "signOut",
           "type": "any"
         }
       ],
-      "description": "",
-      "dependencies": [],
-      "filePath": "/Users/williamphan/Desktop/tour/components/scrollbar/Scrollbar.tsx",
-      "snippet": "'use client';\n\nexport const renderTrack = ({ style, ...props }: any) => {\n  const trackStyle = {\n    position: 'absolute',",
-      "stateManagement": [],
-      "interfaces": [],
-      "testFile": null,
-      "stylingApproach": "CSS Classes"
-    },
-    {
-      "name": "handleCheckout",
-      "props": [],
       "description": "",
       "dependencies": [
-        "../ui/badge",
-        "../ui/button"
+        "./ui/use-toast"
       ],
-      "filePath": "/Users/williamphan/Desktop/tour/components/sidebar/Sidebar.tsx",
-      "snippet": "'use client';\n\nimport { Badge } from '../ui/badge';\nimport { Button } from '../ui/button';\nimport { useSupabase } from '@/app/supabase-provider';",
-      "stateManagement": [],
-      "interfaces": [
-        "SidebarProps",
-        "SidebarLinksProps",
-        "Price"
-      ],
-      "testFile": null,
-      "stylingApproach": "CSS Classes"
-    },
-    {
-      "name": "createAccordionLinks",
-      "props": [],
-      "description": "",
-      "dependencies": [],
-      "filePath": "/Users/williamphan/Desktop/tour/components/sidebar/components/Links.tsx",
-      "snippet": "'use client';\n\n/* eslint-disable */\nimport NavLink from '@/components/link/NavLink';\nimport {",
-      "stateManagement": [],
-      "interfaces": [
-        "SidebarLinksProps"
-      ],
-      "testFile": null,
-      "stylingApproach": "CSS Classes"
-    },
-    {
-      "name": "SidebarDocs",
-      "props": [],
-      "description": "",
-      "dependencies": [],
-      "filePath": "/Users/williamphan/Desktop/tour/components/sidebar/components/SidebarCard.tsx",
-      "snippet": "'use client';\n\nimport { Badge } from '@/components/ui/badge';\nimport { Button } from '@/components/ui/button';\nimport SidebarImage from '@/public/SidebarBadge.png';",
-      "stateManagement": [],
-      "interfaces": [
-        "Price",
-        "SidebarCard"
-      ],
-      "testFile": null,
-      "stylingApproach": "CSS Classes"
-    },
-    {
-      "name": "AlertDialogFooter",
-      "props": [
-        {
-          "name": "className",
-          "type": "any"
-        },
-        {
-          "name": "className",
-          "type": "any"
-        }
-      ],
-      "description": "",
-      "dependencies": [],
-      "filePath": "/Users/williamphan/Desktop/tour/components/ui/alert-dialog.tsx",
-      "snippet": "\"use client\"\n\nimport * as React from \"react\"\nimport * as AlertDialogPrimitive from \"@radix-ui/react-alert-dialog\"\n",
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/components/account-menu.tsx",
+      "snippet": "'use client';\n\nimport Link from 'next/link';\nimport { useRouter } from 'next/navigation';\nimport { IoPersonCircleOutline } from 'react-icons/io5';",
       "stateManagement": [],
       "interfaces": [],
       "testFile": null,
-      "stylingApproach": "CSS Classes"
+      "stylingApproach": "CSS Classes",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [
+        "onClick"
+      ],
+      "lifecycleMethods": [],
+      "customHooks": []
     },
     {
-      "name": "Badge",
+      "name": "handleKeyDown",
       "props": [
         {
-          "name": "className",
+          "name": "onSelect",
           "type": "any"
         },
         {
-          "name": "variant",
+          "name": "updateMyPresenceFn",
+          "type": "any"
+        },
+        {
+          "name": "simulateAgentAction",
           "type": "any"
         }
       ],
       "description": "",
       "dependencies": [],
-      "filePath": "/Users/williamphan/Desktop/tour/components/ui/badge.tsx",
-      "snippet": "import * as React from \"react\"\nimport { cva, type VariantProps } from \"class-variance-authority\"\n\nimport { cn } from \"@/lib/utils\"\n",
-      "stateManagement": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/components/SpotLightSearch.tsx",
+      "snippet": "'use client'\n\nimport React, { useEffect,useState } from 'react'\nimport { Search } from 'lucide-react'\n",
+      "stateManagement": [
+        "useState",
+        "useState",
+        "useState",
+        "useEffect"
+      ],
       "interfaces": [
-        "BadgeProps"
+        "SpotLightSearchProps"
       ],
       "testFile": null,
-      "stylingApproach": "CSS Classes"
+      "stylingApproach": "CSS Classes",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [
+        "onClick",
+        "onOpenChange",
+        "onChange",
+        "onKeyDown",
+        "onClick"
+      ],
+      "lifecycleMethods": [],
+      "customHooks": []
     },
     {
-      "name": "BreadcrumbEllipsis",
+      "name": "Room",
       "props": [
+        {
+          "name": "x",
+          "type": "any"
+        },
+        {
+          "name": "y",
+          "type": "any"
+        },
+        {
+          "name": "color",
+          "type": "any"
+        },
         {
           "name": "children",
           "type": "any"
         },
         {
-          "name": "className",
-          "type": "any"
-        },
-        {
-          "name": "className",
-          "type": "any"
-        }
-      ],
-      "description": "",
-      "dependencies": [],
-      "filePath": "/Users/williamphan/Desktop/tour/components/ui/breadcrumb.tsx",
-      "snippet": "import * as React from \"react\"\nimport { Slot } from \"@radix-ui/react-slot\"\nimport { ChevronRight, MoreHorizontal } from \"lucide-react\"\n\nimport { cn } from \"@/lib/utils\"",
-      "stateManagement": [],
-      "interfaces": [],
-      "testFile": null,
-      "stylingApproach": "CSS Classes"
-    },
-    {
-      "name": "Calendar",
-      "props": [
-        {
-          "name": "className",
-          "type": "any"
-        },
-        {
-          "name": "classNames",
-          "type": "any"
-        },
-        {
-          "name": "showOutsideDays",
-          "type": "any"
-        }
-      ],
-      "description": "",
-      "dependencies": [],
-      "filePath": "/Users/williamphan/Desktop/tour/components/ui/calendar.tsx",
-      "snippet": "\"use client\"\n\nimport * as React from \"react\"\nimport { ChevronLeft, ChevronRight } from \"lucide-react\"\nimport { DayPicker } from \"react-day-picker\"",
-      "stateManagement": [],
-      "interfaces": [
-        "CalendarProps"
-      ],
-      "testFile": null,
-      "stylingApproach": "CSS Classes"
-    },
-    {
-      "name": "useCarousel",
-      "props": [],
-      "description": "",
-      "dependencies": [],
-      "filePath": "/Users/williamphan/Desktop/tour/components/ui/carousel.tsx",
-      "snippet": "\"use client\"\n\nimport * as React from \"react\"\nimport useEmblaCarousel, {\n  type UseEmblaCarouselType,",
-      "stateManagement": [],
-      "interfaces": [
-        "CarouselApi",
-        "UseCarouselParameters",
-        "CarouselOptions",
-        "CarouselPlugin",
-        "CarouselProps",
-        "CarouselContextProps"
-      ],
-      "testFile": null,
-      "stylingApproach": "CSS Classes"
-    },
-    {
-      "name": "getPayloadConfigFromPayload",
-      "props": [
-        {
-          "name": "id",
-          "type": "any"
-        },
-        {
-          "name": "config",
-          "type": "any"
-        }
-      ],
-      "description": "Helper to extract item config from a payload.",
-      "dependencies": [],
-      "filePath": "/Users/williamphan/Desktop/tour/components/ui/chart.tsx",
-      "snippet": "\"use client\"\n\nimport * as React from \"react\"\nimport * as RechartsPrimitive from \"recharts\"\n",
-      "stateManagement": [],
-      "interfaces": [
-        "ChartConfig",
-        "ChartContextProps"
-      ],
-      "testFile": null,
-      "stylingApproach": "CSS Classes"
-    },
-    {
-      "name": "CommandShortcut",
-      "props": [
-        {
           "name": "children",
           "type": "any"
-        },
+        }
+      ],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/components/Room.tsx",
+      "snippet": "\"use client\";\nimport { useCallback,useEffect, useState } from 'react';\nimport { ReactNode } from \"react\";\n\nimport SpotLightSearch from '@/components/SpotLightSearch';",
+      "stateManagement": [
+        "useState",
+        "useState",
+        "useState",
+        "useState",
+        "useState",
+        "useEffect",
+        "useCallback",
+        "useCallback",
+        "useCallback",
+        "useEffect"
+      ],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "Inline Styles",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [
+        "onSelect"
+      ],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "Counter",
+      "props": [
         {
-          "name": "className",
+          "name": "value",
           "type": "any"
         }
       ],
       "description": "",
       "dependencies": [],
-      "filePath": "/Users/williamphan/Desktop/tour/components/ui/command.tsx",
-      "snippet": "\"use client\"\n\nimport * as React from \"react\"\nimport { type DialogProps } from \"@radix-ui/react-dialog\"\nimport { Command as CommandPrimitive } from \"cmdk\"",
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/components/Counter.tsx",
+      "snippet": "import React from 'react';\nimport { animate, motion, useMotionValue, useTransform } from 'framer-motion';\n\ninterface CounterProps {\n  value: number;",
       "stateManagement": [],
       "interfaces": [
-        "CommandDialogProps"
+        "CounterProps"
       ],
       "testFile": null,
-      "stylingApproach": "CSS Classes"
+      "stylingApproach": "None",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
     },
     {
-      "name": "ContextMenuShortcut",
-      "props": [
-        {
-          "name": "className",
-          "type": "any"
-        }
-      ],
-      "description": "",
-      "dependencies": [],
-      "filePath": "/Users/williamphan/Desktop/tour/components/ui/context-menu.tsx",
-      "snippet": "\"use client\"\n\nimport * as React from \"react\"\nimport * as ContextMenuPrimitive from \"@radix-ui/react-context-menu\"\nimport { Check, ChevronRight, Circle } from \"lucide-react\"",
-      "stateManagement": [],
-      "interfaces": [],
-      "testFile": null,
-      "stylingApproach": "CSS Classes"
-    },
-    {
-      "name": "DialogFooter",
-      "props": [
-        {
-          "name": "className",
-          "type": "any"
-        },
-        {
-          "name": "className",
-          "type": "any"
-        }
-      ],
-      "description": "",
-      "dependencies": [],
-      "filePath": "/Users/williamphan/Desktop/tour/components/ui/dialog.tsx",
-      "snippet": "\"use client\"\n\nimport * as React from \"react\"\nimport * as DialogPrimitive from \"@radix-ui/react-dialog\"\nimport { X } from \"lucide-react\"",
-      "stateManagement": [],
-      "interfaces": [],
-      "testFile": null,
-      "stylingApproach": "CSS Classes"
-    },
-    {
-      "name": "DrawerFooter",
-      "props": [
-        {
-          "name": "shouldScaleBackground",
-          "type": "any"
-        },
-        {
-          "name": "className",
-          "type": "any"
-        },
-        {
-          "name": "className",
-          "type": "any"
-        }
-      ],
-      "description": "",
-      "dependencies": [],
-      "filePath": "/Users/williamphan/Desktop/tour/components/ui/drawer.tsx",
-      "snippet": "\"use client\"\n\nimport * as React from \"react\"\nimport { Drawer as DrawerPrimitive } from \"vaul\"\n",
-      "stateManagement": [],
-      "interfaces": [],
-      "testFile": null,
-      "stylingApproach": "CSS Classes"
-    },
-    {
-      "name": "DropdownMenuShortcut",
-      "props": [
-        {
-          "name": "className",
-          "type": "any"
-        }
-      ],
-      "description": "",
-      "dependencies": [],
-      "filePath": "/Users/williamphan/Desktop/tour/components/ui/dropdown-menu.tsx",
-      "snippet": "\"use client\"\n\nimport * as React from \"react\"\nimport * as DropdownMenuPrimitive from \"@radix-ui/react-dropdown-menu\"\nimport { Check, ChevronRight, Circle } from \"lucide-react\"",
-      "stateManagement": [],
-      "interfaces": [],
-      "testFile": null,
-      "stylingApproach": "CSS Classes"
-    },
-    {
-      "name": "useFormField",
+      "name": "useToast",
       "props": [],
       "description": "",
       "dependencies": [],
-      "filePath": "/Users/williamphan/Desktop/tour/components/ui/form.tsx",
-      "snippet": "\"use client\"\n\nimport * as React from \"react\"\nimport * as LabelPrimitive from \"@radix-ui/react-label\"\nimport { Slot } from \"@radix-ui/react-slot\"",
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/components/ui/use-toast.ts",
+      "snippet": "// Inspired by react-hot-toast library\nimport * as React from 'react';\n\nimport type { ToastActionElement, ToastProps } from '@/components/ui/toast';\n",
       "stateManagement": [],
       "interfaces": [
-        "FormFieldContextValue",
-        "FormItemContextValue"
+        "ToasterToast",
+        "ActionType",
+        "Action",
+        "State",
+        "Toast"
       ],
       "testFile": null,
-      "stylingApproach": "CSS Classes"
+      "stylingApproach": "None",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": [
+        "useToast"
+      ]
     },
     {
-      "name": "MenubarShortcut",
-      "props": [
-        {
-          "name": "className",
-          "type": "any"
-        }
-      ],
+      "name": "Toaster",
+      "props": [],
       "description": "",
       "dependencies": [],
-      "filePath": "/Users/williamphan/Desktop/tour/components/ui/menubar.tsx",
-      "snippet": "\"use client\"\n\nimport * as React from \"react\"\nimport * as MenubarPrimitive from \"@radix-ui/react-menubar\"\nimport { Check, ChevronRight, Circle } from \"lucide-react\"",
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/components/ui/toaster.tsx",
+      "snippet": "'use client';\n\nimport { Toast, ToastClose, ToastDescription, ToastProvider, ToastTitle, ToastViewport } from '@/components/ui/toast';\nimport { useToast } from '@/components/ui/use-toast';\n",
       "stateManagement": [],
       "interfaces": [],
       "testFile": null,
-      "stylingApproach": "CSS Classes"
-    },
-    {
-      "name": "PaginationEllipsis",
-      "props": [
-        {
-          "name": "className",
-          "type": "any"
-        },
-        {
-          "name": "className",
-          "type": "any"
-        },
-        {
-          "name": "isActive",
-          "type": "any"
-        },
-        {
-          "name": "size",
-          "type": "any"
-        },
-        {
-          "name": "className",
-          "type": "any"
-        },
-        {
-          "name": "className",
-          "type": "any"
-        },
-        {
-          "name": "className",
-          "type": "any"
-        }
-      ],
-      "description": "",
-      "dependencies": [],
-      "filePath": "/Users/williamphan/Desktop/tour/components/ui/pagination.tsx",
-      "snippet": "import * as React from \"react\"\nimport { ChevronLeft, ChevronRight, MoreHorizontal } from \"lucide-react\"\n\nimport { cn } from \"@/lib/utils\"\nimport { ButtonProps, buttonVariants } from \"@/components/ui/button\"",
-      "stateManagement": [],
-      "interfaces": [
-        "PaginationLinkProps"
-      ],
-      "testFile": null,
-      "stylingApproach": "CSS Classes"
-    },
-    {
-      "name": "ResizableHandle",
-      "props": [
-        {
-          "name": "className",
-          "type": "any"
-        },
-        {
-          "name": "withHandle",
-          "type": "any"
-        },
-        {
-          "name": "className",
-          "type": "any"
-        }
-      ],
-      "description": "",
-      "dependencies": [],
-      "filePath": "/Users/williamphan/Desktop/tour/components/ui/resizable.tsx",
-      "snippet": "\"use client\"\n\nimport { GripVertical } from \"lucide-react\"\nimport * as ResizablePrimitive from \"react-resizable-panels\"\n",
-      "stateManagement": [],
-      "interfaces": [],
-      "testFile": null,
-      "stylingApproach": "CSS Classes"
+      "stylingApproach": "CSS Classes",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
     },
     {
       "name": "SheetFooter",
@@ -892,17 +932,22 @@
       ],
       "description": "",
       "dependencies": [],
-      "filePath": "/Users/williamphan/Desktop/tour/components/ui/sheet.tsx",
-      "snippet": "\"use client\"\n\nimport * as React from \"react\"\nimport * as SheetPrimitive from \"@radix-ui/react-dialog\"\nimport { cva, type VariantProps } from \"class-variance-authority\"",
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/components/ui/sheet.tsx",
+      "snippet": "'use client';\n\nimport * as React from 'react';\nimport { cva, type VariantProps } from 'class-variance-authority';\n",
       "stateManagement": [],
       "interfaces": [
         "SheetContentProps"
       ],
       "testFile": null,
-      "stylingApproach": "CSS Classes"
+      "stylingApproach": "CSS Classes",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
     },
     {
-      "name": "Skeleton",
+      "name": "DropdownMenuShortcut",
       "props": [
         {
           "name": "className",
@@ -911,76 +956,799 @@
       ],
       "description": "",
       "dependencies": [],
-      "filePath": "/Users/williamphan/Desktop/tour/components/ui/skeleton.tsx",
-      "snippet": "import { cn } from \"@/lib/utils\"\n\nfunction Skeleton({\n  className,\n  ...props",
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/components/ui/dropdown-menu.tsx",
+      "snippet": "'use client';\n\nimport * as React from 'react';\n\nimport { cn } from '@/utils/cn';",
       "stateManagement": [],
       "interfaces": [],
       "testFile": null,
-      "stylingApproach": "CSS Classes"
+      "stylingApproach": "CSS Classes",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
     },
     {
-      "name": "Toaster",
-      "props": [],
+      "name": "DialogFooter",
+      "props": [
+        {
+          "name": "className",
+          "type": "any"
+        },
+        {
+          "name": "className",
+          "type": "any"
+        }
+      ],
       "description": "",
       "dependencies": [],
-      "filePath": "/Users/williamphan/Desktop/tour/components/ui/sonner.tsx",
-      "snippet": "\"use client\"\n\nimport { useTheme } from \"next-themes\"\nimport { Toaster as Sonner } from \"sonner\"\n",
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/components/ui/dialog.tsx",
+      "snippet": "\"use client\"\n\nimport * as React from \"react\"\n\nimport { cn } from \"@/utils/cn\"",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Classes",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "CommandShortcut",
+      "props": [
+        {
+          "name": "children",
+          "type": "any"
+        },
+        {
+          "name": "className",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/components/ui/command.tsx",
+      "snippet": "\"use client\"\n\nimport * as React from \"react\"\nimport { Command as CommandPrimitive } from \"cmdk\"\n",
       "stateManagement": [],
       "interfaces": [
-        "ToasterProps"
+        "CommandDialogProps"
       ],
       "testFile": null,
-      "stylingApproach": "CSS Classes"
+      "stylingApproach": "CSS Classes",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
     },
     {
-      "name": "Toaster",
+      "name": "getPayloadConfigFromPayload",
+      "props": [
+        {
+          "name": "id",
+          "type": "any"
+        },
+        {
+          "name": "config",
+          "type": "any"
+        }
+      ],
+      "description": "Helper to extract item config from a payload.",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/components/ui/chart.tsx",
+      "snippet": "\"use client\"\n\nimport * as React from \"react\"\nimport * as RechartsPrimitive from \"recharts\"\nimport {",
+      "stateManagement": [],
+      "interfaces": [
+        "ChartConfig",
+        "ChartContextProps"
+      ],
+      "testFile": null,
+      "stylingApproach": "CSS Classes",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": [
+        "useChart"
+      ]
+    },
+    {
+      "name": "Plot",
       "props": [],
       "description": "",
       "dependencies": [],
-      "filePath": "/Users/williamphan/Desktop/tour/components/ui/toaster.tsx",
-      "snippet": "\"use client\"\n\nimport {\n  Toast,\n  ToastClose,",
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/plot.tsx",
+      "snippet": "import React from 'react';\nimport Image from \"next/image\";\nimport Link from \"next/link\";\n\nimport { products } from '@/data/products';",
       "stateManagement": [],
       "interfaces": [],
       "testFile": null,
-      "stylingApproach": "CSS Classes"
+      "stylingApproach": "CSS Classes",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "Page",
+      "props": [],
+      "description": "",
+      "dependencies": [
+        "./CollaborativeApp"
+      ],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/page.tsx",
+      "snippet": "import Image from \"next/image\";\nimport Link from \"next/link\";\nimport { redirect } from 'next/navigation';\n\nimport { products } from '@/data/products';",
+      "stateManagement": [],
+      "interfaces": [
+        "Product"
+      ],
+      "testFile": null,
+      "stylingApproach": "CSS Classes",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "Navigation",
+      "props": [],
+      "description": "",
+      "dependencies": [
+        "./(auth)/auth-actions"
+      ],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/navigation.tsx",
+      "snippet": "import Link from 'next/link';\nimport { IoMenu } from 'react-icons/io5';\n\nimport { AccountMenu } from '@/components/account-menu';\nimport { Button } from '@/components/ui/button';",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Classes",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "RootLayout",
+      "props": [
+        {
+          "name": "children",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [
+        "../components/Room"
+      ],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/layout.tsx",
+      "snippet": "'use client'\n\nimport { PropsWithChildren } from 'react';\nimport dynamic from 'next/dynamic';\nimport { Montserrat, Montserrat_Alternates } from 'next/font/google';",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Modules",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "handleMouseMove",
+      "props": [
+        {
+          "name": "x",
+          "type": "any"
+        },
+        {
+          "name": "y",
+          "type": "any"
+        },
+        {
+          "name": "color",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/LiveCursor.tsx",
+      "snippet": "\"use client\";\n\nimport { useEffect,useState } from 'react';\n\nimport { useMyPresence, useOthers, useSelf } from \"@liveblocks/react\";",
+      "stateManagement": [
+        "useEffect"
+      ],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "Inline Styles",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "Cursor",
+      "props": [
+        {
+          "name": "x",
+          "type": "any"
+        },
+        {
+          "name": "y",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/Cursor.tsx",
+      "snippet": "\ntype Props = {\n    x: number;\n    y: number;\n  };",
+      "stateManagement": [],
+      "interfaces": [
+        "Props"
+      ],
+      "testFile": null,
+      "stylingApproach": "Inline Styles",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "CollaborativeApp",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/CollaborativeApp.tsx",
+      "snippet": "\"use client\";\n\nimport { useOthers } from \"@liveblocks/react/suspense\";\n\nexport function CollaborativeApp() {",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "None",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "generateMetadataFile",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/sdk/sdk.tsx",
+      "snippet": "import * as fs from 'fs';\nimport { glob } from 'glob';\nimport * as path from 'path';\nimport { Node, Project, PropertyAssignment, SourceFile, SyntaxKind } from 'ts-morph';\n",
+      "stateManagement": [],
+      "interfaces": [
+        "ComponentMetadata",
+        "RouteMetadata",
+        "ApiEndpointMetadata",
+        "NavigationItem",
+        "AppMetadata"
+      ],
+      "testFile": null,
+      "stylingApproach": "CSS Classes",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "main",
+      "props": [],
+      "description": "",
+      "dependencies": [
+        "./sdk"
+      ],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/sdk/run_sdk.ts",
+      "snippet": "// npx ts-node src/app/sdk/run_sdk.\n// npx tsx /Users/williamphan/Desktop/tourguide/src/app/sdk/run_sdk.ts\n\nimport { generateMetadataFile } from './sdk';\n",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "None",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "main",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/sdk/run_sdk.js",
+      "snippet": "\"use strict\";\n// npx ts-node src/app/sdk/run_sdk.tsx\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\n    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }\n    return new (P || (P = Promise))(function (resolve, reject) {",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "None",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "Page",
+      "props": [
+        {
+          "name": "params",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [
+        "./ProductPage"
+      ],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/product/[slug]/page.tsx",
+      "snippet": "import { notFound } from 'next/navigation';\n\nimport { products } from '@/data/products';\n\nimport ProductPage from './ProductPage';",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "None",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "ProductPage",
+      "props": [
+        {
+          "name": "product",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/product/[slug]/ProductPage.tsx",
+      "snippet": "'use client'\n\nimport React, { useState } from 'react';\nimport Image from 'next/image';\nimport Link from 'next/link';",
+      "stateManagement": [
+        "useState"
+      ],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Classes",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [
+        "onChange",
+        "onChange"
+      ],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "PrivatePage",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/private/page.tsx",
+      "snippet": "// TESTING\n\nimport { redirect } from 'next/navigation'\n\nimport { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "None",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "PricingPage",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/pricing/page.tsx",
+      "snippet": "import { PricingSection } from '@/features/pricing/components/pricing-section';\n\nexport default async function PricingPage() {\n  return <PricingSection isPricingPage />;\n}",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "None",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "checkUser",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/flowchart/page.tsx",
+      "snippet": "'use client';\n\nimport { useEffect, useState } from 'react';\nimport { useRouter, useSearchParams } from 'next/navigation';\nimport { AnimatePresence,motion } from 'framer-motion';",
+      "stateManagement": [
+        "useState",
+        "useState",
+        "useState",
+        "useEffect"
+      ],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Classes",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "FlowchartLayout",
+      "props": [
+        {
+          "name": "children",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/flowchart/layout.tsx",
+      "snippet": "import { PropsWithChildren } from 'react';\nimport { Montserrat, Montserrat_Alternates } from 'next/font/google';\n\nimport { cn } from '@/utils/cn';\n",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Classes",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "runAgent",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/api/pythonBridge.ts",
+      "snippet": "import path from 'path';\nimport { PythonShell } from 'python-shell';\n\nexport async function runAgent(question: string): Promise<AsyncIterableIterator<any>> {\n  console.log('runAgent called with question:', question);",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "None",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "getRandomColor",
+      "props": [],
+      "description": "Function to generate random colors",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/api/mark_page.js",
+      "snippet": "const customCSS = `\n    ::-webkit-scrollbar {\n        width: 10px;\n    }\n    ::-webkit-scrollbar-track {",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "None",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "POST",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/api/webhooks/route.ts",
+      "snippet": "import Stripe from 'stripe';\n\nimport { upsertUserSubscription } from '@/features/account/controllers/upsert-user-subscription';\nimport { upsertPrice } from '@/features/pricing/controllers/upsert-price';\nimport { upsertProduct } from '@/features/pricing/controllers/upsert-product';",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "None",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "POST",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/api/run_agent/route.ts",
+      "snippet": "import { NextRequest, NextResponse } from 'next/server';\n\nexport async function POST(request: NextRequest) {\n  const body = await request.json();\n  const { question, currentUrl } = body;",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "None",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "handleOAuthClick",
+      "props": [
+        {
+          "name": "mode",
+          "type": "any"
+        },
+        {
+          "name": "signInWithOAuth",
+          "type": "any"
+        },
+        {
+          "name": "signInWithEmail",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/(auth)/auth-ui.tsx",
+      "snippet": "'use client';\n\nimport { FormEvent, useState } from 'react';\nimport Image from 'next/image';\nimport Link from 'next/link';",
+      "stateManagement": [
+        "useState",
+        "useState",
+        "useState"
+      ],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Classes",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [
+        "onSubmit",
+        "onChange",
+        "onChange",
+        "onClick"
+      ],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "signOut",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/(auth)/auth-actions.ts",
+      "snippet": "'use server';\n\nimport { cookies } from 'next/headers';\nimport { redirect } from 'next/navigation';\nimport { NextResponse } from 'next/server';",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "None",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "SignUp",
+      "props": [],
+      "description": "",
+      "dependencies": [
+        "../auth-actions",
+        "../auth-ui"
+      ],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/(auth)/signup/page.tsx",
+      "snippet": "import { redirect } from 'next/navigation';\n\nimport { getSession } from '@/features/account/controllers/get-session';\nimport { getSubscription } from '@/features/account/controllers/get-subscription';\n",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Classes",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "RootLayout",
+      "props": [
+        {
+          "name": "children",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/(auth)/signup/layout.tsx",
+      "snippet": "import { PropsWithChildren } from 'react';\nimport type { Metadata } from 'next';\nimport { Montserrat, Montserrat_Alternates } from 'next/font/google';\n\nimport { Toaster } from '@/components/ui/toaster';",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Modules",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "GET",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/(auth)/auth/callback/route.ts",
+      "snippet": "// ref: https://github.com/vercel/next.js/blob/canary/examples/with-supabase/app/auth/callback/route.ts\n\nimport { NextResponse } from 'next/server';\n\nimport { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "None",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "GET",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/(account)/manage-subscription/route.ts",
+      "snippet": "import { redirect } from 'next/navigation';\n\nimport { getCustomerId } from '@/features/account/controllers/get-customer-id';\nimport { getSession } from '@/features/account/controllers/get-session';\nimport { stripeAdmin } from '@/libs/stripe/stripe-admin';",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "None",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "Card",
+      "props": [
+        {
+          "name": "title",
+          "type": "any"
+        },
+        {
+          "name": "footer",
+          "type": "any"
+        },
+        {
+          "name": "children",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/(account)/account/page.tsx",
+      "snippet": "import { PropsWithChildren, ReactNode } from 'react';\nimport Link from 'next/link';\nimport { redirect } from 'next/navigation';\n\nimport { Button } from '@/components/ui/button';",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "CSS Classes",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
     }
   ],
   "routes": [
     {
-      "path": "/dashboard/main",
-      "component": "Main Dashboard"
+      "path": "/product/arnold-circus-stool",
+      "component": "Arnold Circus Stool Product Page",
+      "parentRoute": "/product"
     },
     {
-      "path": "/dashboard/ai-chat",
-      "component": "AI Chat"
+      "path": "/product/arnoldino-stool",
+      "component": "Arnoldino Stool Product Page",
+      "parentRoute": "/product"
     },
     {
-      "path": "/dashboard/ai-generator",
-      "component": "AI Generator"
+      "path": "/product/hookalotti",
+      "component": "Hookalotti Product Page",
+      "parentRoute": "/product"
     },
     {
-      "path": "/dashboard/ai-assistant",
-      "component": "AI Assistant"
+      "path": "/product/chicken",
+      "component": "Chicken Product Page",
+      "parentRoute": "/product"
     },
     {
-      "path": "/dashboard/users-list",
-      "component": "Users List"
-    },
-    {
-      "path": "/dashboard/settings",
-      "component": "Profile Settings"
-    },
-    {
-      "path": "/dashboard/subscription",
-      "component": "Subscription"
-    },
-    {
-      "path": "/home",
-      "component": "Landing Page"
-    },
-    {
-      "path": "/pricing",
-      "component": "Pricing Page"
+      "path": "/product/hookalotti-2",
+      "component": "Hookalotti Product Page",
+      "parentRoute": "/product"
     }
+  ],
+  "apiEndpoints": [],
+  "performanceMetrics": {},
+  "seoMetadata": {},
+  "dependencyGraph": {
+    "middleware": [
+      "./libs/supabase/supabase-middleware-client"
+    ],
+    "getServerSideProps": [],
+    "toDateTime": [],
+    "getURL": [],
+    "getEnvVar": [],
+    "cn": [],
+    "createSupabaseServerClient": [],
+    "supabaseMiddlewareClient": [],
+    "upsertProduct": [],
+    "upsertPrice": [],
+    "getProducts": [],
+    "PricingSection": [
+      "../actions/create-checkout-action"
+    ],
+    "PricingSwitch": [
+      "../models/product-metadata",
+      "../types"
+    ],
+    "createCheckoutAction": [],
+    "WelcomeEmail": [
+      "./tailwind.config"
+    ],
+    "copyBillingDetailsToCustomer": [],
+    "getUser": [],
+    "getSubscription": [],
+    "getSession": [],
+    "getOrCreateCustomer": [],
+    "getCustomerId": [],
+    "SexyBoarder": [],
+    "Profile": [],
+    "renderActiveComponent": [
+      "./Counter",
+      "./profile"
+    ],
+    "fetchFlowcharts": [],
+    "Hero": [],
+    "HeroSpline": [],
+    "getMinMaxCoordinates": [
+      "./Counter",
+      "./history"
+    ],
+    "handleLogoutClick": [
+      "./ui/use-toast"
+    ],
+    "handleKeyDown": [],
+    "Room": [],
+    "Counter": [],
+    "useToast": [],
+    "Toaster": [],
+    "SheetFooter": [],
+    "DropdownMenuShortcut": [],
+    "DialogFooter": [],
+    "CommandShortcut": [],
+    "getPayloadConfigFromPayload": [],
+    "Plot": [],
+    "Page": [
+      "./ProductPage"
+    ],
+    "Navigation": [
+      "./(auth)/auth-actions"
+    ],
+    "RootLayout": [],
+    "handleMouseMove": [],
+    "Cursor": [],
+    "CollaborativeApp": [],
+    "generateMetadataFile": [],
+    "main": [],
+    "ProductPage": [],
+    "PrivatePage": [],
+    "PricingPage": [],
+    "checkUser": [],
+    "FlowchartLayout": [],
+    "runAgent": [],
+    "getRandomColor": [],
+    "POST": [],
+    "handleOAuthClick": [],
+    "signOut": [],
+    "SignUp": [
+      "../auth-actions",
+      "../auth-ui"
+    ],
+    "GET": [],
+    "Card": []
+  },
+  "navigationStructure": [],
+  "entryPoints": [
+    "/Users/williamphan/Desktop/tourguide/src/app/layout.tsx"
   ]
 }

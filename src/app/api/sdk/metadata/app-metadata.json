@@ -777,7 +777,7 @@
       "description": "",
       "dependencies": [],
       "filePath": "/Users/williamphan/Desktop/tourguide/src/components/SpotLightSearch.tsx",
-      "snippet": "'use client'\n\nimport React, { useState, useEffect } from 'react'\nimport { Command } from '@/components/ui/command'\nimport { Dialog, DialogContent } from '@/components/ui/dialog'",
+      "snippet": "'use client'\n\nimport React, { useEffect,useState } from 'react'\nimport { Search } from 'lucide-react'\n",
       "stateManagement": [
         "useState",
         "useState",
@@ -797,6 +797,57 @@
         "onChange",
         "onKeyDown",
         "onClick"
+      ],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "Room",
+      "props": [
+        {
+          "name": "x",
+          "type": "any"
+        },
+        {
+          "name": "y",
+          "type": "any"
+        },
+        {
+          "name": "color",
+          "type": "any"
+        },
+        {
+          "name": "children",
+          "type": "any"
+        },
+        {
+          "name": "children",
+          "type": "any"
+        }
+      ],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/components/Room.tsx",
+      "snippet": "\"use client\";\nimport { useCallback,useEffect, useState } from 'react';\nimport { ReactNode } from \"react\";\n\nimport SpotLightSearch from '@/components/SpotLightSearch';",
+      "stateManagement": [
+        "useState",
+        "useState",
+        "useState",
+        "useState",
+        "useState",
+        "useEffect",
+        "useCallback",
+        "useCallback",
+        "useCallback",
+        "useEffect"
+      ],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "Inline Styles",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [
+        "onSelect"
       ],
       "lifecycleMethods": [],
       "customHooks": []
@@ -932,7 +983,7 @@
       "description": "",
       "dependencies": [],
       "filePath": "/Users/williamphan/Desktop/tourguide/src/components/ui/dialog.tsx",
-      "snippet": "\"use client\"\n\nimport * as React from \"react\"\nimport * as DialogPrimitive from \"@radix-ui/react-dialog\"\nimport { Cross2Icon } from \"@radix-ui/react-icons\"",
+      "snippet": "\"use client\"\n\nimport * as React from \"react\"\n\nimport { cn } from \"@/utils/cn\"",
       "stateManagement": [],
       "interfaces": [],
       "testFile": null,
@@ -958,7 +1009,7 @@
       "description": "",
       "dependencies": [],
       "filePath": "/Users/williamphan/Desktop/tourguide/src/components/ui/command.tsx",
-      "snippet": "\"use client\"\n\nimport * as React from \"react\"\nimport { type DialogProps } from \"@radix-ui/react-dialog\"\nimport { MagnifyingGlassIcon } from \"@radix-ui/react-icons\"",
+      "snippet": "\"use client\"\n\nimport * as React from \"react\"\nimport { Command as CommandPrimitive } from \"cmdk\"\n",
       "stateManagement": [],
       "interfaces": [
         "CommandDialogProps"
@@ -1008,7 +1059,7 @@
       "description": "",
       "dependencies": [],
       "filePath": "/Users/williamphan/Desktop/tourguide/src/app/plot.tsx",
-      "snippet": "import React from 'react';\nimport Image from \"next/image\";\nimport Link from \"next/link\";\nimport { products } from '@/data/products';\n",
+      "snippet": "import React from 'react';\nimport Image from \"next/image\";\nimport Link from \"next/link\";\n\nimport { products } from '@/data/products';",
       "stateManagement": [],
       "interfaces": [],
       "testFile": null,
@@ -1069,10 +1120,10 @@
       ],
       "description": "",
       "dependencies": [
-        "./Room"
+        "../components/Room"
       ],
       "filePath": "/Users/williamphan/Desktop/tourguide/src/app/layout.tsx",
-      "snippet": "'use client'\n\nimport { PropsWithChildren } from 'react';\nimport { Montserrat, Montserrat_Alternates } from 'next/font/google';\n",
+      "snippet": "'use client'\n\nimport { PropsWithChildren } from 'react';\nimport dynamic from 'next/dynamic';\nimport { Montserrat, Montserrat_Alternates } from 'next/font/google';",
       "stateManagement": [],
       "interfaces": [],
       "testFile": null,
@@ -1080,57 +1131,6 @@
       "accessibility": [],
       "forms": [],
       "eventHandlers": [],
-      "lifecycleMethods": [],
-      "customHooks": []
-    },
-    {
-      "name": "Room",
-      "props": [
-        {
-          "name": "x",
-          "type": "any"
-        },
-        {
-          "name": "y",
-          "type": "any"
-        },
-        {
-          "name": "color",
-          "type": "any"
-        },
-        {
-          "name": "children",
-          "type": "any"
-        },
-        {
-          "name": "children",
-          "type": "any"
-        }
-      ],
-      "description": "",
-      "dependencies": [],
-      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/Room.tsx",
-      "snippet": "\"use client\";\nimport { useState, useEffect, useCallback } from 'react';\nimport { ReactNode } from \"react\";\nimport {\n  LiveblocksProvider,",
-      "stateManagement": [
-        "useState",
-        "useState",
-        "useState",
-        "useState",
-        "useState",
-        "useEffect",
-        "useCallback",
-        "useCallback",
-        "useCallback",
-        "useEffect"
-      ],
-      "interfaces": [],
-      "testFile": null,
-      "stylingApproach": "Inline Styles",
-      "accessibility": [],
-      "forms": [],
-      "eventHandlers": [
-        "onSelect"
-      ],
       "lifecycleMethods": [],
       "customHooks": []
     },
@@ -1153,7 +1153,7 @@
       "description": "",
       "dependencies": [],
       "filePath": "/Users/williamphan/Desktop/tourguide/src/app/LiveCursor.tsx",
-      "snippet": "\"use client\";\n\nimport { useState, useEffect } from 'react';\nimport { useMyPresence, useOthers, useSelf } from \"@liveblocks/react\";\n",
+      "snippet": "\"use client\";\n\nimport { useEffect,useState } from 'react';\n\nimport { useMyPresence, useOthers, useSelf } from \"@liveblocks/react\";",
       "stateManagement": [
         "useEffect"
       ],
@@ -1217,7 +1217,7 @@
       "description": "",
       "dependencies": [],
       "filePath": "/Users/williamphan/Desktop/tourguide/src/app/sdk/sdk.tsx",
-      "snippet": "import * as fs from 'fs';\nimport * as path from 'path';\nimport { Node, Project, PropertyAssignment, SourceFile, SyntaxKind } from 'ts-morph';\nimport * as parser from '@babel/parser';\nimport { glob } from 'glob';",
+      "snippet": "import * as fs from 'fs';\nimport { glob } from 'glob';\nimport * as path from 'path';\nimport { Node, Project, PropertyAssignment, SourceFile, SyntaxKind } from 'ts-morph';\n",
       "stateManagement": [],
       "interfaces": [
         "ComponentMetadata",
@@ -1242,7 +1242,24 @@
         "./sdk"
       ],
       "filePath": "/Users/williamphan/Desktop/tourguide/src/app/sdk/run_sdk.ts",
-      "snippet": "// npx ts-node src/app/sdk/run_sdk.tsx\n\nimport { generateMetadataFile } from './sdk';\n\nasync function main() {",
+      "snippet": "// npx ts-node src/app/sdk/run_sdk.\n// npx tsx /Users/williamphan/Desktop/tourguide/src/app/sdk/run_sdk.ts\n\nimport { generateMetadataFile } from './sdk';\n",
+      "stateManagement": [],
+      "interfaces": [],
+      "testFile": null,
+      "stylingApproach": "None",
+      "accessibility": [],
+      "forms": [],
+      "eventHandlers": [],
+      "lifecycleMethods": [],
+      "customHooks": []
+    },
+    {
+      "name": "main",
+      "props": [],
+      "description": "",
+      "dependencies": [],
+      "filePath": "/Users/williamphan/Desktop/tourguide/src/app/sdk/run_sdk.js",
+      "snippet": "\"use strict\";\n// npx ts-node src/app/sdk/run_sdk.tsx\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\n    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }\n    return new (P || (P = Promise))(function (resolve, reject) {",
       "stateManagement": [],
       "interfaces": [],
       "testFile": null,
@@ -1388,7 +1405,7 @@
       "description": "",
       "dependencies": [],
       "filePath": "/Users/williamphan/Desktop/tourguide/src/app/api/pythonBridge.ts",
-      "snippet": "import { PythonShell } from 'python-shell';\nimport path from 'path';\n\nexport async function runAgent(question: string): Promise<AsyncIterableIterator<any>> {\n  console.log('runAgent called with question:', question);",
+      "snippet": "import path from 'path';\nimport { PythonShell } from 'python-shell';\n\nexport async function runAgent(question: string): Promise<AsyncIterableIterator<any>> {\n  console.log('runAgent called with question:', question);",
       "stateManagement": [],
       "interfaces": [],
       "testFile": null,
@@ -1691,6 +1708,7 @@
       "./ui/use-toast"
     ],
     "handleKeyDown": [],
+    "Room": [],
     "Counter": [],
     "useToast": [],
     "Toaster": [],
@@ -1707,14 +1725,11 @@
       "./(auth)/auth-actions"
     ],
     "RootLayout": [],
-    "Room": [],
     "handleMouseMove": [],
     "Cursor": [],
     "CollaborativeApp": [],
     "generateMetadataFile": [],
-    "main": [
-      "./sdk"
-    ],
+    "main": [],
     "ProductPage": [],
     "PrivatePage": [],
     "PricingPage": [],

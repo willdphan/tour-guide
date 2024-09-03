@@ -589,7 +589,7 @@ async function generateMetadataFile(rootDir: string) {
   try {
     const metadata = await generateAppMetadata(rootDir);
 
-    const outputDir = path.join(rootDir, 'src', 'app', 'api', 'parse', 'metadata');
+    const outputDir = "/Users/williamphan/Desktop/tourguide/src/app/sdk/metadata"
     const outputPath = path.join(outputDir, 'app-metadata.json');
 
     if (!fs.existsSync(outputDir)) {

@@ -38,7 +38,7 @@ const products: Product[] = [
             Products
           </Link> */}
         </nav>
-        <nav className="flex items-center space-x-2">
+        {/* <nav className="flex items-center space-x-2">
           <Link href="#" className="text-sm" prefetch={false}>
             Where to buy
           </Link>
@@ -48,7 +48,7 @@ const products: Product[] = [
           <Link href="/dashboard/ai-chat" className="text-sm" prefetch={false}>
             AI Chat
           </Link>
-        </nav>
+        </nav> */}
       </header>
       <main className="flex flex-col w-full p-4 space-y-4">
         <div className="max-w-4xl w-full">
