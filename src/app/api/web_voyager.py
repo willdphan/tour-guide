@@ -60,28 +60,35 @@ class AgentState(TypedDict):
 
 # Define tools
 async def click(state: AgentState):
-    page = state["page"] # grab the page in browser
-    # grab the action string list, args determined by agent b4 called
+    page = state["page"]
     click_args = state["prediction"]["args"]
-    # if click_args above doesn't exist, click_args is expected to have one argument
     if click_args is None or len(click_args) != 1:
-        # If we can't click, return the current mouse position
         mouse_position = await page.evaluate("({x: window.mouseX, y: window.mouseY})")
         return f"Failed to click bounding box", mouse_position['x'], mouse_position['y']
-    # accesses first element in click_args list, converts to int. alr decided what to click
-    bbox_id = int(click_args[0])
-    # access specific bounding box information
+    
+    bbox_id_or_label = click_args[0]
+    bboxes = state.get("bboxes", [])
+    
+    # Try to find the bbox by numerical index or by matching the label
+    bbox = None
     try:
-        bbox = state["bboxes"][bbox_id]
-    except:
-        # If bbox doesn't exist, return the current mouse position
+        bbox_id = int(bbox_id_or_label)
+        if 0 <= bbox_id < len(bboxes):
+            bbox = bboxes[bbox_id]
+    except ValueError:
+        # If conversion to int fails, search for a bbox with matching label
+        for i, box in enumerate(bboxes):
+            if box.get("ariaLabel") == bbox_id_or_label or box.get("text") == bbox_id_or_label:
+                bbox = box
+                break
+    
+    if bbox is None:
         mouse_position = await page.evaluate("({x: window.mouseX, y: window.mouseY})")
-        return f"Error: no bbox for : {bbox_id}", mouse_position['x'], mouse_position['y']
-    # grab x and y coordinates
+        return f"Error: no bbox found for: {bbox_id_or_label}", mouse_position['x'], mouse_position['y']
+    
     x, y = bbox["x"], bbox["y"]
-    # page.mouse.click() from playwrite object
     await page.mouse.click(x, y)
-    return f"Clicked {bbox_id}", x, y
+    return f"Clicked {bbox_id_or_label}", x, y
 
 async def type_text(state: AgentState):
     # Get the page object from the state
@@ -183,9 +190,19 @@ async def to_google(state: AgentState):
 
 # Define mark_page function, THIS MARKS BOUNDING BOXES.
 # done with the mark_page.js file
+import os
+
+# Construct the path to mark_page.js relative to the current file
+current_dir = os.path.dirname(os.path.abspath(__file__))
+mark_page_js_path = os.path.join(current_dir, "mark_page.js")
+
 # Read mark_page.js
-with open("/Users/williamphan/Desktop/tour/app/api/parse/mark_page.js") as f:
-    mark_page_script = f.read()
+try:
+    with open(mark_page_js_path, "r") as f:
+        mark_page_script = f.read()
+except FileNotFoundError:
+    print(f"Error: Could not find mark_page.js at {mark_page_js_path}")
+    mark_page_script = ""  # Set to empty string or handle this error as appropriate for your application
 
 # decorator for chaining operations
 # a way to wrap a function with another function, adding functionality before 
@@ -364,7 +381,7 @@ async def run_agent():
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=False)
         page = await browser.new_page()
-        await page.goto("https://www.google.com")
+        await page.goto("https://tour-guide-liard.vercel.app/")
 
         async def call_agent(question: str, page, max_steps: int = 150):
             event_stream = graph.astream(
@@ -407,7 +424,9 @@ async def run_agent():
             # "Could you explain the WebVoyager paper (on arxiv)?",
             # "Please explain the today's XKCD comic for me. Why is it funny?",
             # "What are the latest blog posts from langchain?",
-            "Look for the 10th result of the word fish on google.",
+            # "Look for the 10th result of the word fish on google.",
+            "Go to the chicken page."
+
             # "Could you check google maps to see when i should leave to get to SFO by 7 o'clock? starting from SF downtown.",
         ]
 
