@@ -1,5 +1,12 @@
 """
 Graph RAG with visual component try today.
+
+WHY IT DOESN'T WORK:
+- unable to read metadata that contains components, elements, and other details.
+- unable to provide relevant answers, when asked to find simple chicken page it gives:
+> Finished chain.
+INFO:__main__:Response: It seems there was an issue retrieving the information about the available pages in the application. Could you please specify more details or try a different query?
+- information provided needs to be more detailed and easier to grab.
 """
 
 import ast
@@ -64,140 +71,47 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+import json
+import os
+
 class NextJSUIGraphConstructor:
     def __init__(self, graph_manager, llm):
         self.graph_manager = graph_manager
         self.llm = llm
 
-    def build_graph(self, directory: str):
-        logger.debug(f"Starting to build graph from directory: {directory}")
-        self.add_ui_components_and_pages(directory)
+    def build_graph(self, metadata_directory: str):
+        logger.debug(f"Starting to build graph from metadata directory: {metadata_directory}")
+        self.add_components_and_routes_from_metadata(metadata_directory)
         self.generate_user_flows()
 
-    def add_ui_components_and_pages(self, directory):
-        components_and_pages = self.parse_nextjs_files(directory)
-        for item in components_and_pages:
-            logger.debug(f"Adding to graph: {item}")
-            self.graph_manager.create_node(item.type, item.dict())
+    def add_components_and_routes_from_metadata(self, metadata_directory):
+        metadata_file = os.path.join(metadata_directory, 'app-metadata.json')
+        with open(metadata_file, 'r') as f:
+            metadata = json.load(f)
 
-    def parse_nextjs_files(self, directory):
-        items = []
-        for root, dirs, files in os.walk(directory):
-            for file in files:
-                if file.endswith(('.js', '.jsx', '.ts', '.tsx')):
-                    file_path = os.path.join(root, file)
-                    logger.debug(f"Processing file: {file_path}")
-                    with open(file_path, 'r') as f:
-                        content = f.read()
-                        rel_path = os.path.relpath(file_path, directory)
-                        route = '/' + os.path.splitext(rel_path)[0].replace('\\', '/')
-                        if route.endswith('/index'):
-                            route = route[:-5]
-                        
-                        logger.debug(f"Adding page: {route}")
-                        items.append(UIComponent(
-                            id=f"page_{route}",
-                            type="Page",
-                            label=f"Page: {route}",
-                            page=route
-                        ))
-                        
-                        items.extend(self.extract_components(content, route))
-                        dynamic_routes = self.extract_dynamic_routes(content)
-                        for dynamic_route in dynamic_routes:
-                            logger.debug(f"Adding dynamic route: {dynamic_route}")
-                            items.append(UIComponent(
-                                id=f"page_{dynamic_route}",
-                                type="DynamicPage",
-                                label=f"Dynamic Page: {dynamic_route}",
-                                page=dynamic_route
-                            ))
-        return items
+        # Add components
+        for component in metadata.get('components', []):
+            self.graph_manager.create_node('UIComponent', {
+                'id': component['name'],
+                'type': 'Component',
+                'label': component['name'],
+                'filePath': component['filePath'],
+                'props': component.get('props', []),
+                'description': component.get('description', ''),
+            })
 
-    def extract_components(self, content, page):
-        components = []
-        component_regex = r'(?:export\s+default\s+function|function|const)\s+(\w+)\s*\([^)]*\)\s*{'
-        matches = re.finditer(component_regex, content)
-        for match in matches:
-            component_name = match.group(1)
-            logger.debug(f"Extracted component: {component_name} on page {page}")
-            components.append(UIComponent(
-                id=f"{page}_{component_name}",
-                type="Component",
-                label=component_name,
-                page=page
-            ))
+        # Add routes
+        for route in metadata.get('routes', []):
+            self.graph_manager.create_node('UIComponent', {
+                'id': route['path'],
+                'type': 'Page',
+                'label': f"Page: {route['path']}",
+                'page': route['path'],
+                'component': route['component'],
+                'parentRoute': route.get('parentRoute', ''),
+            })
 
-        form_regex = r'<(input|button|select|textarea)[^>]*>'
-        form_matches = re.finditer(form_regex, content, re.IGNORECASE)
-        for match in form_matches:
-            element_type = match.group(1).lower()
-            label = re.search(r'placeholder="([^"]*)"', match.group(0))
-            label = label.group(1) if label else ""
-            logger.debug(f"Extracted form element: {element_type} with label '{label}' on page {page}")
-            components.append(UIComponent(
-                id=f"{page}_{element_type}_{len(components)}",
-                type=element_type,
-                label=label,
-                page=page
-            ))
-
-        return components
-
-    def extract_dynamic_routes(self, content):
-        dynamic_routes = []
-        array_pattern = r'const\s+(\w+)\s*=\s*\[(.*?)\];'
-        array_matches = re.finditer(array_pattern, content, re.DOTALL)
-        
-        for match in array_matches:
-            array_name = match.group(1)
-            array_content = match.group(2)
-            logger.debug(f"Found array: {array_name}")
-            
-            try:
-                array_items = ast.literal_eval(f"[{array_content}]")
-                for item in array_items:
-                    if isinstance(item, dict) and 'slug' in item:
-                        route = f"/product/{item['slug']}"
-                        logger.debug(f"Extracted dynamic route: {route}")
-                        dynamic_routes.append(route)
-            except:
-                logger.debug("Failed to parse array with ast, falling back to regex")
-                slug_pattern = r"slug:\s*['\"](.+?)['\"]"
-                slug_matches = re.finditer(slug_pattern, array_content)
-                for slug_match in slug_matches:
-                    route = f"/product/{slug_match.group(1)}"
-                    logger.debug(f"Extracted dynamic route (regex): {route}")
-                    dynamic_routes.append(route)
-        
-        return dynamic_routes
-    def extract_components(self, content, page):
-        components = []
-        component_regex = r'(?:export\s+default\s+function|function|const)\s+(\w+)\s*\([^)]*\)\s*{'
-        matches = re.finditer(component_regex, content)
-        for match in matches:
-            component_name = match.group(1)
-            components.append(UIComponent(
-                id=f"{page}_{component_name}",
-                type="Component",
-                label=component_name,
-                page=page
-            ))
-
-        form_regex = r'<(input|button|select|textarea)[^>]*>'
-        form_matches = re.finditer(form_regex, content, re.IGNORECASE)
-        for match in form_matches:
-            element_type = match.group(1).lower()
-            label = re.search(r'placeholder="([^"]*)"', match.group(0))
-            label = label.group(1) if label else ""
-            components.append(UIComponent(
-                id=f"{page}_{element_type}_{len(components)}",
-                type=element_type,
-                label=label,
-                page=page
-            ))
-
-        return components
+        logger.debug(f"Added {len(metadata.get('components', []))} components and {len(metadata.get('routes', []))} routes to the graph")
 
     def generate_user_flows(self):
         components = self.graph_manager.run_query("MATCH (c:UIComponent) RETURN c")
@@ -206,7 +120,7 @@ class NextJSUIGraphConstructor:
         prompt = PromptTemplate(
             input_variables=["components"],
             template="""
-            Based on the following Next.js UI components, generate possible user flows:
+            Based on the following Next.js UI components and routes, generate possible user flows:
 
             {components}
 
@@ -252,70 +166,75 @@ class NextJSUIGraphConstructor:
         for flow in flows:
             self.graph_manager.create_node("UserFlow", UserFlow(**flow).dict())
 
+from langchain.tools import BaseTool
+from typing import Dict, List, Any
 
 class GetComponentInfoTool(BaseTool):
     name = "get_component_info"
     description = "Get information about a specific UI component"
-    graph_manager: SimpleGraphManager = Field(exclude=True)
+    graph_manager: Any  # Add this line
 
-    def _run(self, component_id: str) -> str:
-        for node_id, data in self.graph_manager.graph.nodes(data=True):
-            if data['node_type'] == 'UIComponent' and data['id'] == component_id:
-                return str({**data, 'type': data['component_type']})
-        return f"No component found with id: {component_id}"
+    def __init__(self, graph_manager):
+        super().__init__()
+        self.graph_manager = graph_manager
+
+    def _run(self, component_id: str) -> Dict[str, Any]:
+        query = f"MATCH (c:UIComponent {{id: '{component_id}'}}) RETURN c"
+        result = self.graph_manager.run_query(query)
+        if result:
+            return result[0]['c']
+        return {}
 
 class GetUserFlowStepsTool(BaseTool):
     name = "get_user_flow_steps"
-    description = "Get steps for a particular user flow"
-    graph_manager: SimpleGraphManager = Field(exclude=True)
+    description = "Get the steps for a specific user flow"
+    graph_manager: Any  # Add this line
 
-    def _run(self, flow_id: str) -> str:
-        for _, data in self.graph_manager.graph.nodes(data=True):
-            if data['node_type'] == 'UserFlow' and data['id'] == flow_id:
-                return f"Flow: {data['name']}\nSteps: {', '.join(data['steps'])}\nStart Page: {data['start_page']}\nEnd Page: {data['end_page']}"
-        return f"No user flow found with id: {flow_id}"
+    def __init__(self, graph_manager):
+        super().__init__()
+        self.graph_manager = graph_manager
+
+    def _run(self, flow_id: str) -> List[str]:
+        query = f"MATCH (f:UserFlow {{id: '{flow_id}'}}) RETURN f"
+        result = self.graph_manager.run_query(query)
+        if result:
+            return result[0]['f'].get('steps', [])
+        return []
 
 class FindNavigationPathTool(BaseTool):
     name = "find_navigation_path"
     description = "Find a navigation path between two pages"
-    graph_manager: SimpleGraphManager = Field(exclude=True)
+    graph_manager: Any  # Add this line
 
-    def _run(self, start_page: str, end_page: str) -> str:
-        all_pages = [data['page'] for _, data in self.graph_manager.graph.nodes(data=True) 
-                     if data['node_type'] in ['Page', 'DynamicPage']]
-        logger.debug(f"All pages in graph: {all_pages}")
+    def __init__(self, graph_manager):
+        super().__init__()
+        self.graph_manager = graph_manager
 
-        start_nodes = [n for n, d in self.graph_manager.graph.nodes(data=True) 
-                       if d['node_type'] in ['Page', 'DynamicPage'] and d['page'] == start_page]
-        end_nodes = [n for n, d in self.graph_manager.graph.nodes(data=True) 
-                     if d['node_type'] in ['Page', 'DynamicPage'] and d['page'] == end_page]
+    def _run(self, start_page: str, end_page: str) -> List[str]:
+        query = f"""
+        MATCH path = shortestPath((start:UIComponent {{id: '{start_page}'}})-[*]-(end:UIComponent {{id: '{end_page}'}}))
+        RETURN [node in nodes(path) | node.id] as path
+        """
+        result = self.graph_manager.run_query(query)
+        if result:
+            return result[0]['path']
+        return []
 
-        logger.debug(f"Start nodes: {start_nodes}")
-        logger.debug(f"End nodes: {end_nodes}")
-
-        if not start_nodes or not end_nodes:
-            return f"No path found between {start_page} and {end_page}. Available pages: {', '.join(all_pages)}"
-
-        try:
-            path = nx.shortest_path(self.graph_manager.graph, start_nodes[0], end_nodes[0])
-            steps = [self.graph_manager.graph.nodes[node]['label'] for node in path if 'label' in self.graph_manager.graph.nodes[node]]
-            return f"Navigation path: {' -> '.join(steps)}"
-        except nx.NetworkXNoPath:
-            return f"No path found between {start_page} and {end_page}. Available pages: {', '.join(all_pages)}"
-from langchain.agents import AgentExecutor
-from langchain.memory import ConversationBufferMemory
-
+# Update the NextJSUIGuideAgent class to use these tools
 class NextJSUIGuideAgent:
-    def __init__(self, repo_path: str):
+    def __init__(self, metadata_path: str):
         self.graph_manager = SimpleGraphManager()
         self.llm = ChatOpenAI(model="gpt-4-turbo-preview", temperature=0)
         self.graph_constructor = NextJSUIGraphConstructor(self.graph_manager, self.llm)
-        self.build_graph(repo_path)
+        self.metadata = parse_app_metadata(metadata_path)
+        if self.metadata is None:
+            raise ValueError("Failed to load metadata")
+        self.build_graph(metadata_path)
         self.setup_agent()
 
-    def build_graph(self, repo_path: str):
+    def build_graph(self, metadata_path: str):
         try:
-            self.graph_constructor.build_graph(repo_path)
+            self.graph_constructor.build_graph(metadata_path)
         except Exception as e:
             print(f"Error building graph: {e}")
             print(traceback.format_exc())
@@ -372,17 +291,33 @@ class NextJSUIGuideAgent:
         except Exception as e:
             return f"Error: {str(e)}"
 
+
+
+def parse_app_metadata(metadata_path):
+    try:
+        if os.path.isdir(metadata_path):
+            metadata_path = os.path.join(metadata_path, 'app-metadata.json')
+        
+        if not os.path.exists(metadata_path):
+            raise FileNotFoundError(f"Metadata file not found at {metadata_path}")
+        
+        with open(metadata_path, 'r') as f:
+            metadata = json.load(f)
+        logger.debug(f"Loaded metadata: {json.dumps(metadata, indent=2)}")
+        return metadata
+    except Exception as e:
+        logger.error(f"Error loading metadata: {str(e)}")
+        return None
 # Example usage
 if __name__ == "__main__":
-    repo_path = "/Users/williamphan/Desktop/tourguide/src"
-    logger.info(f"Initializing UI Guide Agent with repo path: {repo_path}")
-    ui_guide = NextJSUIGuideAgent(repo_path)
+    metadata_path = "/Users/williamphan/Desktop/tourguide/src/app/sdk/metadata"
+    logger.info(f"Initializing UI Guide Agent with metadata path: {metadata_path}")
+    ui_guide = NextJSUIGuideAgent(metadata_path)
 
     try:
         queries = [
             "How do I navigate to the chicken page?",
             "What pages are available in the application?",
-            "Show me all the product pages",
         ]
 
         for query in queries:

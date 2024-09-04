@@ -16,10 +16,10 @@ export default function ProductPage({ product }) {
             <Link href="/" className="text-gray-500">Home</Link>
             <span className="mx-2">&gt;</span>
           </li>
-          <li className="flex items-center">
+          {/* <li className="flex items-center">
             <Link href="/products" className="text-gray-500">Products</Link>
             <span className="mx-2">&gt;</span>
-          </li>
+          </li> */}
           <li className="flex items-center">
             <span className="text-gray-900">{product.name}</span>
           </li>

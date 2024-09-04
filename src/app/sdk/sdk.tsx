@@ -4,6 +4,8 @@ import * as path from 'path';
 import { Node, Project, PropertyAssignment, SourceFile, SyntaxKind } from 'ts-morph';
 
 import * as parser from '@babel/parser';
+import { parse as parseHTML } from 'node-html-parser';
+import { chromium } from 'playwright';
 
 interface ComponentMetadata {
   name: string;
@@ -44,6 +46,22 @@ interface NavigationItem {
   children?: NavigationItem[];
 }
 
+interface ElementMetadata {
+  tag: string;
+  id?: string;
+  classes: string[];
+  attributes: { [key: string]: string };
+  textContent?: string;
+  children: ElementMetadata[];
+}
+
+interface PageMetadata {
+  url: string;
+  title: string;
+  description: string;
+  elements: ElementMetadata[];
+}
+
 interface AppMetadata {
   components: ComponentMetadata[];
   routes: RouteMetadata[];
@@ -53,6 +71,11 @@ interface AppMetadata {
   dependencyGraph: { [key: string]: string[] };
   entryPoints: string[];
   navigationStructure: NavigationItem[];
+  pages: PageMetadata[];
+  globalStyles: string[];
+  thirdPartyScripts: string[];
+  environmentVariables: string[];
+  buildConfiguration: any;
 }
 
 async function analyzeComponent(filePath: string, project: Project): Promise<ComponentMetadata> {
@@ -544,6 +567,162 @@ function identifyEntryPoints(rootDir: string): string[] {
   return entryPoints;
 }
 
+async function analyzeElement(element: any): Promise<ElementMetadata> {
+  if (!element || typeof element !== 'object') {
+    console.warn('Invalid element received:', element);
+    return {
+      tag: 'unknown',
+      classes: [],
+      attributes: {},
+      children: []
+    };
+  }
+
+  const metadata: ElementMetadata = {
+    tag: element.tagName ? element.tagName.toLowerCase() : 'unknown',
+    classes: element.classList ? Array.from(element.classList) : [],
+    attributes: {},
+    children: []
+  };
+
+  if (element.id) {
+    metadata.id = element.id;
+  }
+
+  if (element.attributes) {
+    if (Array.isArray(element.attributes)) {
+      for (const attr of element.attributes) {
+        metadata.attributes[attr.name] = attr.value;
+      }
+    } else if (typeof element.attributes === 'object') {
+      Object.keys(element.attributes).forEach(key => {
+        metadata.attributes[key] = element.attributes[key];
+      });
+    }
+  }
+
+  if (element.textContent && (!element.childNodes || element.childNodes.length === 0)) {
+    metadata.textContent = element.textContent.trim();
+  }
+
+  if (element.childNodes) {
+    for (const child of element.childNodes) {
+      if (child.nodeType === 1) { // Element node
+        metadata.children.push(await analyzeElement(child));
+      }
+    }
+  }
+
+  return metadata;
+}
+
+async function analyzePage(url: string): Promise<PageMetadata> {
+  const browser = await chromium.launch();
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  
+  try {
+    await page.goto(url, { waitUntil: 'networkidle' });
+
+    const pageMetadata: PageMetadata = {
+      url,
+      title: await page.title(),
+      description: await page.$eval('meta[name="description"]', (element: any) => element.content).catch(() => ''),
+      elements: []
+    };
+
+    const bodyHTML = await page.evaluate(() => document.body.innerHTML);
+
+    if (!bodyHTML) {
+      console.warn('No HTML content found for page:', url);
+      return pageMetadata;
+    }
+
+    const root = parseHTML(bodyHTML);
+    const rootElement = await analyzeElement(root);
+    pageMetadata.elements = [rootElement]; // Wrap in an array
+
+    return pageMetadata;
+  } catch (error) {
+    console.error('Error analyzing page:', url, error);
+    return {
+      url,
+      title: 'Error',
+      description: 'Failed to analyze page',
+      elements: []
+    };
+  } finally {
+    await browser.close();
+  }
+}
+
+async function analyzeGlobalStyles(rootDir: string): Promise<string[]> {
+  const globalStyles: string[] = [];
+  const styleFiles = glob.sync(path.join(rootDir, 'src', '**', '*.{css,scss,less}'));
+  
+  styleFiles.forEach(file => {
+    const content = fs.readFileSync(file, 'utf-8');
+    if (content.includes(':root') || content.includes('html') || content.includes('body')) {
+      globalStyles.push(file);
+    }
+  });
+
+  return globalStyles;
+}
+
+function analyzeThirdPartyScripts(rootDir: string): string[] {
+  const scripts: string[] = [];
+  const htmlFiles = glob.sync(path.join(rootDir, '**', '*.html'));
+  
+  htmlFiles.forEach(file => {
+    const content = fs.readFileSync(file, 'utf-8');
+    const matches = content.match(/<script[^>]+src=["']https?:\/\/[^"']+["'][^>]*>/g);
+    if (matches) {
+      scripts.push(...matches);
+    }
+  });
+
+  return scripts;
+}
+
+function analyzeEnvironmentVariables(rootDir: string): string[] {
+  const envFiles = ['.env', '.env.local', '.env.development', '.env.production'];
+  const variables: string[] = [];
+
+  envFiles.forEach(file => {
+    const filePath = path.join(rootDir, file);
+    if (fs.existsSync(filePath)) {
+      const content = fs.readFileSync(filePath, 'utf-8');
+      const matches = content.match(/^[A-Z_][A-Z0-9_]*=/gm);
+      if (matches) {
+        variables.push(...matches.map(match => match.slice(0, -1)));
+      }
+    }
+  });
+
+  return variables;
+}
+
+function analyzeBuildConfiguration(rootDir: string): any {
+  const configFiles = ['next.config.js', 'webpack.config.js', 'tsconfig.json', 'package.json'];
+  const config: any = {};
+
+  configFiles.forEach(file => {
+    const filePath = path.join(rootDir, file);
+    if (fs.existsSync(filePath)) {
+      const content = fs.readFileSync(filePath, 'utf-8');
+      try {
+        config[file] = JSON.parse(content);
+      } catch {
+        // If it's not JSON, it's likely a JS file
+        config[file] = 'Non-JSON configuration file';
+      }
+    }
+  });
+
+  return config;
+}
+
 async function generateAppMetadata(rootDir: string): Promise<AppMetadata> {
   const components: ComponentMetadata[] = [];
   const project = new Project();
@@ -573,6 +752,17 @@ async function generateAppMetadata(rootDir: string): Promise<AppMetadata> {
   const navigationStructure = await extractNavigationStructure(rootDir);
   const entryPoints = identifyEntryPoints(rootDir);
 
+  const pages: PageMetadata[] = [];
+  for (const route of routes) {
+    const pageMetadata = await analyzePage(`http://localhost:3000${route.path}`);
+    pages.push(pageMetadata);
+  }
+
+  const globalStyles = await analyzeGlobalStyles(rootDir);
+  const thirdPartyScripts = analyzeThirdPartyScripts(rootDir);
+  const environmentVariables = analyzeEnvironmentVariables(rootDir);
+  const buildConfiguration = analyzeBuildConfiguration(rootDir);
+
   return {
     components,
     routes,
@@ -581,7 +771,12 @@ async function generateAppMetadata(rootDir: string): Promise<AppMetadata> {
     seoMetadata,
     dependencyGraph,
     navigationStructure,
-    entryPoints
+    entryPoints,
+    pages,
+    globalStyles,
+    thirdPartyScripts,
+    environmentVariables,
+    buildConfiguration
   };
 }
 
