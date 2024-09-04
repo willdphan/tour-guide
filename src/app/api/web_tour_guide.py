@@ -11,6 +11,8 @@ WHY IT DOESN'T WORK:
 - loops until rate limited, and even until then it does not get near the answer with soley vision.
 - needs to do exploration/crawl the entire website. loading times are too long for the agent
 to explore every time for each query.
+- have to query for mapped paths, not entire codebase
+- struggles to navigate between routes unless experienced itself
 """
 
 import json
