@@ -1,15 +1,21 @@
-import os
-from multion.client import MultiOn
-from dotenv import load_dotenv
+"""
+python /Users/williamphan/Desktop/tourguide/src/app/api/multion_tour.py --explore --url https://tour-guide-liard.vercel.app
 
-from multion.client import MultiOn
+python /Users/williamphan/Desktop/tourguide/src/app/api/multion_tour.py --query --url https://tour-guide-liard.vercel.app --target "Chicken Page"
+"""
 import os
-from dotenv import load_dotenv
-import networkx as nx
-from typing import List, Dict
+import time
+import json
+import logging
 import traceback
+from typing import List
+from dotenv import load_dotenv
+from multion.client import MultiOn
 
+# Set up logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+# Load environment variables
 load_dotenv()
 
 # Initialize Multion client
@@ -18,43 +24,59 @@ client = MultiOn(api_key=os.getenv("MULTION_API_KEY"))
 def interact_with_website(url: str, commands: List[str], max_retries: int = 3):
     """Interact with a website using Multion."""
     current_url = url
+    workflow_log = []
+    
     for command in commands:
         for attempt in range(max_retries):
             try:
+                logging.info(f"Executing command: {command}")
                 response = client.browse(
                     url=current_url,
                     cmd=command
                 )
                 
-                print(f"Command: {command}")
-                print(f"Response Status: {response.status}")
-                print(f"Response Message: {response.message}")
+                log_entry = {
+                    "command": command,
+                    "status": response.status,
+                    "message": response.message,
+                    "url": response.url,
+                    "attempt": attempt + 1
+                }
                 
-                # Print all non-callable attributes
+                # Log all non-callable attributes
                 for attr in dir(response):
                     if not attr.startswith('_') and not callable(getattr(response, attr)):
                         value = getattr(response, attr)
-                        print(f"{attr}: {value}")
+                        log_entry[attr] = str(value)
+                
+                workflow_log.append(log_entry)
+                logging.info(f"Command response: {json.dumps(log_entry, indent=2)}")
                 
                 if response.status == 'DONE':
                     current_url = response.url
-                    print(f"Current URL: {current_url}")
+                    logging.info(f"Command completed successfully. New URL: {current_url}")
                     break
                 elif response.status == 'ASK_USER':
                     user_input = input(f"The agent needs more information: {response.message}\nYour input: ")
+                    logging.info(f"User input requested. Input: {user_input}")
                     return interact_with_website(current_url, [user_input])
                 else:
-                    print(f"Unexpected status: {response.status}. Retrying...")
+                    logging.warning(f"Unexpected status: {response.status}. Retrying...")
                     if attempt == max_retries - 1:
                         raise Exception(f"Failed to execute command: {command}")
             
             except Exception as e:
-                print(f"Error on attempt {attempt + 1}: {str(e)}")
-                print(f"Full error: {traceback.format_exc()}")
+                logging.error(f"Error on attempt {attempt + 1}: {str(e)}")
+                logging.error(f"Full error: {traceback.format_exc()}")
                 if attempt == max_retries - 1:
                     raise
                 time.sleep(2 ** attempt)  # Exponential backoff
-
+    
+    # Save workflow log to a file
+    with open('workflow_log.json', 'w') as f:
+        json.dump(workflow_log, f, indent=2)
+    
+    logging.info("Workflow log saved to workflow_log.json")
     return response.message
 
 def main():
@@ -63,16 +85,14 @@ def main():
         "WAIT_FOR_NAVIGATION",  # Wait for the page to fully load
         "Go to the start_url and explore every page, component, element of the website. Provide a list of what you see after you are done."
     ]
-
-    print(f"Interacting with {start_url}")
-    print(f"Commands: {commands}")
-
+    logging.info(f"Interacting with {start_url}")
+    logging.info(f"Commands: {commands}")
     try:
         response = interact_with_website(start_url, commands)
-        print(f"Final Response: {response}")
+        logging.info(f"Final Response: {response}")
     except Exception as e:
-        print(f"An error occurred: {str(e)}")
-        print("Please check your API key and ensure it's correctly set in the .env file.")
+        logging.error(f"An error occurred: {str(e)}")
+        logging.error("Please check your API key and ensure it's correctly set in the .env file.")
 
 if __name__ == "__main__":
     main()
