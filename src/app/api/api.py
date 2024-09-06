@@ -20,7 +20,7 @@ import json
 from fastapi import FastAPI, Query
 
 # Import the run_agent function from web_tour_guide.py
-from src.app.api.web_tour_guide import run_agent as web_tour_guide_run_agent
+from src.app.api.web_tour_html import run_agent as web_tour_html_run_agent
 
 # Load environment variables
 load_dotenv()
@@ -40,17 +40,31 @@ class AgentRequest(BaseModel):
     question: str
     currentUrl: str
 
+from playwright.async_api import async_playwright
+
 @app.post("/api/run-agent/")
 async def api_run_agent(request: AgentRequest):
     print(f"Received question: {request.question}")
-    print(f"Received currentUrl: {request.currentUrl}")
     
     async def event_generator():
         try:
-            print(f"Starting web_tour_guide_run_agent with start_url: {request.currentUrl}")
-            async for step in web_tour_guide_run_agent(request.question, request.currentUrl):
+            print(f"Starting web_tour_html_run_agent with question: {request.question}")
+            agent_generator = web_tour_html_run_agent(request.question)
+            
+            async for step in agent_generator:
                 yield f"data: {json.dumps(step)}\n\n"
+                
+                if step['action'] == "FINAL_ANSWER":
+                    break
+                
+                # Automatically proceed with each action
+                try:
+                    await agent_generator.asend(True)
+                except StopAsyncIteration:
+                    break
+            
             yield "data: [DONE]\n\n"
+            
         except Exception as e:
             print(f"Error in event_generator: {str(e)}")
             print(traceback.format_exc())
