@@ -632,7 +632,7 @@ async def run_agent(question: str, start_url: str):
 async def main():
     try:
         # Run the agent
-        agent_generator = run_agent("How do I go to the chicken page?", "https://tour-guide-liard.vercel.app/")
+        agent_generator = run_agent("How do I go to the fish page?", "http://localhost:3000")
         
         async for step in agent_generator:
             print(f"Thought: {step['thought']}")
