@@ -3,236 +3,49 @@ python /Users/williamphan/Desktop/tourguide/src/app/api/multion_tour.py --explor
 
 python /Users/williamphan/Desktop/tourguide/src/app/api/multion_tour.py --query --url https://tour-guide-liard.vercel.app --target "Chicken Page"
 
-Building graph for https://tour-guide-liard.vercel.app
-Processing URL: https://tour-guide-liard.vercel.app, Action: Start, Depth: 0
-Added node: 94f33c24-a10c-41ae-8784-e4e4070d7ccf (URL: https://tour-guide-liard.vercel.app, Action: Start)
-Attempting to browse URL: https://tour-guide-liard.vercel.app
-Command: Explore this page and list all possible actions
-Response Status: DONE
-Response Message: I have explored the page and identified the following interactive elements:
+metadata: step_count=3 processing_time=21 temperature=0.2
+screenshot: 
+session_id: 3aa8614d-784e-4da6-abf8-8a69b5da93ca
+status: DONE
+url: https://tour-guide-liard.vercel.app/product/chicken
+Current URL: https://tour-guide-liard.vercel.app/product/chicken
+Command completed: Provide all paths and map out elements and components you were able to access. Find the shortest path to the chicken page if it exists.
+Response: Memorizing the following information about the "Chicken" page elements and components:
 
-1. <l id=0>Stools & Co
-2. <l id=1>Where to buy
-3. <l id=2>Become a stockist
-4. <l id=3>AI Chat
-5. <l id=8>Arnold Circus Stool $ 20 22 servings
-6. <l id=10>Arnoldino Stool $ 30 22 servings
-7. <l id=12>Hookalotti $ 40 22 servings
-8. <l id=14>Chicken $ 40 22 servings
-
-Possible actions based on these elements include:
-- Clicking on "Stools & Co" to learn more about the company.
-- Clicking on "Where to buy" to find purchasing locations.
-- Clicking on "Become a stockist" to get information on becoming a distributor.
-- Clicking on "AI Chat" to engage with a chatbot.
-- Clicking on product links (Arnold Circus Stool, Arnoldino Stool, Hookalotti, Chicken) to view more details or make a purchase.
-
-Response URL: https://tour-guide-liard.vercel.app/
-Current URL: https://tour-guide-liard.vercel.app/
-Response from interact_with_website: I have explored the page and identified the following interactive elements:
-
-1. <l id=0>Stools & Co
-2. <l id=1>Where to buy
-3. <l id=2>Become a stockist
-4. <l id=3>AI Chat
-5. <l id=8>Arnold Circus Stool $ 20 22 servings
-6. <l id=10>Arnoldino Stool $ 30 22 servings
-7. <l id=12>Hookalotti $ 40 22 servings
-8. <l id=14>Chicken $ 40 22 servings
-
-Possible actions based on these elements include:
-- Clicking on "Stools & Co" to learn more about the company.
-- Clicking on "Where to buy" to find purchasing locations.
-- Clicking on "Become a stockist" to get information on becoming a distributor.
-- Clicking on "AI Chat" to engage with a chatbot.
-- Clicking on product links (Arnold Circus Stool, Arnoldino Stool, Hookalotti, Chicken) to view more details or make a purchase.
-
-Parsing response:
-I have explored the page and identified the following interactive elements:
-
-1. <l id=0>Stools & Co
-2. <l id=1>Where to buy
-3. <l id=2>Become a stockist
-4. <l id=3>AI Chat
-5. <l id=8>Arnold Circus Stool $ 20 22 servings
-6. <l id=10>Arnoldino Stool $ 30 22 servings
-7. <l id=12>Hookalotti $ 40 22 servings
-8. <l id=14>Chicken $ 40 22 servings
-
-Possible actions based on these elements include:
-- Clicking on "Stools & Co" to learn more about the company.
-- Clicking on "Where to buy" to find purchasing locations.
-- Clicking on "Become a stockist" to get information on becoming a distributor.
-- Clicking on "AI Chat" to engage with a chatbot.
-- Clicking on product links (Arnold Circus Stool, Arnoldino Stool, Hookalotti, Chicken) to view more details or make a purchase.
-
-Parsed actions: []
-Parsed actions: []
+1. <l id=0 href="link_0">Home
+2. <t id=1>> 
+3. <l id=2 href="link_1">Products
+4. <t id=3>> 
+5. <t id=4>Chicken
+6. <img id=5>
+7. <t id=6>Product description not available.
+8. <t id=7>Chicken
+9. <t id=8>4.6
+10. <l id=9 href="link_3">(499 reviews)
+11. <i id=10 type="radio" name="option">checked
+12. <t id=11>- 
+13. <t id=12>pot
+14. <t id=13>€27
+15. <t id=14>-30% €18,90
+16. <t id=15>18 porties (€1,05/portie)
+17. <i id=16 type="radio" name="option">unchecked
+18. <t id=17>- 
+19. <t id=18>probeerverpakking
+20. <t id=19>€3
+21. <t id=20>-67%
+22. <t id=21>€1
+23. <t id=22>1 portie (€1,-/portie)
+24. <t id=23>Strawberry
+25. <b id=24>Add
+26. <t id=25>Lemon (sold out)
+27. <b id=26>Notify me
+28. <t id=27>Orange (sold out)
+29. <b id=28>Notify me
+30. <t id=29>Order today = Delivered tomorrow.
+The shortest path to the chicken page is:
+1. Click on the link labeled "Chicken $ 40 22 servings" on the main page.
 """
 
-"""
-python /Users/williamphan/Desktop/tourguide/src/app/api/multion_tour.py --explore --url https://tour-guide-liard.vercel.app
-
-python /Users/williamphan/Desktop/tourguide/src/app/api/multion_tour.py --query --url https://tour-guide-liard.vercel.app --target "Chicken Page"
-
-"""
-# import os
-# from multion.client import MultiOn
-# from dotenv import load_dotenv
-# import os
-# from dotenv import load_dotenv
-# import networkx as nx
-# from typing import List, Dict
-# import traceback
-
-
-# load_dotenv()
-
-# # Initialize Multion client
-# client = MultiOn(api_key=os.getenv("MULTION_API_KEY"))
-
-# def interact_with_website(url: str, commands: List[str], max_retries: int = 3):
-#     """Interact with a website using Multion."""
-#     current_url = url
-#     for command in commands:
-#         for attempt in range(max_retries):
-#             try:
-#                 response = client.browse(
-#                     url=current_url,
-#                     cmd=command
-#                 )
-                
-#                 print(f"Command: {command}")
-#                 print(f"Response Status: {response.status}")
-#                 print(f"Response Message: {response.message}")
-                
-#                 # Print all non-callable attributes
-#                 for attr in dir(response):
-#                     if not attr.startswith('_') and not callable(getattr(response, attr)):
-#                         value = getattr(response, attr)
-#                         print(f"{attr}: {value}")
-                
-#                 if response.status == 'DONE':
-#                     current_url = response.url
-#                     print(f"Current URL: {current_url}")
-#                     break
-#                 elif response.status == 'ASK_USER':
-#                     user_input = input(f"The agent needs more information: {response.message}\nYour input: ")
-#                     return interact_with_website(current_url, [user_input])
-#                 else:
-#                     print(f"Unexpected status: {response.status}. Retrying...")
-#                     if attempt == max_retries - 1:
-#                         raise Exception(f"Failed to execute command: {command}")
-            
-#             except Exception as e:
-#                 print(f"Error on attempt {attempt + 1}: {str(e)}")
-#                 print(f"Full error: {traceback.format_exc()}")
-#                 if attempt == max_retries - 1:
-#                     raise
-#                 time.sleep(2 ** attempt)  # Exponential backoff
-
-#     return response.message
-
-# def main():
-#     start_url = "https://tour-guide-liard.vercel.app"
-#     commands = [
-#         "WAIT_FOR_NAVIGATION",  # Wait for the page to fully load
-#         "Go to the start_url and explore every page, component, element of the website. Provide a list of what you see after you are done."
-
-#         "after exploring, provide all the paths and map out of elements and components. find the shortest path to get to chicken page"
-#     ]
-
-#     print(f"Interacting with {start_url}")
-#     print(f"Commands: {commands}")
-
-#     try:
-#         response = interact_with_website(start_url, commands)
-#         print(f"Final Response: {response}")
-#     except Exception as e:
-#         print(f"An error occurred: {str(e)}")
-#         print("Please check your API key and ensure it's correctly set in the .env file.")
-
-# if __name__ == "__main__":
-#     main()
-
-"""
-python /Users/williamphan/Desktop/tourguide/src/app/api/multion_tour.py --explore --url https://tour-guide-liard.vercel.app
-
-python /Users/williamphan/Desktop/tourguide/src/app/api/multion_tour.py --query --url https://tour-guide-liard.vercel.app --target "Chicken Page"
-
-Building graph for https://tour-guide-liard.vercel.app
-Processing URL: https://tour-guide-liard.vercel.app, Action: Start, Depth: 0
-Added node: 94f33c24-a10c-41ae-8784-e4e4070d7ccf (URL: https://tour-guide-liard.vercel.app, Action: Start)
-Attempting to browse URL: https://tour-guide-liard.vercel.app
-Command: Explore this page and list all possible actions
-Response Status: DONE
-Response Message: I have explored the page and identified the following interactive elements:
-
-1. <l id=0>Stools & Co
-2. <l id=1>Where to buy
-3. <l id=2>Become a stockist
-4. <l id=3>AI Chat
-5. <l id=8>Arnold Circus Stool $ 20 22 servings
-6. <l id=10>Arnoldino Stool $ 30 22 servings
-7. <l id=12>Hookalotti $ 40 22 servings
-8. <l id=14>Chicken $ 40 22 servings
-
-Possible actions based on these elements include:
-- Clicking on "Stools & Co" to learn more about the company.
-- Clicking on "Where to buy" to find purchasing locations.
-- Clicking on "Become a stockist" to get information on becoming a distributor.
-- Clicking on "AI Chat" to engage with a chatbot.
-- Clicking on product links (Arnold Circus Stool, Arnoldino Stool, Hookalotti, Chicken) to view more details or make a purchase.
-
-Response URL: https://tour-guide-liard.vercel.app/
-Current URL: https://tour-guide-liard.vercel.app/
-Response from interact_with_website: I have explored the page and identified the following interactive elements:
-
-1. <l id=0>Stools & Co
-2. <l id=1>Where to buy
-3. <l id=2>Become a stockist
-4. <l id=3>AI Chat
-5. <l id=8>Arnold Circus Stool $ 20 22 servings
-6. <l id=10>Arnoldino Stool $ 30 22 servings
-7. <l id=12>Hookalotti $ 40 22 servings
-8. <l id=14>Chicken $ 40 22 servings
-
-Possible actions based on these elements include:
-- Clicking on "Stools & Co" to learn more about the company.
-- Clicking on "Where to buy" to find purchasing locations.
-- Clicking on "Become a stockist" to get information on becoming a distributor.
-- Clicking on "AI Chat" to engage with a chatbot.
-- Clicking on product links (Arnold Circus Stool, Arnoldino Stool, Hookalotti, Chicken) to view more details or make a purchase.
-
-Parsing response:
-I have explored the page and identified the following interactive elements:
-
-1. <l id=0>Stools & Co
-2. <l id=1>Where to buy
-3. <l id=2>Become a stockist
-4. <l id=3>AI Chat
-5. <l id=8>Arnold Circus Stool $ 20 22 servings
-6. <l id=10>Arnoldino Stool $ 30 22 servings
-7. <l id=12>Hookalotti $ 40 22 servings
-8. <l id=14>Chicken $ 40 22 servings
-
-Possible actions based on these elements include:
-- Clicking on "Stools & Co" to learn more about the company.
-- Clicking on "Where to buy" to find purchasing locations.
-- Clicking on "Become a stockist" to get information on becoming a distributor.
-- Clicking on "AI Chat" to engage with a chatbot.
-- Clicking on product links (Arnold Circus Stool, Arnoldino Stool, Hookalotti, Chicken) to view more details or make a purchase.
-
-Parsed actions: []
-Parsed actions: []
-"""
-
-"""
-python /Users/williamphan/Desktop/tourguide/src/app/api/multion_tour.py --explore --url https://tour-guide-liard.vercel.app
-
-python /Users/williamphan/Desktop/tourguide/src/app/api/multion_tour.py --query --url https://tour-guide-liard.vercel.app --target "Chicken Page"
-
-"""
 import os
 from multion.client import MultiOn
 from dotenv import load_dotenv
