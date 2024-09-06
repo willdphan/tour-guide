@@ -567,13 +567,28 @@ async def run_agent(question: str, start_url: str):
                             else:
                                 element = elements[element_id]
                                 element_description = element['text']
-                                screen_location = {
-                                    "x": 0,
-                                    "y": 0,
-                                    "width": 0,
-                                    "height": 0
-                                }
-                                hover_before_action = True
+                                
+                                # Get the bounding box of the element
+                                bbox = await page.evaluate(f"""() => {{
+                                    const element = document.querySelector('[id="{element['html_id']}"]') || 
+                                                    document.querySelector('[name="{element['name']}"]') ||
+                                                    document.querySelector('a[href="{element['href']}"]') ||
+                                                    document.querySelector('{element['type']}:has-text("{element['text']}")');
+                                    if (element) {{
+                                        const rect = element.getBoundingClientRect();
+                                        return {{
+                                            x: rect.left + window.pageXOffset,
+                                            y: rect.top + window.pageYOffset,
+                                            width: rect.width,
+                                            height: rect.height
+                                        }};
+                                    }}
+                                    return null;
+                                }}""")
+                                
+                                if bbox:
+                                    screen_location = bbox
+                                    hover_before_action = True
 
                                 if action == "Click":
                                     instruction = f"Click on the {element_description}."
@@ -632,7 +647,7 @@ async def run_agent(question: str, start_url: str):
 async def main():
     try:
         # Run the agent
-        agent_generator = run_agent("How do I go to the fish page?", "http://localhost:3000")
+        agent_generator = run_agent("How do I go to the chicken page?", "http://localhost:3000")
         
         async for step in agent_generator:
             print(f"Thought: {step['thought']}")
@@ -641,7 +656,7 @@ async def main():
             if step['element_description']:
                 print(f"Element Description: {step['element_description']}")
             if step['screen_location']:
-                print(f"Screen Location: {step['screen_location']}")
+                print(f"Screen Location: x={step['screen_location']['x']}, y={step['screen_location']['y']}, width={step['screen_location']['width']}, height={step['screen_location']['height']}")
             if step['hover_before_action']:
                 print("Hovering before action")
             if step['text_input']:
