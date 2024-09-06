@@ -44,6 +44,10 @@ Response: Memorizing the following information about the "Chicken" page elements
 30. <t id=29>Order today = Delivered tomorrow.
 The shortest path to the chicken page is:
 1. Click on the link labeled "Chicken $ 40 22 servings" on the main page.
+
+WHY IT DOESN'T WORK:
+- doesn't provide coordinates
+- hella expensive
 """
 
 import os
