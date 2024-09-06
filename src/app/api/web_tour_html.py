@@ -505,168 +505,222 @@ graph = graph_builder.compile()
 # RUN AGENT #
 #############
 
-async def run_agent(question: str, start_url: str):
-    print(f"run_agent called with question: {question}, start_url: {start_url}")
+async def run_agent(question: str, start_url: str, browser, page):
+    try:
+        print(f"Navigating to start_url: {start_url}")
+        await page.goto(start_url, timeout=60000)
+        print(f"Navigated to {start_url}")
+        
+        # Instead of querying Pinecone, we'll analyze the current page
+        current_page_info = await enhanced_content_analysis(page)
+        relevant_info = f"Current page information:\n{json.dumps(current_page_info, indent=2)}"
+
+        augmented_input = f"Goal: {question}\n\nRelevant information from current page:\n{relevant_info}"
+
+        event_stream = graph.astream(
+            {
+                "page": page,
+                "input": augmented_input,
+                "scratchpad": [],
+                "current_url": page.url,
+                "action_history": [],
+                "html_content": "",
+                "text_content": "",
+            },
+            {
+                "recursion_limit": 150,
+            },
+        )
+
+        async for event in event_stream:
+            if "agent" not in event:
+                continue
+            
+            state = event["agent"]
+            pred = state.get("prediction") or {}
+            action = pred.get("action")
+            action_input = pred.get("args")
+            thought = state.get("output", "").split("Thought:", 1)[-1].split("Action:", 1)[0].strip()
+
+            action_history = state.get("action_history", [])
+            if action_history and action_history[-1]["action"] == action and action_history[-1]["args"] == action_input:
+                print("Repeated action detected. Skipping.")
+                continue
+
+            instruction = ""
+            element_description = None
+            screen_location = None
+            hover_before_action = False
+            text_input = None
+
+            try:
+                if action in ["Click", "Type", "Scroll"]:
+                    if action_input:
+                        element_id = int(action_input[0])
+                        elements = state["content_analysis"]["elements"]
+                        if element_id < 0 or element_id >= len(elements):
+                            instruction = f"Invalid element ID: {element_id}"
+                        else:
+                            element = elements[element_id]
+                            element_description = element['text']
+                            
+                            # Get the bounding box of the element
+                            bbox = await page.evaluate(f"""() => {{
+                                const element = document.querySelector('[id="{element['html_id']}"]') || 
+                                                document.querySelector('[name="{element['name']}"]') ||
+                                                document.querySelector('a[href="{element['href']}"]') ||
+                                                document.querySelector('{element['type']}:has-text("{element['text']}")');
+                                if (element) {{
+                                    const rect = element.getBoundingClientRect();
+                                    return {{
+                                        x: rect.left + window.pageXOffset,
+                                        y: rect.top + window.pageYOffset,
+                                        width: rect.width,
+                                        height: rect.height
+                                    }};
+                                }}
+                                return null;
+                            }}""")
+                            
+                            if bbox:
+                                screen_location = bbox
+                                hover_before_action = True
+
+                            if action == "Click":
+                                instruction = f"Click on the {element_description}."
+                            elif action == "Type":
+                                text_input = action_input[1]
+                                instruction = f"Type '{text_input}' into the {element_description}."
+                            elif action == "Scroll":
+                                direction = "up" if action_input[1].lower() == "up" else "down"
+                                instruction = f"Scroll {direction} in the {element_description}."
+                elif action == "Wait":
+                    instruction = "Wait for a moment while the page loads."
+                elif action == "GoBack":
+                    instruction = "Go back to the previous page."
+                elif action == "Home":
+                    instruction = "Go back to home page."
+                elif action.startswith("ANSWER"):
+                    final_answer = action_input[0] if action_input else "Task completed, but no specific answer provided."
+                    yield {
+                        "thought": thought,
+                        "action": "FINAL_ANSWER",
+                        "instruction": f"Task completed. Final answer: {final_answer}",
+                        "element_description": None,
+                        "screen_location": None,
+                        "hover_before_action": False,
+                        "text_input": None
+                    }
+                    break
+                else:
+                    instruction = f"{action} {action_input}"
+            except Exception as e:
+                print(f"Error processing action: {str(e)}")
+
+            step_info = {
+                "thought": thought,
+                "action": action,
+                "instruction": instruction,
+                "element_description": element_description,
+                "screen_location": screen_location,
+                "hover_before_action": hover_before_action,
+                "text_input": text_input
+            }
+
+            # Yield the step information and wait for permission
+            proceed = yield step_info
+
+            # Only execute the action if permission is granted
+            if proceed:
+                if action == "Click":
+                    await click(state)
+                elif action == "Type":
+                    await type_text(state)
+                elif action == "Scroll":
+                    await scroll(state)
+                elif action == "Wait":
+                    await asyncio.sleep(5)
+                elif action == "GoBack":
+                    await page.go_back()
+                elif action == "Home":
+                    await page.goto("http://localhost:3000/")
+                elif action.startswith("ANSWER"):
+                    break
+            else:
+                print("Action skipped due to lack of permission.")
+
+            if action.startswith("ANSWER"):
+                break
+
+    except Exception as e:
+        print(f"Error during agent execution: {str(e)}")
+        yield {
+            "thought": "Error occurred",
+            "action": "ERROR",
+            "instruction": f"An error occurred: {str(e)}",
+            "element_description": None,
+            "screen_location": None,
+            "hover_before_action": False,
+            "text_input": None
+        }
+
+async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=False)
         page = await browser.new_page()
         try:
-            print(f"Navigating to start_url: {start_url}")
-            await page.goto(start_url, timeout=60000)
-            print(f"Navigated to {start_url}")
-            
-            # Instead of querying Pinecone, we'll analyze the current page
-            current_page_info = await enhanced_content_analysis(page)
-            relevant_info = f"Current page information:\n{json.dumps(current_page_info, indent=2)}"
-
-            augmented_input = f"Goal: {question}\n\nRelevant information from current page:\n{relevant_info}"
-
-            event_stream = graph.astream(
-                {
-                    "page": page,
-                    "input": augmented_input,
-                    "scratchpad": [],
-                    "current_url": page.url,
-                    "action_history": [],
-                    "html_content": "",
-                    "text_content": "",
-                },
-                {
-                    "recursion_limit": 150,
-                },
-            )
-
-            async for event in event_stream:
-                if "agent" not in event:
-                    continue
-                
-                state = event["agent"]
-                pred = state.get("prediction") or {}
-                action = pred.get("action")
-                action_input = pred.get("args")
-                thought = state.get("output", "").split("Thought:", 1)[-1].split("Action:", 1)[0].strip()
-
-                action_history = state.get("action_history", [])
-                if action_history and action_history[-1]["action"] == action and action_history[-1]["args"] == action_input:
-                    print("Repeated action detected. Skipping.")
-                    continue
-
-                instruction = ""
-                element_description = None
-                screen_location = None
-                hover_before_action = False
-                text_input = None
-
-                try:
-                    if action in ["Click", "Type", "Scroll"]:
-                        if action_input:
-                            element_id = int(action_input[0])
-                            elements = state["content_analysis"]["elements"]
-                            if element_id < 0 or element_id >= len(elements):
-                                instruction = f"Invalid element ID: {element_id}"
-                            else:
-                                element = elements[element_id]
-                                element_description = element['text']
-                                
-                                # Get the bounding box of the element
-                                bbox = await page.evaluate(f"""() => {{
-                                    const element = document.querySelector('[id="{element['html_id']}"]') || 
-                                                    document.querySelector('[name="{element['name']}"]') ||
-                                                    document.querySelector('a[href="{element['href']}"]') ||
-                                                    document.querySelector('{element['type']}:has-text("{element['text']}")');
-                                    if (element) {{
-                                        const rect = element.getBoundingClientRect();
-                                        return {{
-                                            x: rect.left + window.pageXOffset,
-                                            y: rect.top + window.pageYOffset,
-                                            width: rect.width,
-                                            height: rect.height
-                                        }};
-                                    }}
-                                    return null;
-                                }}""")
-                                
-                                if bbox:
-                                    screen_location = bbox
-                                    hover_before_action = True
-
-                                if action == "Click":
-                                    instruction = f"Click on the {element_description}."
-                                    await click(state)
-                                elif action == "Type":
-                                    text_input = action_input[1]
-                                    instruction = f"Type '{text_input}' into the {element_description}."
-                                    await type_text(state)
-                                elif action == "Scroll":
-                                    direction = "up" if action_input[1].lower() == "up" else "down"
-                                    instruction = f"Scroll {direction} in the {element_description}."
-                                    await scroll(state)
-                    elif action == "Wait":
-                        instruction = "Wait for a moment while the page loads."
-                        await asyncio.sleep(5)
-                    elif action == "GoBack":
-                        instruction = "Go back to the previous page."
-                        await page.go_back()
-                    elif action == "Home":
-                        instruction = "Go back to home page."
-                        await page.goto("http://localhost:3000/")
-                    elif action.startswith("ANSWER"):
-                        instruction = f"Task completed. Answer: {action_input[0]}"
-                    else:
-                        instruction = f"{action} {action_input}"
-                except Exception as e:
-                    print(f"Error processing action: {str(e)}")
-
-                yield {
-                    "thought": thought,
-                    "action": action,
-                    "instruction": instruction,
-                    "element_description": element_description,
-                    "screen_location": screen_location,
-                    "hover_before_action": hover_before_action,
-                    "text_input": text_input
-                }
-
-                if action.startswith("ANSWER"):
+            while True:
+                # Ask the user for a question
+                question = input("Enter your question (or 'quit' to exit): ")
+                if question.lower() == 'quit':
                     break
 
+                # # Ask the user for a starting URL
+                start_url = "http://localhost:3000"
+                # if not start_url:
+                #     start_url = "http://localhost:3000"
+
+                agent_generator = run_agent(question, start_url, browser, page)
+                
+                async for step in agent_generator:
+                    print(f"Thought: {step['thought']}")
+                    print(f"Action: {step['action']}")
+                    print(f"Instruction: {step['instruction']}")
+                    if step['element_description']:
+                        print(f"Element Description: {step['element_description']}")
+                    if step['screen_location']:
+                        print(f"Screen Location: x={step['screen_location']['x']}, y={step['screen_location']['y']}, width={step['screen_location']['width']}, height={step['screen_location']['height']}")
+                    if step['hover_before_action']:
+                        print("Hovering before action")
+                    if step['text_input']:
+                        print(f"Text Input: {step['text_input']}")
+                    print("---")  # Separator between steps
+
+                    if step['action'] == "FINAL_ANSWER":
+                        print("Task completed!")
+                        break
+
+                    # Ask for permission to proceed
+                    permission = input("Do you want to proceed with this action? (y/n): ").lower().strip()
+                    proceed = permission == 'y'
+
+                    # Send the permission back to the generator
+                    try:
+                        await agent_generator.asend(proceed)
+                    except StopAsyncIteration:
+                        break
+
+                print("Agent has completed this task. You can ask another question or type 'quit' to exit.")
+                print("The browser will remain open for the next question or manual interaction.")
+
+            print("Exiting program. The browser will close.")
+
+        except KeyboardInterrupt:
+            print("\nExiting program...")
         except Exception as e:
-            print(f"Error during agent execution: {str(e)}")
-            yield {
-                "thought": "Error occurred",
-                "action": "ERROR",
-                "instruction": f"An error occurred: {str(e)}",
-                "element_description": None,
-                "screen_location": None,
-                "hover_before_action": False,
-                "text_input": None
-            }
-        finally:
-            await browser.close()
-
-async def main():
-    try:
-        # Run the agent
-        agent_generator = run_agent("How do I go to the chicken page?", "http://localhost:3000")
-        
-        async for step in agent_generator:
-            print(f"Thought: {step['thought']}")
-            print(f"Action: {step['action']}")
-            print(f"Instruction: {step['instruction']}")
-            if step['element_description']:
-                print(f"Element Description: {step['element_description']}")
-            if step['screen_location']:
-                print(f"Screen Location: x={step['screen_location']['x']}, y={step['screen_location']['y']}, width={step['screen_location']['width']}, height={step['screen_location']['height']}")
-            if step['hover_before_action']:
-                print("Hovering before action")
-            if step['text_input']:
-                print(f"Text Input: {step['text_input']}")
-            print("---")  # Separator between steps
-
-    except Exception as e:
-        print(f"An unexpected error occurred: {str(e)}")
-        import traceback
-        traceback.print_exc()
+            print(f"An unexpected error occurred: {str(e)}")
+            import traceback
+            traceback.print_exc()
 
 if __name__ == "__main__":
     asyncio.run(main())

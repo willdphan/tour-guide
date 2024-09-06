@@ -38,7 +38,7 @@ export default function RootLayout({ children }: PropsWithChildren) {
               <div className='relative h-full'>
               <Room>
                 {children}
-                <ScreenLocationOverlay />
+                {/* <ScreenLocationOverlay /> */}
                 </Room>
               </div>
             </main>
