@@ -117,10 +117,42 @@ async def click(state: AgentState):
         selector = f"{element['type']}:has-text('{element['text']}')"
     
     try:
-        await page.click(selector)
+        print(f"Attempting to click element with selector: {selector}")
+        
+        # First, try to scroll the element into view
+        await page.evaluate(f"""
+            (selector) => {{
+                const element = document.querySelector(selector);
+                if (element) {{
+                    element.scrollIntoView({{behavior: 'smooth', block: 'center', inline: 'center'}});
+                }}
+            }}
+        """, selector)
+        
+        # Wait a bit for any animations to complete
+        await page.wait_for_timeout(1000)
+        
+        # Now try to click the element
+        await page.click(selector, timeout=5000)
+        
         return f"Clicked element with ID {element_id}"
     except Exception as e:
-        return f"Failed to click element with ID {element_id}: {str(e)}"
+        print(f"Failed to click element with ID {element_id}: {str(e)}")
+        print(f"Element details: {json.dumps(element, indent=2)}")
+        
+        # If click fails, try to execute click via JavaScript
+        try:
+            await page.evaluate(f"""
+                (selector) => {{
+                    const element = document.querySelector(selector);
+                    if (element) {{
+                        element.click();
+                    }}
+                }}
+            """, selector)
+            return f"Clicked element with ID {element_id} using JavaScript"
+        except Exception as js_e:
+            return f"Failed to click element with ID {element_id} even with JavaScript: {str(js_e)}"
 
 async def type_text(state: AgentState):
     page = state["page"]
@@ -355,11 +387,13 @@ def format_descriptions(state):
 
 def parse(text: str) -> dict:
     action_prefix = "Action: "
-    if not text.strip().split("\n")[-1].startswith(action_prefix):
+    lines = text.strip().split("\n")
+    action_line = next((line for line in reversed(lines) if line.startswith(action_prefix)), None)
+    
+    if not action_line:
         return {"action": "retry", "args": f"Could not parse LLM Output: {text}"}
-    action_block = text.strip().split("\n")[-1]
-
-    action_str = action_block[len(action_prefix):]
+    
+    action_str = action_line[len(action_prefix):]
     split_output = action_str.split(" ", 1)
     if len(split_output) == 1:
         action, action_input = split_output[0], None
@@ -374,10 +408,14 @@ def update_scratchpad(state: AgentState):
     old = state.get("scratchpad")
     action_history = state.get("action_history", [])
     
-    if old:
+    if old and old[0].content:
         txt = old[0].content
         last_line = txt.rsplit("\n", 1)[-1]
-        step = int(re.match(r"\d+", last_line).group()) + 1
+        match = re.match(r"\d+", last_line)
+        if match:
+            step = int(match.group()) + 1
+        else:
+            step = len(action_history) + 1
     else:
         txt = "Previous action observations:\n"
         step = 1
@@ -542,6 +580,17 @@ async def run_agent(question: str, start_url: str, browser, page):
             action_input = pred.get("args")
             thought = state.get("output", "").split("Thought:", 1)[-1].split("Action:", 1)[0].strip()
 
+            print(f"Current action: {action}")
+            print(f"Action input: {action_input}")
+            print(f"Current URL: {state['current_url']}")
+            print(f"HTML content length: {len(state.get('html_content', ''))}")
+            print(f"Content analysis: {json.dumps(state.get('content_analysis', {}), indent=2)}")
+
+            # Add this check
+            if action is None:
+                print(f"Warning: Received null action. Full prediction: {pred}")
+                continue
+
             action_history = state.get("action_history", [])
             if action_history and action_history[-1]["action"] == action and action_history[-1]["args"] == action_input:
                 print("Repeated action detected. Skipping.")
@@ -654,6 +703,8 @@ async def run_agent(question: str, start_url: str, browser, page):
 
     except Exception as e:
         print(f"Error during agent execution: {str(e)}")
+        import traceback
+        traceback.print_exc()  # This will print the full stack trace
         yield {
             "thought": "Error occurred",
             "action": "ERROR",
@@ -675,40 +726,46 @@ async def main():
                 if question.lower() == 'quit':
                     break
 
-                # # Ask the user for a starting URL
-                start_url = "http://localhost:3000"
-                # if not start_url:
-                #     start_url = "http://localhost:3000"
+                # Ask the user for a starting URL
+                start_url = input("Enter the starting URL (press Enter for default http://localhost:3000): ")
+                if not start_url:
+                    start_url = "http://localhost:3000"
 
-                agent_generator = run_agent(question, start_url, browser, page)
-                
-                async for step in agent_generator:
-                    print(f"Thought: {step['thought']}")
-                    print(f"Action: {step['action']}")
-                    print(f"Instruction: {step['instruction']}")
-                    if step['element_description']:
-                        print(f"Element Description: {step['element_description']}")
-                    if step['screen_location']:
-                        print(f"Screen Location: x={step['screen_location']['x']}, y={step['screen_location']['y']}, width={step['screen_location']['width']}, height={step['screen_location']['height']}")
-                    if step['hover_before_action']:
-                        print("Hovering before action")
-                    if step['text_input']:
-                        print(f"Text Input: {step['text_input']}")
-                    print("---")  # Separator between steps
+                try:
+                    agent_generator = run_agent(question, start_url, browser, page)
+                    
+                    async for step in agent_generator:
+                        print(f"Thought: {step['thought']}")
+                        print(f"Action: {step['action']}")
+                        print(f"Instruction: {step['instruction']}")
+                        if step['element_description']:
+                            print(f"Element Description: {step['element_description']}")
+                        if step['screen_location']:
+                            print(f"Screen Location: x={step['screen_location']['x']}, y={step['screen_location']['y']}, width={step['screen_location']['width']}, height={step['screen_location']['height']}")
+                        if step['hover_before_action']:
+                            print("Hovering before action")
+                        if step['text_input']:
+                            print(f"Text Input: {step['text_input']}")
+                        print("---")  # Separator between steps
 
-                    if step['action'] == "FINAL_ANSWER":
-                        print("Task completed!")
-                        break
+                        if step['action'] == "FINAL_ANSWER":
+                            print("Task completed!")
+                            break
 
-                    # Ask for permission to proceed
-                    permission = input("Do you want to proceed with this action? (y/n): ").lower().strip()
-                    proceed = permission == 'y'
+                        # Ask for permission to proceed
+                        permission = input("Do you want to proceed with this action? (y/n): ").lower().strip()
+                        proceed = permission == 'y'
 
-                    # Send the permission back to the generator
-                    try:
-                        await agent_generator.asend(proceed)
-                    except StopAsyncIteration:
-                        break
+                        # Send the permission back to the generator
+                        try:
+                            await agent_generator.asend(proceed)
+                        except StopAsyncIteration:
+                            break
+
+                except Exception as e:
+                    print(f"Error in agent execution: {str(e)}")
+                    import traceback
+                    traceback.print_exc()
 
                 print("Agent has completed this task. You can ask another question or type 'quit' to exit.")
                 print("The browser will remain open for the next question or manual interaction.")
