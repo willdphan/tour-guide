@@ -10,6 +10,7 @@ import {
   LiveblocksProvider,
   RoomProvider,
 } from "@liveblocks/react/suspense";
+import AgentActionConfirmation from './AgentActionConfirmation';
 
 function Cursor({ x, y, color }: { x: number; y: number; color: string }) {
   return (
@@ -53,6 +54,7 @@ function RoomContent({ children }: { children: ReactNode }) {
   const [userQuery, setUserQuery] = useState('');
   const [userCursorColor, setUserCursorColor] = useState("#FF0000");
   const [agentCursorColor, setAgentCursorColor] = useState("#00FF00");
+  const [currentAction, setCurrentAction] = useState<any | null>(null);
 
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
@@ -67,6 +69,12 @@ function RoomContent({ children }: { children: ReactNode }) {
 
   const simulateAgentAction = useCallback(async (action: any) => {
     console.log('Simulating action:', action);
+    setCurrentAction(action);
+
+    // Update cursor position based on the action's screen_location
+    if (action.screen_location) {
+      setAgentCursor({ x: action.screen_location.x, y: action.screen_location.y });
+    }
 
     const moveMouseTo = (x: number, y: number) => {
       setAgentCursor({ x, y });
@@ -100,7 +108,7 @@ function RoomContent({ children }: { children: ReactNode }) {
             const element = findElementByText(action.element_description);
             if (element instanceof HTMLElement) {
               scrollToElement(element);
-              await wait(1000);
+              await wait(3000);
               element.click();
               console.log('Clicked element:', element);
               // Visual feedback
@@ -159,8 +167,8 @@ function RoomContent({ children }: { children: ReactNode }) {
           break;
 
         case 'Wait':
-          console.log('Waiting for 5 seconds');
-          await wait(5000);
+          console.log('Waiting for 1 seconds');
+          await wait(1000);
           break;
 
         case 'GoBack':
@@ -176,16 +184,16 @@ function RoomContent({ children }: { children: ReactNode }) {
         case 'FINAL_ANSWER':
           console.log('Task completed. Answer:', action.instruction);
           // Display the answer in the UI
-          const answerElement = document.createElement('div');
-          answerElement.textContent = `Agent's Answer: ${action.instruction}`;
-          answerElement.style.position = 'fixed';
-          answerElement.style.bottom = '20px';
-          answerElement.style.left = '20px';
-          answerElement.style.backgroundColor = 'lightgreen';
-          answerElement.style.padding = '10px';
-          answerElement.style.borderRadius = '5px';
-          document.body.appendChild(answerElement);
-          setTimeout(() => document.body.removeChild(answerElement), 5000);
+          // const answerElement = document.createElement('div');
+          // answerElement.textContent = `Agent's Answer: ${action.instruction}`;
+          // answerElement.style.position = 'fixed';
+          // answerElement.style.bottom = '20px';
+          // answerElement.style.left = '20px';
+          // answerElement.style.backgroundColor = 'lightgreen';
+          // answerElement.style.padding = '10px';
+          // answerElement.style.borderRadius = '5px';
+          // document.body.appendChild(answerElement);
+          // setTimeout(() => document.body.removeChild(answerElement), 5000);
           break;
 
         default:
@@ -205,11 +213,20 @@ function RoomContent({ children }: { children: ReactNode }) {
     setAgentCursorColor(newAgentColor);
   }, []);
 
+  const handleActionConfirmation = (confirmed: boolean) => {
+    if (confirmed) {
+      // Proceed with the action
+      // You'll need to implement the logic to execute the action here
+      console.log('Action confirmed:', currentAction);
+    }
+    setCurrentAction(null);
+  };
+
   useEffect(() => {
     // Change colors after a short delay to ensure it's not overwritten
     const timer = setTimeout(() => {
       setUserCursorColor("#0000FF"); // Change to blue
-      setAgentCursorColor("#FFA500"); // Change to orange
+      // setAgentCursorColor("#FFA500"); // Change to orange
       console.log("Cursor colors updated:", userCursorColor, agentCursorColor);
     }, 2000);
 
@@ -249,6 +266,13 @@ function RoomContent({ children }: { children: ReactNode }) {
           simulateAgentAction={simulateAgentAction}
         />
       </div>
+      {currentAction && (
+        <AgentActionConfirmation
+          action={currentAction}
+          onConfirm={handleActionConfirmation}
+          cursorPosition={agentCursor}
+        />
+      )}
       {children}
     </div>
   );

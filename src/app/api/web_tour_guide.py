@@ -729,7 +729,7 @@ async def run_agent(question: str, start_url: str):
                                     await page.mouse.wheel(0, -100 if direction == "up" else 100)
                     elif action == "Wait":
                         instruction = "Wait for a moment while the page loads."
-                        await asyncio.sleep(5)
+                        await asyncio.sleep(2)
                     elif action == "GoBack":
                         instruction = "Go back to the previous page."
                         await page.go_back()

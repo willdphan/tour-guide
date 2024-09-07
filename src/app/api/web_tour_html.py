@@ -220,7 +220,7 @@ async def scroll(state: AgentState):
     return f"Scrolled {direction} in {'window' if target.upper() == 'WINDOW' else f'element {target}'}"
 
 async def wait(state: AgentState):
-    sleep_time = 5
+    sleep_time = 2
     await asyncio.sleep(sleep_time)
     return f"Waited for {sleep_time}s."
 

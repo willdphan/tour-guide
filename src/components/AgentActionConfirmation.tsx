@@ -12,12 +12,13 @@ interface AgentActionConfirmationProps {
     text_input?: string | null;
   };
   onConfirm: (confirmed: boolean) => void;
+  cursorPosition: { x: number; y: number };
 }
 
-const AgentActionConfirmation: React.FC<AgentActionConfirmationProps> = ({ action, onConfirm }) => {
+const AgentActionConfirmation: React.FC<AgentActionConfirmationProps> = ({ action, onConfirm, cursorPosition }) => {
   console.log('Rendering AgentActionConfirmation', action);
 
-const isActionable = ['Click', 'Type', 'Scroll', 'GoBack', 'Home'].includes(action.action);
+  const isActionable = ['Click', 'Type', 'Scroll', 'GoBack', 'Home'].includes(action.action);
 
   useEffect(() => {
     if (action.action === 'Wait') {
@@ -26,16 +27,36 @@ const isActionable = ['Click', 'Type', 'Scroll', 'GoBack', 'Home'].includes(acti
     }
   }, [action, onConfirm]);
 
+  const boxStyle: React.CSSProperties = cursorPosition
+    ? {
+        position: 'fixed',
+        left: `${cursorPosition.x + 20}px`,
+        top: `${cursorPosition.y + 20}px`,
+        zIndex: 9999,
+        maxWidth: '300px',
+        width: '100%',
+      }
+    : {
+        position: 'fixed',
+        left: '50%',
+        top: '50%',
+        transform: 'translate(-10%, -10%)',
+        zIndex: 9999,
+        maxWidth: '300px',
+        width: '100%',
+      };
+
+
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50">
-      <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
-        <h2 className="text-2xl font-bold mb-4 text-red-600">Confirm Action</h2>
-        <p className="mb-6 text-lg">{action.instruction}</p>
-        <div className="flex justify-end space-x-4">
-          <Button variant="outline" onClick={() => onConfirm(false)} className="px-6 py-2">
+    <div className="fixed inset-0 z-50" style={boxStyle}>
+      <div className="bg-white p-4 rounded-lg shadow-lg">
+        <h2 className="text-xl font-bold mb-2 text-red-600">Confirm Action</h2>
+        <p className="mb-4 text-sm">{action.instruction}</p>
+        <div className="flex justify-end space-x-2">
+          <Button variant="outline" onClick={() => onConfirm(false)} className="px-3 py-1 text-sm">
             Cancel
           </Button>
-          <Button onClick={() => onConfirm(true)} className="px-6 py-2 bg-red-600 hover:bg-red-700">
+          <Button onClick={() => onConfirm(true)} className="px-3 py-1 bg-red-600 hover:bg-red-700 text-sm">
             Proceed
           </Button>
         </div>
