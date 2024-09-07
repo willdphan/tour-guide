@@ -17,24 +17,19 @@ interface AgentActionConfirmationProps {
 const AgentActionConfirmation: React.FC<AgentActionConfirmationProps> = ({ action, onConfirm }) => {
   console.log('Rendering AgentActionConfirmation', action);
 
-  const isActionable = ['Click', 'Type', 'Scroll', 'GoBack', 'Home'].includes(action.action);
+const isActionable = ['Click', 'Type', 'Scroll', 'GoBack', 'Home'].includes(action.action);
 
   useEffect(() => {
-    if (action.action === 'Wait' || action.action === 'FINAL_ANSWER') {
-      // Automatically confirm for Wait and FINAL_ANSWER actions
+    if (action.action === 'Wait') {
+      // Automatically confirm for Wait actions
       onConfirm(true);
     }
   }, [action, onConfirm]);
 
-  if (!isActionable) {
-    // Don't render anything for non-actionable steps
-    return null;
-  }
-
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+    <div className="fixed inset-0 flex items-center justify-center z-50">
       <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
-        <h2 className="text-2xl font-bold mb-4 text-red-600">Agent Action</h2>
+        <h2 className="text-2xl font-bold mb-4 text-red-600">Confirm Action</h2>
         <p className="mb-6 text-lg">{action.instruction}</p>
         <div className="flex justify-end space-x-4">
           <Button variant="outline" onClick={() => onConfirm(false)} className="px-6 py-2">

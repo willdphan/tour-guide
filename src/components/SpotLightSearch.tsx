@@ -235,14 +235,14 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
         />
       )}
       {agentRunning && !showActionPrompt && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="fixed inset-0 flex items-center justify-center ">
           <div className="bg-white p-6 rounded-lg shadow-lg">
             <p>Agent is running...</p>
           </div>
         </div>
       )}
       {!agentRunning && agentResponse && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="fixed inset-0 flex items-center justify-center ">
           <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
             <h2 className="text-xl font-bold mb-4">Agent Response</h2>
             <p className="mb-4">{agentResponse}</p>
