@@ -16,7 +16,13 @@ interface AgentActionConfirmationProps {
 }
 
 const AgentActionConfirmation: React.FC<AgentActionConfirmationProps> = ({ action, onConfirm, cursorPosition }) => {
-  console.log('Rendering AgentActionConfirmation', action);
+  console.log('Rendering AgentActionConfirmation', action, cursorPosition);
+
+  useEffect(() => {
+    if (!cursorPosition) {
+      console.warn('AgentActionConfirmation rendered without cursor position');
+    }
+  }, [cursorPosition]);
 
   const isActionable = ['Click', 'Type', 'Scroll', 'GoBack', 'Home'].includes(action.action);
 
@@ -47,22 +53,22 @@ const AgentActionConfirmation: React.FC<AgentActionConfirmationProps> = ({ actio
       };
 
 
-  return (
-    <div className="fixed inset-0 z-50" style={boxStyle}>
-      <div className="bg-white p-4 rounded-lg shadow-lg">
-        <h2 className="text-xl font-bold mb-2 text-red-600">Confirm Action</h2>
-        <p className="mb-4 text-sm">{action.instruction}</p>
-        <div className="flex justify-end space-x-2">
-          <Button variant="outline" onClick={() => onConfirm(false)} className="px-3 py-1 text-sm">
-            Cancel
-          </Button>
-          <Button onClick={() => onConfirm(true)} className="px-3 py-1 bg-red-600 hover:bg-red-700 text-sm">
-            Proceed
-          </Button>
+      return (
+        <div className="fixed inset-0 z-50" style={boxStyle}>
+          <div className="bg-white p-4 rounded-lg shadow-lg">
+            <h2 className="text-xl font-bold mb-2 text-blue-600">Confirm Action</h2>
+            <p className="mb-4 text-sm">{action.instruction}</p>
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => onConfirm(false)} className="px-3 py-1 text-sm">
+                Cancel
+              </Button>
+              <Button onClick={() => onConfirm(true)} className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-sm">
+                Proceed
+              </Button>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-  );
-};
+      );
+    };
 
 export default AgentActionConfirmation;

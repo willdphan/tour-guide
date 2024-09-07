@@ -49,12 +49,14 @@ function RoomContent({ children }: { children: ReactNode }) {
   const self = useSelf();
   const myId = self?.id;
 
-  const [agentCursor, setAgentCursor] = useState({ x: 0, y: 0 });
-  const [isAgentRunning, setIsAgentRunning] = useState(false);
+  const [agentCursor, setAgentCursor] = useState<{ x: number; y: number } | null>(null);
+  const [isAgentActive, setIsAgentActive] = useState(false); // Add this line
+
   const [userQuery, setUserQuery] = useState('');
   const [userCursorColor, setUserCursorColor] = useState("#FF0000");
   const [agentCursorColor, setAgentCursorColor] = useState("#00FF00");
   const [currentAction, setCurrentAction] = useState<any | null>(null);
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
@@ -70,11 +72,14 @@ function RoomContent({ children }: { children: ReactNode }) {
   const simulateAgentAction = useCallback(async (action: any) => {
     console.log('Simulating action:', action);
     setCurrentAction(action);
+    setIsAgentActive(true); // Add this line
 
     // Update cursor position based on the action's screen_location
     if (action.screen_location) {
       setAgentCursor({ x: action.screen_location.x, y: action.screen_location.y });
     }
+
+    setShowConfirmation(true);
 
     const moveMouseTo = (x: number, y: number) => {
       setAgentCursor({ x, y });
@@ -112,7 +117,7 @@ function RoomContent({ children }: { children: ReactNode }) {
               element.click();
               console.log('Clicked element:', element);
               // Visual feedback
-              element.style.border = '2px solid red';
+              element.style.border = '2px solid blue';
               setTimeout(() => element.style.border = '', 1000);
             } else if (action.screen_location) {
               moveMouseTo(action.screen_location.x, action.screen_location.y);
@@ -202,7 +207,8 @@ function RoomContent({ children }: { children: ReactNode }) {
     };
 
     await performAction();
-  }, [setAgentCursor, updateMyPresenceFn]);
+    setIsAgentActive(false); // Add this line
+  }, [setAgentCursor]);
 
   const handleSearch = useCallback((selectedItem: { title: string, description: string }) => {
     setUserQuery(selectedItem.title);
@@ -215,12 +221,22 @@ function RoomContent({ children }: { children: ReactNode }) {
 
   const handleActionConfirmation = (confirmed: boolean) => {
     if (confirmed) {
-      // Proceed with the action
-      // You'll need to implement the logic to execute the action here
       console.log('Action confirmed:', currentAction);
+      // Perform the action here
+    } else {
+      console.log('Action cancelled:', currentAction);
+      setIsAgentActive(false); // Add this line
     }
     setCurrentAction(null);
+    setShowConfirmation(false);
   };
+
+  // Use an effect to ensure cursor visibility
+  useEffect(() => {
+    if (showConfirmation && !agentCursor) {
+      console.warn('Cursor position lost while confirmation box is visible');
+    }
+  }, [showConfirmation, agentCursor]);
 
   useEffect(() => {
     // Change colors after a short delay to ensure it's not overwritten
@@ -232,6 +248,14 @@ function RoomContent({ children }: { children: ReactNode }) {
 
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (!showConfirmation && agentCursor) {
+      // If the confirmation box is closed and we still have a cursor position,
+      // make sure it's visible
+      setAgentCursor({ ...agentCursor });
+    }
+  }, [showConfirmation, agentCursor]);
 
   return (
     <div style={{ position: "relative", width: "100%", height: "100vh", overflow: "hidden" }}>
@@ -245,11 +269,13 @@ function RoomContent({ children }: { children: ReactNode }) {
           />
         )
       )}
-      <Cursor 
-        x={agentCursor.x} 
-        y={agentCursor.y} 
-        color={agentCursorColor} 
-      />
+      {(showConfirmation || isAgentActive) && agentCursor && ( // Modify this line
+        <Cursor 
+          x={agentCursor.x} 
+          y={agentCursor.y} 
+          color={agentCursorColor} 
+        />
+      )}
       <div
         style={{
           position: 'absolute',
@@ -266,11 +292,11 @@ function RoomContent({ children }: { children: ReactNode }) {
           simulateAgentAction={simulateAgentAction}
         />
       </div>
-      {currentAction && (
+      {showConfirmation && currentAction && (
         <AgentActionConfirmation
           action={currentAction}
           onConfirm={handleActionConfirmation}
-          cursorPosition={agentCursor}
+          cursorPosition={agentCursor || undefined}
         />
       )}
       {children}
