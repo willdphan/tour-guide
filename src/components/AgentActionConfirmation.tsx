@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 
 interface AgentActionConfirmationProps {
@@ -17,26 +17,33 @@ interface AgentActionConfirmationProps {
 const AgentActionConfirmation: React.FC<AgentActionConfirmationProps> = ({ action, onConfirm }) => {
   console.log('Rendering AgentActionConfirmation', action);
 
+  const isActionable = ['Click', 'Type', 'Scroll', 'GoBack', 'Home'].includes(action.action);
+
+  useEffect(() => {
+    if (action.action === 'Wait' || action.action === 'FINAL_ANSWER') {
+      // Automatically confirm for Wait and FINAL_ANSWER actions
+      onConfirm(true);
+    }
+  }, [action, onConfirm]);
+
+  if (!isActionable) {
+    // Don't render anything for non-actionable steps
+    return null;
+  }
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
       <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
-        <h2 className="text-2xl font-bold mb-4 text-red-600">Confirm Action</h2>
+        <h2 className="text-2xl font-bold mb-4 text-red-600">Agent Action</h2>
         <p className="mb-6 text-lg">{action.instruction}</p>
-        {action.action !== 'FINAL_ANSWER' && (
-          <div className="flex justify-end space-x-4">
-            <Button variant="outline" onClick={() => onConfirm(false)} className="px-6 py-2">
-              Cancel
-            </Button>
-            <Button onClick={() => onConfirm(true)} className="px-6 py-2 bg-red-600 hover:bg-red-700">
-              Proceed
-            </Button>
-          </div>
-        )}
-        {action.action === 'FINAL_ANSWER' && (
-          <Button onClick={() => onConfirm(true)} className="px-6 py-2 bg-green-600 hover:bg-green-700 w-full">
-            Acknowledge
+        <div className="flex justify-end space-x-4">
+          <Button variant="outline" onClick={() => onConfirm(false)} className="px-6 py-2">
+            Cancel
           </Button>
-        )}
+          <Button onClick={() => onConfirm(true)} className="px-6 py-2 bg-red-600 hover:bg-red-700">
+            Proceed
+          </Button>
+        </div>
       </div>
     </div>
   );
