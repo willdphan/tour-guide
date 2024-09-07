@@ -739,13 +739,11 @@ async def main():
         page = await browser.new_page()
         try:
             while True:
-                # Ask the user for a question
                 question = input("Enter your question (or 'quit' to exit): ")
                 if question.lower() == 'quit':
                     break
 
                 try:
-                    # Pass the page object to run_agent
                     agent_generator = run_agent(question, page)
                     
                     async for step in agent_generator:
@@ -755,7 +753,7 @@ async def main():
                         if step['element_description']:
                             print(f"Element Description: {step['element_description']}")
                         if step['screen_location']:
-                            print(f"Screen Location: x={step['screen_location']['x']}, y={step['screen_location']['y']}, width={step['screen_location']['width']}, height={step['screen_location']['height']}")
+                            print(f"Screen Location: {step['screen_location']}")
                         if step['hover_before_action']:
                             print("Hovering before action")
                         if step['text_input']:
@@ -783,8 +781,6 @@ async def main():
 
                 print("Agent has completed this task. You can ask another question or type 'quit' to exit.")
                 print("The browser will remain open for the next question or manual interaction.")
-
-            print("Exiting program. The browser will close.")
 
         except KeyboardInterrupt:
             print("\nExiting program...")
