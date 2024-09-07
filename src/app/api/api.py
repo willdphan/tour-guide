@@ -24,6 +24,10 @@ from fastapi import FastAPI, Query
 
 # Import the run_agent function from web_tour_html.py
 from src.app.api.web_tour_html import run_agent
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
@@ -43,31 +47,35 @@ class AgentRequest(BaseModel):
     currentUrl: str
 
 from playwright.async_api import async_playwright
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 @app.post("/api/run-agent/")
 async def api_run_agent(request: AgentRequest):
-    print(f"Received question: {request.question}")
+    logger.info(f"Received question: {request.question}")
     
     async def event_generator():
         try:
-            print(f"Starting web_tour_html_run_agent with question: {request.question}")
+            logger.info(f"Starting agent with question: {request.question}")
             async with async_playwright() as p:
-                browser = await p.chromium.launch(headless=True)  # Use headless=True for server environments
+                browser = await p.chromium.launch(headless=True)
                 page = await browser.new_page()
                 try:
                     await page.goto(request.currentUrl, timeout=60000)
                     agent_generator = run_agent(request.question, page)
                     
                     async for step in agent_generator:
+                        action = step.get('action', 'Unknown')
+                        logger.info(f"Agent action: {action}")
                         yield f"data: {json.dumps(step)}\n\n"
                         
-                        if step['action'] == "FINAL_ANSWER":
+                        if action == "FINAL_ANSWER":
+                            logger.info("Agent finished with final answer")
                             break
+
+                        if action == "WAIT_FOR_PERMISSION":
+                            logger.info("Waiting for user permission")
                         
-                        # Instead of waiting for permission here, we'll let the frontend handle it
-                        yield f"data: {json.dumps({'action': 'WAIT_FOR_PERMISSION'})}\n\n"
-                        
-                        # Wait for a short time to allow the frontend to process the permission request
                         await asyncio.sleep(0.1)
                     
                     yield "data: [DONE]\n\n"
@@ -75,8 +83,7 @@ async def api_run_agent(request: AgentRequest):
                     await browser.close()
             
         except Exception as e:
-            print(f"Error in event_generator: {str(e)}")
-            print(traceback.format_exc())
+            logger.error(f"Error in agent execution: {str(e)}")
             yield f"data: {json.dumps({'error': str(e)})}\n\n"
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")

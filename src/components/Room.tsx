@@ -65,97 +65,135 @@ function RoomContent({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, [updateMyPresence]);
 
-  const simulateAgentAction = useCallback((action: any) => {
+  const simulateAgentAction = useCallback(async (action: any) => {
     console.log('Simulating action:', action);
 
     const moveMouseTo = (x: number, y: number) => {
-      // Update the cursor position
       setAgentCursor({ x, y });
       updateMyPresenceFn({
         cursor: { x, y },
         isAgent: true,
       });
+      console.log(`Moved cursor to (${x}, ${y})`);
     };
 
     const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-    switch (action.action) {
-      case 'Click':
-        if (action.screen_location) {
-          moveMouseTo(action.screen_location.x, action.screen_location.y);
-          wait(2000).then(() => {
-            const element = document.elementFromPoint(action.screen_location.x, action.screen_location.y);
-            if (element) {
-              (element as HTMLElement).click();
-            }
-          });
-        }
-        break;
+    const scrollToElement = (element: Element) => {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+      console.log('Scrolled to element:', element);
+    };
 
-      case 'Type':
-        if (action.screen_location && action.text_input) {
-          moveMouseTo(action.screen_location.x, action.screen_location.y);
-          wait(2000).then(() => {
-            const element = document.elementFromPoint(action.screen_location.x, action.screen_location.y);
+    const getElementFromPoint = (x: number, y: number) => {
+      return document.elementFromPoint(x, y);
+    };
+
+    const findElementByText = (text: string) => {
+      return Array.from(document.querySelectorAll('*'))
+        .find(el => el.textContent?.trim() === text);
+    };
+
+    const performAction = async () => {
+      switch (action.action) {
+        case 'Click':
+          if (action.element_description) {
+            const element = findElementByText(action.element_description);
+            if (element instanceof HTMLElement) {
+              scrollToElement(element);
+              await wait(1000);
+              element.click();
+              console.log('Clicked element:', element);
+              // Visual feedback
+              element.style.border = '2px solid red';
+              setTimeout(() => element.style.border = '', 1000);
+            } else if (action.screen_location) {
+              moveMouseTo(action.screen_location.x, action.screen_location.y);
+              await wait(1000);
+              const elementAtPoint = getElementFromPoint(action.screen_location.x, action.screen_location.y);
+              if (elementAtPoint instanceof HTMLElement) {
+                scrollToElement(elementAtPoint);
+                await wait(1000);
+                elementAtPoint.click();
+                console.log('Clicked element at point:', elementAtPoint);
+                // Visual feedback
+                elementAtPoint.style.border = '2px solid red';
+                setTimeout(() => elementAtPoint.style.border = '', 1000);
+              } else {
+                console.log('No clickable element found at the specified location or with the given description');
+              }
+            }
+          }
+          break;
+
+        case 'Type':
+          if (action.screen_location && action.text_input) {
+            moveMouseTo(action.screen_location.x, action.screen_location.y);
+            await wait(1000);
+            const element = getElementFromPoint(action.screen_location.x, action.screen_location.y);
             if (element instanceof HTMLInputElement) {
+              scrollToElement(element);
+              await wait(1000);
               element.value = action.text_input;
               element.dispatchEvent(new Event('input', { bubbles: true }));
-            }
-          });
-        }
-        break;
-
-      case 'Scroll':
-        if (action.screen_location) {
-          moveMouseTo(action.screen_location.x, action.screen_location.y);
-          wait(2000).then(() => {
-            const instruction = action.instruction.toLowerCase();
-            let scrollX = 0;
-            let scrollY = 0;
-
-            if (instruction.includes('up')) {
-              scrollY = -100;
-            } else if (instruction.includes('down')) {
-              scrollY = 100;
-            } else if (instruction.includes('left')) {
-              scrollX = -100;
-            } else if (instruction.includes('right')) {
-              scrollX = 100;
-            }
-
-            // Find the scrollable container
-            const scrollableContainer = document.querySelector('.overflow-x-auto');
-            if (scrollableContainer) {
-              scrollableContainer.scrollBy(scrollX, scrollY);
+              console.log('Typed into input:', action.text_input);
+              // Visual feedback
+              element.style.backgroundColor = 'yellow';
+              setTimeout(() => element.style.backgroundColor = '', 1000);
             } else {
-              window.scrollBy(scrollX, scrollY);
+              console.log('No input element found at the specified location');
             }
-          });
-        }
-        break;
+          }
+          break;
 
-      case 'Wait':
-        // Just wait for 5 seconds
-        wait(5000);
-        break;
+        case 'Scroll':
+          if (action.screen_location) {
+            moveMouseTo(action.screen_location.x, action.screen_location.y);
+            await wait(1000);
+            const element = getElementFromPoint(action.screen_location.x, action.screen_location.y);
+            if (element) {
+              scrollToElement(element);
+            } else {
+              console.log('No element found at the specified location for scrolling');
+            }
+          }
+          break;
 
-      case 'GoBack':
-        window.history.back();
-        break;
+        case 'Wait':
+          console.log('Waiting for 5 seconds');
+          await wait(5000);
+          break;
 
-      case 'Home':
-        console.log('Navigating to home page');
-        window.location.href = 'http://localhost:3000/';
-        break;
+        case 'GoBack':
+          console.log('Navigating back');
+          window.history.back();
+          break;
 
-      case 'ANSWER':
-        console.log('Task completed. Answer:', action.instruction);
-        // You might want to display this answer somewhere in your UI
-        break;
+        case 'Home':
+          console.log('Navigating to home page');
+          window.location.href = '/';
+          break;
 
-      default:
-        console.log('Unknown action:', action.action, action.instruction);
-    }
+        case 'FINAL_ANSWER':
+          console.log('Task completed. Answer:', action.instruction);
+          // Display the answer in the UI
+          const answerElement = document.createElement('div');
+          answerElement.textContent = `Agent's Answer: ${action.instruction}`;
+          answerElement.style.position = 'fixed';
+          answerElement.style.bottom = '20px';
+          answerElement.style.left = '20px';
+          answerElement.style.backgroundColor = 'lightgreen';
+          answerElement.style.padding = '10px';
+          answerElement.style.borderRadius = '5px';
+          document.body.appendChild(answerElement);
+          setTimeout(() => document.body.removeChild(answerElement), 5000);
+          break;
+
+        default:
+          console.log('Unknown action:', action.action, action.instruction);
+      }
+    };
+
+    await performAction();
   }, [setAgentCursor, updateMyPresenceFn]);
 
   const handleSearch = useCallback((selectedItem: { title: string, description: string }) => {
