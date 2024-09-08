@@ -708,27 +708,27 @@ async def _run_agent_with_page(question: str, page):
             "text_input": text_input
         }
 
-        # Yield the step information
-        yield step_info
+        # Yield the step information and wait for permission
+        proceed = yield step_info
 
-        # Execute the action without waiting for permission
-        if action == "Click":
-            await click(state)
-        elif action == "Type":
-            await type_text(state)
-        elif action == "Scroll":
-            await scroll(state)
-        elif action == "Wait":
-            await asyncio.sleep(5)
-        elif action == "GoBack":
-            await page.go_back()
-        elif action == "Home":
-            await page.goto("http://localhost:3000/")
-        elif action.startswith("ANSWER"):
-            break
-
-        # Add a delay between actions
-        await asyncio.sleep(2)  # 2-second delay between actions
+        # Only execute the action if permission is granted
+        if proceed:
+            if action == "Click":
+                await click(state)
+            elif action == "Type":
+                await type_text(state)
+            elif action == "Scroll":
+                await scroll(state)
+            elif action == "Wait":
+                await asyncio.sleep(5)
+            elif action == "GoBack":
+                await page.go_back()
+            elif action == "Home":
+                await page.goto("http://localhost:3000/")
+            elif action.startswith("ANSWER"):
+                break
+        else:
+            print("Action skipped due to lack of permission.")
 
         if action.startswith("ANSWER"):
             break
@@ -764,7 +764,15 @@ async def main():
                             print("Task completed!")
                             break
 
-                        # Remove the permission request
+                        # Ask for permission to proceed
+                        permission = input("Do you want to proceed with this action? (y/n): ").lower().strip()
+                        proceed = permission == 'y'
+
+                        # Send the permission back to the generator
+                        try:
+                            await agent_generator.asend(proceed)
+                        except StopAsyncIteration:
+                            break
 
                 except Exception as e:
                     print(f"Error in agent execution: {str(e)}")

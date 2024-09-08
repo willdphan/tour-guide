@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import AnimatedProgressBar from './AnimatedProgressBar';
 
 interface AgentActionConfirmationProps {
   action: {
@@ -82,7 +83,7 @@ const AgentActionConfirmation: React.FC<AgentActionConfirmationProps> = ({ actio
 
   return (
     <div style={boxStyle}>
-      <div className="bg-white p-4 rounded-lg shadow-lg">
+      <div className="bg-white p-4 rounded-lg border-[2px] border-blue-500  rounded-[0.5rem]">
         {isAgentRunning ? (
    <>
   <h2 className="text-xl font-bold text-blue-600">Agent is running...</h2>
@@ -91,15 +92,21 @@ const AgentActionConfirmation: React.FC<AgentActionConfirmationProps> = ({ actio
         
         ) : (
           <>
-            <h2 className="text-xl font-bold mb-2 text-blue-600">Confirm Action</h2>
+            {/* <h2 className="text-xl font-bold mb-2 text-blue-600">Confirm Action</h2> */}
             <p className="mb-4 text-sm">{action.instruction}</p>
-            <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => onConfirm(false)} className="px-3 py-1 text-sm">
-                Cancel
-              </Button>
-              <Button onClick={() => onConfirm(true)} className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-sm">
+        <div className="flex w-full items-center space-x-4">
+          <div className="flex-grow">
+            <AnimatedProgressBar />
+          </div>
+          <Button 
+            onClick={() => onConfirm(false)} 
+            className="flex-shrink-0 w-6 h-6 p-0 text-xs rounded-full flex items-center justify-center aspect-square border border-black "
+          >
+            X
+          </Button>
+              {/* <Button onClick={() => onConfirm(true)} className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-sm">
                 Proceed
-              </Button>
+              </Button> */}
             </div>
           </>
         )}

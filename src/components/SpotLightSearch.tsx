@@ -103,36 +103,13 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
                 const parsedData = JSON.parse(jsonData);
                 console.log('Received data:', parsedData);
                 
-                setCurrentAction(parsedData);
-
                 if (parsedData.action !== 'FINAL_ANSWER') {
+                  setCurrentAction(parsedData);
                   setShowActionPrompt(true);
-                  await new Promise<void>((resolve) => {
-                    const handleConfirm = async (confirmed: boolean) => {
-                      if (confirmed) {
-                        const result = await sendPermissionDecision(true);
-                        console.log('Permission decision result:', result);
-                        await simulateAgentAction(parsedData);
-                      } else {
-                        await sendPermissionDecision(false);
-                        setAgentRunning(false);
-                      }
-                      setShowActionPrompt(false);
-                      resolve();
-                    };
-                    setCurrentAction({ ...parsedData, onConfirm: handleConfirm });
-                  });
+                  await simulateAgentAction(parsedData);
                 } else {
                   setAgentResponse(parsedData.instruction);
                   setAgentRunning(false);
-                  setShowActionPrompt(true);
-                  await new Promise<void>((resolve) => {
-                    const handleConfirm = () => {
-                      setShowActionPrompt(false);
-                      resolve();
-                    };
-                    setCurrentAction({ ...parsedData, onConfirm: handleConfirm });
-                  });
                 }
               } catch (error) {
                 console.error('Error parsing JSON:', error);
@@ -147,31 +124,31 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
     }
   }, [search, simulateAgentAction]);
 
-  const askUserForPermission = async (data: any) => {
-    console.log('Asking for permission:', data);
-    return confirm('Do you want to proceed with the next action?');
-  };
+  // const askUserForPermission = async (data: any) => {
+  //   console.log('Asking for permission:', data);
+  //   return confirm('Do you want to proceed with the next action?');
+  // };
 
-  const sendPermissionDecision = async (proceed: boolean) => {
-    try {
-      console.log('Sending permission decision:', proceed);
-      const response = await fetch('http://127.0.0.1:8000/api/run-agent/permission', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ proceed })
-      });
-      console.log('Permission decision response status:', response.status);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const result = await response.json();
-      console.log('Permission decision sent:', result);
-      return result;
-    } catch (error) {
-      console.error('Error sending permission decision:', error);
-      return { message: "Error sending permission decision" };
-    }
-  };
+  // const sendPermissionDecision = async (proceed: boolean) => {
+  //   try {
+  //     console.log('Sending permission decision:', proceed);
+  //     const response = await fetch('http://127.0.0.1:8000/api/run-agent/permission', {
+  //       method: 'POST',
+  //       headers: { 'Content-Type': 'application/json' },
+  //       body: JSON.stringify({ proceed })
+  //     });
+  //     console.log('Permission decision response status:', response.status);
+  //     if (!response.ok) {
+  //       throw new Error(`HTTP error! status: ${response.status}`);
+  //     }
+  //     const result = await response.json();
+  //     console.log('Permission decision sent:', result);
+  //     return result;
+  //   } catch (error) {
+  //     console.error('Error sending permission decision:', error);
+  //     return { message: "Error sending permission decision" };
+  //   }
+  // };
 
   return (
     <>
@@ -231,7 +208,10 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
       {showActionPrompt && currentAction && (
         <AgentActionConfirmation
           action={currentAction}
-          onConfirm={currentAction.onConfirm}
+          onConfirm={() => {
+            setShowActionPrompt(false);
+            setCurrentAction(null);
+          }}
         />
       )}
       {/* {agentRunning && !showActionPrompt && (

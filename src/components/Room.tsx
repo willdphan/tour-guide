@@ -13,7 +13,7 @@ import {
 import AgentActionConfirmation from './AgentActionConfirmation';
 
 function Cursor({ x, y, color, isActive }: { x: number; y: number; color: string; isActive: boolean }) {
-  console.log('Rendering cursor with color:', color);
+  // console.log('Rendering cursor with color:', color);
   return (
     <div
       style={{
@@ -87,7 +87,7 @@ function RoomContent({ children }: { children: ReactNode }) {
   useEffect(() => {
     const updateInitialPosition = () => {
       const { innerWidth, innerHeight } = window;
-      setInitialCursorPosition({ x: innerWidth - 50, y: innerHeight - 50 });
+      setInitialCursorPosition({ x: innerWidth + 100 , y: innerHeight + 100}); // where cursor starts
     };
 
     updateInitialPosition();
