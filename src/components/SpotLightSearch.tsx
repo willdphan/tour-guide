@@ -112,7 +112,7 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
                       if (confirmed) {
                         const result = await sendPermissionDecision(true);
                         console.log('Permission decision result:', result);
-                        simulateAgentAction(parsedData);
+                        await simulateAgentAction(parsedData);
                       } else {
                         await sendPermissionDecision(false);
                         setAgentRunning(false);
@@ -234,13 +234,13 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
           onConfirm={currentAction.onConfirm}
         />
       )}
-      {agentRunning && !showActionPrompt && (
+      {/* {agentRunning && !showActionPrompt && (
         <div className="fixed inset-0 flex items-center justify-center ">
           <div className="bg-white p-6 rounded-lg shadow-lg">
             <p>Agent is running...</p>
           </div>
         </div>
-      )}
+      )} */}
     </>
   )
 }

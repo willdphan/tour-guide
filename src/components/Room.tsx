@@ -58,6 +58,8 @@ function RoomContent({ children }: { children: ReactNode }) {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [agentCursorColor, setAgentCursorColor] = useState("#0000FF"); // Blue
 
+  const [isAgentRunning, setIsAgentRunning] = useState(false);
+
   useEffect(() => {
     console.log("Agent cursor color set to:", agentCursorColor);
   }, [agentCursorColor]);
@@ -103,7 +105,16 @@ function RoomContent({ children }: { children: ReactNode }) {
         .find(el => el.textContent?.trim() === text);
     };
 
-    const performAction = async () => {
+    return new Promise<void>(async (resolve) => {
+      await performAction();
+      await wait(1000); // Add a delay after each action
+      setIsAgentActive(false);
+      setAgentCursor(null);
+      updateMyPresenceFn({ isAgent: false, cursor: null });
+      resolve();
+    });
+
+    async function performAction() {
       switch (action.action) {
         case 'Click':
           if (action.element_description) {
@@ -193,13 +204,7 @@ function RoomContent({ children }: { children: ReactNode }) {
         default:
           console.log('Unknown action:', action.action, action.instruction);
       }
-    };
-
-    updateMyPresenceFn({ isAgent: true });
-    await performAction();
-    setIsAgentActive(false);
-    setAgentCursor(null);
-    updateMyPresenceFn({ isAgent: false, cursor: null });
+    }
   }, [setAgentCursor, updateMyPresenceFn]);
 
   const handleSearch = useCallback((selectedItem: { title: string, description: string }) => {
@@ -258,7 +263,7 @@ function RoomContent({ children }: { children: ReactNode }) {
         <AgentActionConfirmation
           action={currentAction}
           onConfirm={handleActionConfirmation}
-          cursorPosition={agentCursor || undefined}
+          isAgentRunning={isAgentRunning}
         />
       )}
       {children}
