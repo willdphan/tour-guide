@@ -12,7 +12,7 @@ import {
 } from "@liveblocks/react/suspense";
 import AgentActionConfirmation from './AgentActionConfirmation';
 
-function Cursor({ x, y, color }: { x: number; y: number; color: string }) {
+function Cursor({ x, y, color, isActive }: { x: number; y: number; color: string; isActive: boolean }) {
   console.log('Rendering cursor with color:', color);
   return (
     <div
@@ -24,6 +24,7 @@ function Cursor({ x, y, color }: { x: number; y: number; color: string }) {
         transform: "translateX(-50%) translateY(-50%)",
         pointerEvents: "none",
         zIndex: 1000,
+        opacity: isActive ? 1 : 0.5, // Fade out when inactive
       }}
     >
       <svg
@@ -72,6 +73,7 @@ function RoomContent({ children }: { children: ReactNode }) {
   const myId = self?.id;
 
   const [agentCursor, setAgentCursor] = useState<{ x: number; y: number } | null>(null);
+  const [initialCursorPosition, setInitialCursorPosition] = useState<{ x: number; y: number } | null>(null);
   const [isAgentActive, setIsAgentActive] = useState(false);
 
   const [userQuery, setUserQuery] = useState('');
@@ -80,6 +82,19 @@ function RoomContent({ children }: { children: ReactNode }) {
   const [agentCursorColor, setAgentCursorColor] = useState("#0000FF"); // Blue
 
   const [isAgentRunning, setIsAgentRunning] = useState(false);
+
+  // Set initial cursor position to bottom right
+  useEffect(() => {
+    const updateInitialPosition = () => {
+      const { innerWidth, innerHeight } = window;
+      setInitialCursorPosition({ x: innerWidth - 50, y: innerHeight - 50 });
+    };
+
+    updateInitialPosition();
+    window.addEventListener('resize', updateInitialPosition);
+
+    return () => window.removeEventListener('resize', updateInitialPosition);
+  }, []);
 
   useEffect(() => {
     console.log("Agent cursor color set to:", agentCursorColor);
@@ -102,12 +117,14 @@ function RoomContent({ children }: { children: ReactNode }) {
     setIsAgentActive(true);
 
     const moveMouseTo = (x: number, y: number) => {
-      setAgentCursor({ x, y });
-      updateMyPresenceFn({
-        cursor: { x, y },
-        isAgent: true,
-      });
-      console.log(`Moved cursor to (${x}, ${y})`);
+      if (x !== undefined && y !== undefined) {
+        setAgentCursor({ x, y });
+        updateMyPresenceFn({
+          cursor: { x, y },
+          isAgent: true,
+        });
+        console.log(`Moved cursor to (${x}, ${y})`);
+      }
     };
 
     const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -130,8 +147,6 @@ function RoomContent({ children }: { children: ReactNode }) {
       await performAction();
       await wait(1000); // Add a delay after each action
       setIsAgentActive(false);
-      setAgentCursor(null);
-      updateMyPresenceFn({ isAgent: false, cursor: null });
       resolve();
     });
 
@@ -257,11 +272,12 @@ function RoomContent({ children }: { children: ReactNode }) {
 
   return (
     <div style={{ position: "relative", width: "100%", height: "100vh", overflow: "hidden" }}>
-      {isAgentActive && agentCursor && (
+      {initialCursorPosition && (
         <Cursor 
-          x={agentCursor.x} 
-          y={agentCursor.y} 
+          x={agentCursor ? agentCursor.x : initialCursorPosition.x} 
+          y={agentCursor ? agentCursor.y : initialCursorPosition.y} 
           color={agentCursorColor} 
+          isActive={isAgentActive}
         />
       )}
       <div
