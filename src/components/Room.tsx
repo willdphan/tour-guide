@@ -1,5 +1,5 @@
 "use client";
-import { useCallback,useEffect, useState } from 'react';
+import { useCallback,useEffect, useState, useRef } from 'react';
 import { ReactNode } from "react";
 
 import SpotLightSearch from '@/components/SpotLightSearch';
@@ -13,6 +13,7 @@ import {
 import AgentActionConfirmation from './AgentActionConfirmation';
 
 function Cursor({ x, y, color }: { x: number; y: number; color: string }) {
+  console.log('Rendering cursor with color:', color);
   return (
     <svg
       style={{
@@ -30,7 +31,7 @@ function Cursor({ x, y, color }: { x: number; y: number; color: string }) {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <path
+    <path
         d="M5.65376 12.3673H5.46026L5.31717 12.4976L0.500002 16.8829L0.500002 1.19841L11.7841 12.3673H5.65376Z"
         fill={color}
       />
@@ -50,13 +51,16 @@ function RoomContent({ children }: { children: ReactNode }) {
   const myId = self?.id;
 
   const [agentCursor, setAgentCursor] = useState<{ x: number; y: number } | null>(null);
-  const [isAgentActive, setIsAgentActive] = useState(false); // Add this line
+  const [isAgentActive, setIsAgentActive] = useState(false);
 
   const [userQuery, setUserQuery] = useState('');
-  const [userCursorColor, setUserCursorColor] = useState("#FF0000");
-  const [agentCursorColor, setAgentCursorColor] = useState("#00FF00");
   const [currentAction, setCurrentAction] = useState<any | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [agentCursorColor, setAgentCursorColor] = useState("#0000FF"); // Blue
+
+  useEffect(() => {
+    console.log("Agent cursor color set to:", agentCursorColor);
+  }, [agentCursorColor]);
 
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
@@ -72,14 +76,7 @@ function RoomContent({ children }: { children: ReactNode }) {
   const simulateAgentAction = useCallback(async (action: any) => {
     console.log('Simulating action:', action);
     setCurrentAction(action);
-    setIsAgentActive(true); // Add this line
-
-    // Update cursor position based on the action's screen_location
-    if (action.screen_location) {
-      setAgentCursor({ x: action.screen_location.x, y: action.screen_location.y });
-    }
-
-    setShowConfirmation(true);
+    setIsAgentActive(true);
 
     const moveMouseTo = (x: number, y: number) => {
       setAgentCursor({ x, y });
@@ -112,28 +109,31 @@ function RoomContent({ children }: { children: ReactNode }) {
           if (action.element_description) {
             const element = findElementByText(action.element_description);
             if (element instanceof HTMLElement) {
+              const rect = element.getBoundingClientRect();
+              moveMouseTo(rect.left + rect.width / 2, rect.top + rect.height / 2);
+              await wait(1000);
               scrollToElement(element);
-              await wait(3000);
+              await wait(1000);
               element.click();
               console.log('Clicked element:', element);
               // Visual feedback
               element.style.border = '2px solid blue';
               setTimeout(() => element.style.border = '', 1000);
-            } else if (action.screen_location) {
-              moveMouseTo(action.screen_location.x, action.screen_location.y);
+            }
+          } else if (action.screen_location) {
+            moveMouseTo(action.screen_location.x, action.screen_location.y);
+            await wait(1000);
+            const elementAtPoint = getElementFromPoint(action.screen_location.x, action.screen_location.y);
+            if (elementAtPoint instanceof HTMLElement) {
+              scrollToElement(elementAtPoint);
               await wait(1000);
-              const elementAtPoint = getElementFromPoint(action.screen_location.x, action.screen_location.y);
-              if (elementAtPoint instanceof HTMLElement) {
-                scrollToElement(elementAtPoint);
-                await wait(1000);
-                elementAtPoint.click();
-                console.log('Clicked element at point:', elementAtPoint);
-                // Visual feedback
-                elementAtPoint.style.border = '2px solid red';
-                setTimeout(() => elementAtPoint.style.border = '', 1000);
-              } else {
-                console.log('No clickable element found at the specified location or with the given description');
-              }
+              elementAtPoint.click();
+              console.log('Clicked element at point:', elementAtPoint);
+              // Visual feedback
+              elementAtPoint.style.border = '2px solid red';
+              setTimeout(() => elementAtPoint.style.border = '', 1000);
+            } else {
+              console.log('No clickable element found at the specified location or with the given description');
             }
           }
           break;
@@ -188,17 +188,6 @@ function RoomContent({ children }: { children: ReactNode }) {
 
         case 'FINAL_ANSWER':
           console.log('Task completed. Answer:', action.instruction);
-          // Display the answer in the UI
-          // const answerElement = document.createElement('div');
-          // answerElement.textContent = `Agent's Answer: ${action.instruction}`;
-          // answerElement.style.position = 'fixed';
-          // answerElement.style.bottom = '20px';
-          // answerElement.style.left = '20px';
-          // answerElement.style.backgroundColor = 'lightgreen';
-          // answerElement.style.padding = '10px';
-          // answerElement.style.borderRadius = '5px';
-          // document.body.appendChild(answerElement);
-          // setTimeout(() => document.body.removeChild(answerElement), 5000);
           break;
 
         default:
@@ -206,16 +195,18 @@ function RoomContent({ children }: { children: ReactNode }) {
       }
     };
 
+    updateMyPresenceFn({ isAgent: true });
     await performAction();
-    setIsAgentActive(false); // Add this line
-  }, [setAgentCursor]);
+    setIsAgentActive(false);
+    setAgentCursor(null);
+    updateMyPresenceFn({ isAgent: false, cursor: null });
+  }, [setAgentCursor, updateMyPresenceFn]);
 
   const handleSearch = useCallback((selectedItem: { title: string, description: string }) => {
     setUserQuery(selectedItem.title);
   }, []);
 
-  const updateCursorColors = useCallback((newUserColor: string, newAgentColor: string) => {
-    setUserCursorColor(newUserColor);
+  const updateCursorColors = useCallback((newAgentColor: string) => {
     setAgentCursorColor(newAgentColor);
   }, []);
 
@@ -225,7 +216,7 @@ function RoomContent({ children }: { children: ReactNode }) {
       // Perform the action here
     } else {
       console.log('Action cancelled:', currentAction);
-      setIsAgentActive(false); // Add this line
+      setIsAgentActive(false);
     }
     setCurrentAction(null);
     setShowConfirmation(false);
@@ -238,38 +229,9 @@ function RoomContent({ children }: { children: ReactNode }) {
     }
   }, [showConfirmation, agentCursor]);
 
-  useEffect(() => {
-    // Change colors after a short delay to ensure it's not overwritten
-    const timer = setTimeout(() => {
-      setUserCursorColor("#0000FF"); // Change to blue
-      // setAgentCursorColor("#FFA500"); // Change to orange
-      console.log("Cursor colors updated:", userCursorColor, agentCursorColor);
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    if (!showConfirmation && agentCursor) {
-      // If the confirmation box is closed and we still have a cursor position,
-      // make sure it's visible
-      setAgentCursor({ ...agentCursor });
-    }
-  }, [showConfirmation, agentCursor]);
-
   return (
     <div style={{ position: "relative", width: "100%", height: "100vh", overflow: "hidden" }}>
-      {others.map(({ connectionId, presence }) => 
-        presence.cursor && connectionId !== myId && (
-          <Cursor 
-            key={connectionId} 
-            x={presence.cursor.x} 
-            y={presence.cursor.y} 
-            color={presence.isAgent ? agentCursorColor : userCursorColor} 
-          />
-        )
-      )}
-      {(showConfirmation || isAgentActive) && agentCursor && ( // Modify this line
+      {isAgentActive && agentCursor && (
         <Cursor 
           x={agentCursor.x} 
           y={agentCursor.y} 
