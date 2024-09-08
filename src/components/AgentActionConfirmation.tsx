@@ -16,15 +16,15 @@ interface AgentActionConfirmationProps {
   isAgentRunning: boolean;
 }
 
-const AgentActionConfirmation: React.FC<AgentActionConfirmationProps> = ({ action, onConfirm, isAgentRunning }) => {
+const AgentActionConfirmation: React.FC<AgentActionConfirmationProps> = ({ action, onConfirm, isAgentRunning, isWaiting }) => {
   const [boxPosition, setBoxPosition] = useState({ x: 0, y: 0 });
 
   const updatePosition = () => {
     const { innerWidth, innerHeight } = window;
     const boxWidth = 300;
     const boxHeight = 150;
-    const cursorPadding = 200;
-    const edgePadding = 20;
+    const cursorPadding = 20;
+    const edgePadding = 16;
 
     if (action.screen_location) {
       const { x, y } = action.screen_location;
@@ -53,7 +53,7 @@ const AgentActionConfirmation: React.FC<AgentActionConfirmationProps> = ({ actio
         });
       }
     } else {
-      // Default position if no cursor location is provided
+      // Default position in bottom right if no cursor location is provided
       setBoxPosition({
         x: innerWidth - boxWidth - edgePadding,
         y: innerHeight - boxHeight - edgePadding
@@ -72,7 +72,16 @@ const AgentActionConfirmation: React.FC<AgentActionConfirmationProps> = ({ actio
     return () => window.removeEventListener('resize', updatePosition);
   }, [action, onConfirm]);
 
-  const boxStyle: React.CSSProperties = {
+  const isFixedPosition = action.action == 'Wait' || action.action == 'Processing';
+
+  const boxStyle: React.CSSProperties = isFixedPosition ? {
+    position: 'fixed',
+    right: '16px',
+    bottom: '16px',
+    zIndex: 9999,
+    maxWidth: '300px',
+    width: '100%',
+  } : {
     position: 'fixed',
     left: `${boxPosition.x}px`,
     top: `${boxPosition.y}px`,
@@ -81,32 +90,35 @@ const AgentActionConfirmation: React.FC<AgentActionConfirmationProps> = ({ actio
     width: '100%',
   };
 
+
   return (
     <div style={boxStyle}>
-      <div className="bg-white p-4 rounded-lg border-[2px] border-blue-500  rounded-[0.5rem]">
-        {isAgentRunning ? (
-   <>
-  <h2 className="text-xl font-bold text-blue-600">Agent is running...</h2>
-  <p className="text-sm mt-2">Please wait while the agent processes the next action.</p>
-</>
-        
+      <div className=" bg-white p-4 rounded-lg border-[2px] border-blue-500 rounded-[0.5rem]">
+        {action.action === 'Wait' ? (
+           <>
+           <div className=" flex justify-between items-center">
+           <p className="text-sm">{action.instruction || "Give me a minute! Thinking..."}</p>
+             <Button 
+               onClick={() => onConfirm(false)} 
+               className="flex-shrink-0 w-6 h-6 p-0 text-xs rounded-full flex items-center justify-center aspect-square border border-black ml-2"
+             >
+               X
+             </Button>
+           </div>
+         </>
         ) : (
           <>
-            {/* <h2 className="text-xl font-bold mb-2 text-blue-600">Confirm Action</h2> */}
             <p className="mb-4 text-sm">{action.instruction}</p>
-        <div className="flex w-full items-center space-x-4">
-          <div className="flex-grow">
-            <AnimatedProgressBar />
-          </div>
-          <Button 
-            onClick={() => onConfirm(false)} 
-            className="flex-shrink-0 w-6 h-6 p-0 text-xs rounded-full flex items-center justify-center aspect-square border border-black "
-          >
-            X
-          </Button>
-              {/* <Button onClick={() => onConfirm(true)} className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-sm">
-                Proceed
-              </Button> */}
+            <div className="flex w-full items-center space-x-4">
+              <div className="flex-grow">
+                <AnimatedProgressBar />
+              </div>
+              <Button 
+                onClick={() => onConfirm(false)} 
+                className="flex-shrink-0 w-6 h-6 p-0 text-xs rounded-full flex items-center justify-center aspect-square border border-black"
+              >
+                X
+              </Button>
             </div>
           </>
         )}

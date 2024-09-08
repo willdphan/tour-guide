@@ -1,11 +1,11 @@
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import { Search } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Command } from '@/components/ui/command'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import AgentActionPrompt from './AgentActionPrompt'
-import AgentActionConfirmation from './AgentActionConfirmation'; // Add this line
+import AgentActionConfirmation from './AgentActionConfirmation';
 
 
 interface SpotLightSearchProps {
@@ -32,8 +32,9 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
   const [agentRunning, setAgentRunning] = useState(false)
   const [agentResponse, setAgentResponse] = useState('')
   const [currentInstruction, setCurrentInstruction] = useState('')
-  const [showActionPrompt, setShowActionPrompt] = useState(false)
-  const [currentAction, setCurrentAction] = useState<any>(null);
+  const [actions, setActions] = useState<any[]>([]);
+  const [isWaiting, setIsWaiting] = useState(false);
+  const [isAgentProcessing, setIsAgentProcessing] = useState(false);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -53,12 +54,27 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
       result.description.toLowerCase().includes(search.toLowerCase())
   )
 
+  const handleNewAction = useCallback((action: any) => {
+    if (action.action === 'Wait') {
+      setIsWaiting(true);
+    } else {
+      setIsWaiting(false);
+      const actionWithId = { ...action, id: Date.now() };
+      setActions(prevActions => [...prevActions, actionWithId]);
+      
+      // Remove the action after 2 seconds
+      setTimeout(() => {
+        setActions(prevActions => prevActions.filter(a => a.id !== actionWithId.id));
+      }, 2000);
+    }
+  }, []);
+
   const handleKeyDown = useCallback(async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       console.log('Enter key pressed, search query:', search);
-      setAgentRunning(true);
-      setAgentResponse('');
+      setIsWaiting(true);
+      setIsAgentProcessing(true);
       setOpen(false);
 
       try {
@@ -96,20 +112,23 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
               const jsonData = line.slice(6);
               if (jsonData === '[DONE]') {
                 console.log('Stream completed');
-                setAgentRunning(false);
+                setIsWaiting(false);
+                setIsAgentProcessing(false);
                 break;
               }
               try {
                 const parsedData = JSON.parse(jsonData);
                 console.log('Received data:', parsedData);
                 
-                if (parsedData.action !== 'FINAL_ANSWER') {
-                  setCurrentAction(parsedData);
-                  setShowActionPrompt(true);
-                  await simulateAgentAction(parsedData);
+                handleNewAction(parsedData);
+
+                if (parsedData.action === 'FINAL_ANSWER') {
+                  setIsWaiting(false);
+                  setIsAgentProcessing(false);
                 } else {
-                  setAgentResponse(parsedData.instruction);
-                  setAgentRunning(false);
+                  await simulateAgentAction(parsedData);
+                  // Keep isAgentProcessing true between steps
+                  setIsAgentProcessing(true);
                 }
               } catch (error) {
                 console.error('Error parsing JSON:', error);
@@ -119,36 +138,11 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
         }
       } catch (error) {
         console.error('Error fetching search results:', error);
-        setAgentRunning(false);
+        setIsAgentProcessing(false);
+        setIsWaiting(false);
       }
     }
-  }, [search, simulateAgentAction]);
-
-  // const askUserForPermission = async (data: any) => {
-  //   console.log('Asking for permission:', data);
-  //   return confirm('Do you want to proceed with the next action?');
-  // };
-
-  // const sendPermissionDecision = async (proceed: boolean) => {
-  //   try {
-  //     console.log('Sending permission decision:', proceed);
-  //     const response = await fetch('http://127.0.0.1:8000/api/run-agent/permission', {
-  //       method: 'POST',
-  //       headers: { 'Content-Type': 'application/json' },
-  //       body: JSON.stringify({ proceed })
-  //     });
-  //     console.log('Permission decision response status:', response.status);
-  //     if (!response.ok) {
-  //       throw new Error(`HTTP error! status: ${response.status}`);
-  //     }
-  //     const result = await response.json();
-  //     console.log('Permission decision sent:', result);
-  //     return result;
-  //   } catch (error) {
-  //     console.error('Error sending permission decision:', error);
-  //     return { message: "Error sending permission decision" };
-  //   }
-  // };
+  }, [search, simulateAgentAction, handleNewAction]);
 
   return (
     <>
@@ -205,22 +199,28 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
           </Command>
         </DialogContent>
       </Dialog>
-      {showActionPrompt && currentAction && (
+      {isWaiting && (
         <AgentActionConfirmation
-          action={currentAction}
-          onConfirm={() => {
-            setShowActionPrompt(false);
-            setCurrentAction(null);
-          }}
+          action={{ action: 'Wait', instruction: '' }}
+          onConfirm={() => {}}
+          isWaiting={true}
         />
       )}
-      {/* {agentRunning && !showActionPrompt && (
-        <div className="fixed inset-0 flex items-center justify-center ">
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <p>Agent is running...</p>
-          </div>
-        </div>
-      )} */}
+      {actions.map((action) => (
+        <AgentActionConfirmation
+          key={action.id}
+          action={action}
+          onConfirm={() => {}}
+          isWaiting={false}
+        />
+      ))}
+      {isAgentProcessing && actions.length === 0 && !isWaiting && (
+        <AgentActionConfirmation
+          action={{ action: 'Processing', instruction: 'Agent is thinking...' }}
+          onConfirm={() => {}}
+          isWaiting={false}
+        />
+      )}
     </>
   )
 }

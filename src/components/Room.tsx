@@ -24,7 +24,7 @@ function Cursor({ x, y, color, isActive }: { x: number; y: number; color: string
         transform: "translateX(-50%) translateY(-50%)",
         pointerEvents: "none",
         zIndex: 1000,
-        opacity: isActive ? 1 : 0.5, // Fade out when inactive
+        opacity: isActive ? 1 : 0.0, // Fade out when inactive
       }}
     >
       <svg
@@ -219,8 +219,8 @@ function RoomContent({ children }: { children: ReactNode }) {
           break;
 
         case 'Wait':
-          console.log('Waiting for 1 seconds');
-          await wait(1000);
+          console.log('Waiting for 0 seconds');
+          await wait(0);
           break;
 
         case 'GoBack':
