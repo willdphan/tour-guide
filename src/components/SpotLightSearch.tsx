@@ -122,7 +122,7 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
   return (
     <>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="p-0 overflow-hidden !rounded-xl bg-white/80 backdrop-blur-sm border border-gray-200 shadow-lg">
+        <DialogContent className="p-0 overflow-hidden font-Roboto !rounded-xl bg-white/80 backdrop-blur-sm border border-gray-200 shadow-lg">
           <Command className="border-none">
             <div className="flex items-center !rounded-t-xl w-full relative">
               <CommandInput
@@ -131,7 +131,7 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
                 onValueChange={setSearch}
                 onKeyDown={handleKeyDown}
                 disabled={agentRunning}
-                className="w-full h-12 border-0 outline-none focus:ring-0 text-sm placeholder:text-gray-400 px-4 bg-transparent"
+                className="w-full h-12 border-0 outline-none focus:ring-0 text-sm placeholder:text-gray-400 px-0 bg-transparent"
               />
               <div className="absolute right-3 flex items-center space-x-1">
                 <kbd className="px-1.5 py-0.5 text-xs text-gray-500 bg-gray-200 rounded">⌘</kbd>
