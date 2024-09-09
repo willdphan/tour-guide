@@ -1,3 +1,4 @@
+import { Roboto } from 'next/font/google';
 import type { Config } from 'tailwindcss';
 import { fontFamily } from 'tailwindcss/defaultTheme';
 
@@ -17,6 +18,7 @@ const config: Config = {
       ibm: ['IBM Plex Sans'],
       work: ['Work Sans', ...fontFamily.sans],
       inter: ['Inter', ...fontFamily.sans],
+      Roboto: ['Roboto', ...fontFamily.sans],
     },
     container: {
       center: true,

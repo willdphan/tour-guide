@@ -23,7 +23,7 @@ const AgentActionConfirmation: React.FC<AgentActionConfirmationProps> = ({ actio
     const { innerWidth, innerHeight } = window;
     const boxWidth = 300;
     const boxHeight = 150;
-    const cursorPadding = 20;
+    const cursorPadding = 5;
     const edgePadding = 16;
 
     if (action.screen_location) {

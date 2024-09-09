@@ -47,7 +47,7 @@ function Cursor({ x, y, color, isActive }: { x: number; y: number; color: string
         style={{
           position: "absolute",
           top: "100%",
-          left: "180%", // Changed from 100% to 50%
+          left: "100%", // Changed from 100% to 50%
           backgroundColor: color,
           color: "white",
           padding: "2px 4px",
@@ -55,8 +55,8 @@ function Cursor({ x, y, color, isActive }: { x: number; y: number; color: string
           fontSize: "12px",
           whiteSpace: "nowrap",
           marginTop: "-12px", // Adjust this to fine-tune vertical position
-          marginLeft: "2px", // Reduced from 5px to 2px
-          transform: "translateX(-50%)", // Added to center the text horizontally
+          marginLeft: "-5px", // Reduced from 5px to 2px
+          transform: "translateX(-10%)", 
         }}
       >
         Tour Guide
