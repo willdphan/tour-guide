@@ -573,6 +573,23 @@ async def run_agent(question: str, page=None):
             "text_input": None
         }
 
+def generate_personable_instruction(action, element_description, text_input):
+    llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0.7)
+    prompt = f"""
+    Generate a friendly and personable instruction for a web navigation assistant.
+
+    The instruction should be based on the following action:
+
+    Action: {action}
+    Element Description: {element_description}
+    Text Input: {text_input}
+
+    Make the instruction sound natural, as if a helpful friend is guiding the user.
+    Keep it very concise but engaging. Get to the point no extra info at each step. No emojis.
+    """
+    response = llm.predict(prompt)
+    return response.strip()
+
 async def _run_agent_with_page(question: str, page):
     # Hardcode the start_url
     start_url = "http://localhost:3000"
@@ -668,25 +685,26 @@ async def _run_agent_with_page(question: str, page):
                             hover_before_action = True
 
                         if action == "Click":
-                            instruction = f"Click on the {element_description}."
+                            instruction = generate_personable_instruction("Click", element_description, None)
                         elif action == "Type":
                             text_input = action_input[1]
-                            instruction = f"Type '{text_input}' into the {element_description}."
+                            instruction = generate_personable_instruction("Type", element_description, text_input)
                         elif action == "Scroll":
                             direction = "up" if action_input[1].lower() == "up" else "down"
-                            instruction = f"Scroll {direction} in the {element_description}."
+                            instruction = generate_personable_instruction("Scroll", element_description, direction)
             elif action == "Wait":
-                instruction = "Wait for a moment while the page loads."
+                instruction = generate_personable_instruction("Wait", None, None)
             elif action == "GoBack":
-                instruction = "Go back to the previous page."
+                instruction = generate_personable_instruction("GoBack", None, None)
             elif action == "Home":
-                instruction = "Go back to home page."
+                instruction = generate_personable_instruction("Home", None, None)
             elif action.startswith("ANSWER"):
                 final_answer = action_input[0] if action_input else "Task completed, but no specific answer provided."
+                instruction = generate_personable_instruction("FinalAnswer", None, final_answer)
                 yield {
                     "thought": thought,
                     "action": "FINAL_ANSWER",
-                    "instruction": f"Task completed. Final answer: {final_answer}",
+                    "instruction": instruction,
                     "element_description": None,
                     "screen_location": None,
                     "hover_before_action": False,
@@ -694,7 +712,7 @@ async def _run_agent_with_page(question: str, page):
                 }
                 break
             else:
-                instruction = f"{action} {action_input}"
+                instruction = generate_personable_instruction(action, None, str(action_input))
         except Exception as e:
             print(f"Error processing action: {str(e)}")
 

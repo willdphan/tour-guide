@@ -19,6 +19,8 @@ const config: Config = {
       work: ['Work Sans', ...fontFamily.sans],
       inter: ['Inter', ...fontFamily.sans],
       Roboto: ['Roboto', ...fontFamily.sans],
+      Mono: ['IBM Plex Mono', ...fontFamily.sans],
+      Chakra: ['Chakra Petch', ...fontFamily.sans],
     },
     container: {
       center: true,

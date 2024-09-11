@@ -9,6 +9,11 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
 import PopUpApple from './popup-apple'
 import PopUpDefault from './popup-default'
+import { IBM_Plex_Sans } from 'next/font/google'
+
+// ... existing utility functions ...
+
+export const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 interface SpotLightSearchProps {
   onSelect: (selectedItem: { title: string; description: string }) => void;
@@ -21,9 +26,10 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
   const [search, setSearch] = useState('')
   const [agentRunning, setAgentRunning] = useState(false)
   const [agentResponse, setAgentResponse] = useState('')
-  const [actions, setActions] = useState<any[]>([])
+  const [currentAction, setCurrentAction] = useState<any>(null);
   const [isWaiting, setIsWaiting] = useState(false)
   const [isAgentProcessing, setIsAgentProcessing] = useState(false)
+  const [finalAction, setFinalAction] = useState<any>(null);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -37,19 +43,32 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
     return () => document.removeEventListener('keydown', down)
   }, [])
 
-  const handleNewAction = useCallback((action: any) => {
+  const handleNewAction = useCallback(async (action: any) => {
     if (action.action === 'Wait') {
-      setIsWaiting(true)
+      setIsWaiting(true);
     } else {
-      setIsWaiting(false)
-      const actionWithId = { ...action, id: Date.now() }
-      setActions(prevActions => [...prevActions, actionWithId])
+      setIsWaiting(false);
+      setCurrentAction(action);
       
-      setTimeout(() => {
-        setActions(prevActions => prevActions.filter(a => a.id !== actionWithId.id))
-      }, 2000)
+      // Simulate the action
+      await simulateAgentAction(action);
+      
+      if (action.action === 'FINAL_ANSWER') {
+        setFinalAction(action);
+        // Keep the final action visible for 10 seconds (adjust as needed)
+        await sleep(2000);
+        setFinalAction(null);
+      } else {
+        // Display the action for 3 seconds
+        await sleep(3000);
+        
+        setCurrentAction(null);
+        
+        // Add a 1-second pause between actions
+        await sleep(1000);
+      }
     }
-  }, [])
+  }, [simulateAgentAction]);
 
   const handleKeyDown = useCallback(async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -102,13 +121,12 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
                 const parsedData = JSON.parse(jsonData)
                 console.log('Received data:', parsedData)
                 
-                handleNewAction(parsedData)
+                await handleNewAction(parsedData)
 
                 if (parsedData.action === 'FINAL_ANSWER') {
                   setIsWaiting(false)
                   setIsAgentProcessing(false)
                 } else {
-                  await simulateAgentAction(parsedData)
                   setIsAgentProcessing(true)
                 }
               } catch (error) {
@@ -127,23 +145,27 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
 
   return (
     <>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="p-0 overflow-hidden font-Sans !rounded-xl bg-white backdrop-blur-xs border border-gray-200">
-          <Command className="border-none">
-            <div className="flex items-center !rounded-t-xl w-full relative text-gray-500 ">
-              <CommandInput
-                placeholder="Search or type a command"
-                value={search}
-                onValueChange={setSearch}
-                onKeyDown={handleKeyDown}
-                disabled={agentRunning}
-                className="w-full h-12 border-0 outline-none focus:ring-0 text-sm placeholder:text-gray-400 px-0 bg-transparent"
-              />
-              <div className="absolute right-3 flex items-center space-x-1">
-                <kbd className="px-1.5 py-0.5 text-xs text-gray-500 bg-gray-200 rounded">⌘</kbd>
-                <kbd className="px-1.5 py-0.5 text-xs text-gray-500 bg-gray-200 rounded">K</kbd>
-              </div>
+     <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="p-0 overflow-hidden font-Chakra bg-white backdrop-blur-xs">
+        <Command className="border-none">
+          <div className="flex items-center !rounded-t-xl w-full relative text-gray-500">
+            <CommandInput
+              placeholder="Search or type a command"
+              value={search}
+              onValueChange={setSearch}
+              onKeyDown={handleKeyDown}
+              disabled={agentRunning}
+              className="w-full h-12 s outline-none focus:ring-0 text-sm placeholder:text-gray-400 px-0 bg-transparent"
+            />
+            <div className="absolute right-3 flex items-center space-x-1">
+              <kbd className="px-1.5 py-0.5 text-xs text-gray-500 bg-gray-200 inline-flex items-center justify-center w-6 h-6">
+                <span className="text-base font-semibold">⌘</span>
+              </kbd>
+              <kbd className="px-1.5 py-0.5 text-xs text-gray-500 bg-gray-200 inline-flex items-center justify-center w-6 h-6 font-Chakra">
+                <span className="text-sm">K</span>
+              </kbd>
             </div>
+          </div>
             <CommandList className='hidden'>
               <CommandGroup>
                 <CommandItem value="placeholder">
@@ -167,15 +189,21 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
           isWaiting={true}
         />
       )}
-      {actions.map((action) => (
+      {currentAction && !finalAction && (
         <AgentActionConfirmation
-          key={action.id}
-          action={action}
+          action={currentAction}
           onConfirm={() => {}}
           isWaiting={false}
         />
-      ))}
-      {isAgentProcessing && actions.length === 0 && !isWaiting && (
+      )}
+      {finalAction && (
+        <AgentActionConfirmation
+          action={finalAction}
+          onConfirm={() => {}}
+          isWaiting={false}
+        />
+      )}
+      {isAgentProcessing && !currentAction && !isWaiting && !finalAction && (
         <AgentActionConfirmation
           action={{ action: 'One sec, planning my next step...', instruction: 'One sec, planning my next step...' }}
           onConfirm={() => {}}

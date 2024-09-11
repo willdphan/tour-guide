@@ -137,11 +137,15 @@ const AgentActionConfirmation: React.FC<AgentActionConfirmationProps> = ({
     }
   }, [currentPhase])
 
+  const formatPercentage = (text: string) => {
+    return text.replace(/(\d+(\.\d+)?%)/g, (match) => `<span class="font-Chakra">${match}</span>`);
+  };
+
   return (
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          className={`fixed right-4 bottom-4 z-50 w-64 shadow-md ${ibmPlexSans.className} ${
+          className={`fixed right-4 bottom-4 z-50 w-64 shadow-md font-Chakra ${
             isDarkMode ? 'text-white' : 'bg-white text-gray-800'
           }`}
           style={{ backgroundColor: isDarkMode ? '#31313C' : undefined }}
@@ -215,7 +219,7 @@ const AgentActionConfirmation: React.FC<AgentActionConfirmationProps> = ({
               </div>
               <div className="flex justify-between items-center">
                 <motion.span 
-                  className="text-xs font-medium"
+                  className="text-xs font-medium font-Chakra"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.2 }}
@@ -237,18 +241,16 @@ const AgentActionConfirmation: React.FC<AgentActionConfirmationProps> = ({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
-            >
-              {action.instruction || "Processing..."}
-            </motion.p>
+              dangerouslySetInnerHTML={{ __html: formatPercentage(action.instruction || "Processing...") }}
+            />
             {action.thought && (
               <motion.p 
                 className={`mt-1 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} leading-relaxed`}
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
-              >
-                {action.thought}
-              </motion.p>
+                dangerouslySetInnerHTML={{ __html: formatPercentage(action.thought) }}
+              />
             )}
           </div>
         </motion.div>
