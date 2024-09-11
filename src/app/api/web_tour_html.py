@@ -25,7 +25,7 @@ from langchain_core.runnables import RunnablePassthrough, RunnableLambda, chain 
 from langchain_openai import ChatOpenAI
 from langchain import hub
 from langgraph.graph import END, StateGraph
-from playwright.async_api import Page, async_playwright
+from playwright.async_api import Page, async_playwright, Error as PlaywrightError
 
 import bs4
 from bs4 import BeautifulSoup
@@ -84,6 +84,7 @@ class Step(BaseModel):
     screen_location: Optional[dict] = None
     hover_before_action: bool = False
     text_input: Optional[str] = None
+    duration: float = 2.0  # Default duration in seconds
 
 class AgentResponse(BaseModel):
     steps: List[Step]
@@ -549,7 +550,16 @@ async def run_agent(question: str, page=None):
             # If page is not provided, create a new browser and page
             async with async_playwright() as p:
                 browser = await p.chromium.launch(headless=False)
-                page = await browser.new_page()
+                context = await browser.new_context(ignore_https_errors=True)
+                page = await context.new_page()
+                
+                # Ignore specific console messages
+                page.on("console", lambda msg: None if "message channel closed before a response was received" in msg.text.lower() else print(f"Console: {msg.text}"))
+                
+                # Set longer timeouts
+                page.set_default_navigation_timeout(60000)  # 60 seconds
+                page.set_default_timeout(30000)  # 30 seconds
+                
                 try:
                     async for step in _run_agent_with_page(question, page):
                         yield step
@@ -559,14 +569,36 @@ async def run_agent(question: str, page=None):
             # If page is provided, use it directly
             async for step in _run_agent_with_page(question, page):
                 yield step
+    except PlaywrightError as e:
+        if "message channel closed before a response was received" in str(e).lower():
+            print(f"Ignoring known Playwright error: {e}")
+            # You might want to yield a special step here to inform the frontend
+            yield {
+                "thought": "Error occurred",
+                "action": "ERROR",
+                "instruction": "An error occurred, but we're continuing the process.",
+                "element_description": None,
+                "screen_location": None,
+                "hover_before_action": False,
+                "text_input": None
+            }
+        else:
+            # For other Playwright errors, we'll still yield an error step
+            yield {
+                "thought": "Error occurred",
+                "action": "ERROR",
+                "instruction": f"An error occurred: {str(e)}",
+                "element_description": None,
+                "screen_location": None,
+                "hover_before_action": False,
+                "text_input": None
+            }
     except Exception as e:
-        # print(f"Error during agent execution: {str(e)}")
-        # import traceback
-        # traceback.print_exc()
+        # For any other exceptions, yield an error step
         yield {
             "thought": "Error occurred",
             "action": "ERROR",
-            "instruction": f"An error occurred: {str(e)}",
+            "instruction": f"An unexpected error occurred: {str(e)}",
             "element_description": None,
             "screen_location": None,
             "hover_before_action": False,
@@ -585,7 +617,7 @@ def generate_personable_instruction(action, element_description, text_input):
     Text Input: {text_input}
 
     Make the instruction sound natural, as if a helpful friend is guiding the user.
-    Keep it very concise but engaging. Get to the point no extra info at each step. No emojis.
+    Keep it very concise but engaging. Make very short. Get to the point, no extra info or small talk at each step. No emojis.
     """
     response = llm.predict(prompt)
     return response.strip()
@@ -619,6 +651,8 @@ async def _run_agent_with_page(question: str, page):
         },
     )
 
+    final_answer_sent = False  # Add this flag
+
     async for event in event_stream:
         if "agent" not in event:
             continue
@@ -629,11 +663,13 @@ async def _run_agent_with_page(question: str, page):
         action_input = pred.get("args")
         thought = state.get("output", "").split("Thought:", 1)[-1].split("Action:", 1)[0].strip()
 
+        # Check if we've already sent a FINAL_ANSWER
+        if final_answer_sent:
+            continue
+
         print(f"Current action: {action}")
         print(f"Action input: {action_input}")
         print(f"Current URL: {state['current_url']}")
-        # print(f"HTML content length: {len(state.get('html_content', ''))}")
-        # print(f"Content analysis: {json.dumps(state.get('content_analysis', {}), indent=2)}")
 
         # Add this check
         if action is None:
@@ -699,18 +735,10 @@ async def _run_agent_with_page(question: str, page):
             elif action == "Home":
                 instruction = generate_personable_instruction("Home", None, None)
             elif action.startswith("ANSWER"):
-                final_answer = action_input[0] if action_input else "Task completed, but no specific answer provided."
-                instruction = generate_personable_instruction("FinalAnswer", None, final_answer)
-                yield {
-                    "thought": thought,
-                    "action": "FINAL_ANSWER",
-                    "instruction": instruction,
-                    "element_description": None,
-                    "screen_location": None,
-                    "hover_before_action": False,
-                    "text_input": None
-                }
-                break
+                final_answer_sent = True  # Set the flag when sending FINAL_ANSWER
+                instruction =  generate_personable_instruction(action_input[0], None, None) if action_input else generate_personable_instruction("Answer", None, None)
+                
+        
             else:
                 instruction = generate_personable_instruction(action, None, str(action_input))
         except Exception as e:
@@ -730,26 +758,53 @@ async def _run_agent_with_page(question: str, page):
         yield step_info
 
         # Execute the action without waiting for permission
-        if action == "Click":
-            await click(state)
-        elif action == "Type":
-            await type_text(state)
-        elif action == "Scroll":
-            await scroll(state)
-        elif action == "Wait":
-            await asyncio.sleep(5)
-        elif action == "GoBack":
-            await page.go_back()
-        elif action == "Home":
-            await page.goto("http://localhost:3000/")
-        elif action.startswith("ANSWER"):
-            break
+        try:
+            if action == "Click":
+                await click(state)
+            elif action == "Type":
+                await type_text(state)
+            elif action == "Scroll":
+                await scroll(state)
+            elif action == "Wait":
+                await asyncio.sleep(0) # 0 wait time
+            elif action == "GoBack":
+                await page.go_back()
+            elif action == "Home":
+                await page.goto("http://localhost:3000/")
+            elif action.startswith("ANSWER"):
+                break
+        except PlaywrightError as e:
+            if "message channel closed before a response was received" in str(e).lower():
+                print(f"Ignoring known Playwright error during action: {e}")
+                continue
+            else:
+                print(f"Playwright error during action: {e}")
+                yield {
+                    "thought": "Error occurred",
+                    "action": "ERROR",
+                    "instruction": f"An error occurred during the action: {str(e)}",
+                    "element_description": None,
+                    "screen_location": None,
+                    "hover_before_action": False,
+                    "text_input": None
+                }
+        except Exception as e:
+            print(f"Unexpected error during action: {e}")
+            yield {
+                "thought": "Error occurred",
+                "action": "ERROR",
+                "instruction": f"An unexpected error occurred during the action: {str(e)}",
+                "element_description": None,
+                "screen_location": None,
+                "hover_before_action": False,
+                "text_input": None
+            }
 
         # Add a delay between actions
-        await asyncio.sleep(2)  # 2-second delay between actions
+        await asyncio.sleep(0.5)  # 0.5-second delay between actions
 
-        if action.startswith("ANSWER"):
-            break
+        if final_answer_sent:
+            break  # Exit the loop after sending FINAL_ANSWER
 
 async def main():
     async with async_playwright() as p:

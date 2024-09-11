@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useCallback, useEffect } from 'react'
+import React, { useState, useCallback, useEffect, useRef } from 'react'
 import { Search } from 'lucide-react'
 import { Command, CommandInput, CommandList, CommandGroup, CommandItem } from '@/components/ui/command'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
@@ -10,6 +10,7 @@ import { X } from 'lucide-react'
 import PopUpApple from './popup-apple'
 import PopUpDefault from './popup-default'
 import { IBM_Plex_Sans } from 'next/font/google'
+import { debounce } from 'lodash';
 
 // ... existing utility functions ...
 
@@ -30,6 +31,8 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
   const [isWaiting, setIsWaiting] = useState(false)
   const [isAgentProcessing, setIsAgentProcessing] = useState(false)
   const [finalAction, setFinalAction] = useState<any>(null);
+  const [isProcessingAction, setIsProcessingAction] = useState(false);
+  const lastActionRef = useRef<string | null>(null);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -43,32 +46,54 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
     return () => document.removeEventListener('keydown', down)
   }, [])
 
-  const handleNewAction = useCallback(async (action: any) => {
-    if (action.action === 'Wait') {
-      setIsWaiting(true);
-    } else {
-      setIsWaiting(false);
-      setCurrentAction(action);
+  const handleNewAction = useCallback(
+    debounce(async (action: any) => {
+      if (isProcessingAction) return;
       
-      // Simulate the action
-      await simulateAgentAction(action);
+      // Create a unique key for the action
+      const actionKey = `${action.action}-${action.element_description || ''}-${Date.now()}`;
       
-      if (action.action === 'FINAL_ANSWER') {
-        setFinalAction(action);
-        // Keep the final action visible for 10 seconds (adjust as needed)
-        await sleep(2000);
-        setFinalAction(null);
-      } else {
-        // Display the action for 3 seconds
-        await sleep(3000);
-        
-        setCurrentAction(null);
-        
-        // Add a 1-second pause between actions
-        await sleep(1000);
+      if (actionKey === lastActionRef.current) {
+        console.log('Duplicate action detected, skipping:', action);
+        return;
       }
-    }
-  }, [simulateAgentAction]);
+      
+      setIsProcessingAction(true);
+      lastActionRef.current = actionKey;
+      
+      try {
+        console.log('Processing action:', action);
+        
+        if (action.action === 'Wait') {
+          setIsWaiting(true);
+        } else {
+          setIsWaiting(false);
+          setCurrentAction(action);
+          
+          // Simulate the action
+          await simulateAgentAction(action);
+          
+          if (action.action === 'FINAL_ANSWER') {
+            setFinalAction(action);
+            // Keep the final action visible for 10 seconds (adjust as needed)
+            // await sleep(10000);
+            setFinalAction(null);
+          } else {
+            // Display the action for 3 seconds
+            await sleep(3000);
+            
+            setCurrentAction(null);
+            
+            // Add a 1-second pause between actions
+            // await sleep(1000);
+          }
+        }
+      } finally {
+        setIsProcessingAction(false);
+      }
+    }, 0),
+    [simulateAgentAction]
+  );
 
   const handleKeyDown = useCallback(async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
