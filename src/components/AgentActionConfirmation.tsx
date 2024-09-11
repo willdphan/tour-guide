@@ -29,7 +29,8 @@ const AgentActionConfirmation: React.FC<AgentActionConfirmationProps> = ({
 }) => {
   const [progress, setProgress] = useState(0)
   const [isVisible, setIsVisible] = useState(true)
-  const [isDarkMode, setIsDarkMode] = useState(true)
+  const [isDarkMode, setIsDarkMode] = useState(false)  // Changed to false for light mode default
+  const [isBlinking, setIsBlinking] = useState(false)
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
@@ -41,7 +42,7 @@ const AgentActionConfirmation: React.FC<AgentActionConfirmationProps> = ({
           }
           return prevProgress + 1
         })
-      }, 100) // Adjust this value to change the speed of the progress bar
+      }, 100)
     } else {
       if (progressIntervalRef.current) {
         clearInterval(progressIntervalRef.current)
@@ -55,6 +56,15 @@ const AgentActionConfirmation: React.FC<AgentActionConfirmationProps> = ({
       }
     }
   }, [isWaiting])
+
+  useEffect(() => {
+    const blinkInterval = setInterval(() => {
+      setIsBlinking(true)
+      setTimeout(() => setIsBlinking(false), 200)
+    }, 3000)
+
+    return () => clearInterval(blinkInterval)
+  }, [])
 
   const getCurrentPhase = () => {
     if (isWaiting) return 'Analyzing'
@@ -73,6 +83,44 @@ const AgentActionConfirmation: React.FC<AgentActionConfirmationProps> = ({
       case 'Finalizing': return '#1D4ED8'
       case 'Initializing': return '#60A5FA'
       default: return '#3B82F6'
+    }
+  }
+
+  const getEyeAnimation = () => {
+    switch (currentPhase) {
+      case 'Analyzing':
+        return {
+          x: isBlinking ? 0 : [0, 2, -2, 1, -1, 2, -2, 0],
+          y: isBlinking ? 0 : [-1, 1, -1, 2, -2, 1, -1, 0],
+          transition: { repeat: Infinity, duration: 3, ease: "easeInOut" }
+        }
+      case 'Processing':
+        return {
+          x: isBlinking ? 0 : [-2, 2, -1, 1, 0, -2, 2, -1, 1, 0],
+          y: isBlinking ? 0 : [1, -1, 2, -2, 0, -1, 1, -2, 2, 0],
+          transition: { repeat: Infinity, duration: 1.5, ease: "linear" }
+        }
+      case 'Finalizing':
+        return {
+          x: isBlinking ? 0 : [0, 2, 0, -2, 1, -1, 2, -2, 1, -1, 0],
+          y: isBlinking ? 0 : [0, -1, 2, -1, 1, -2, 1, 0, -1, 2, 0],
+          transition: { repeat: Infinity, duration: 4, ease: "easeInOut" }
+        }
+      case 'Initializing':
+        return {
+          x: isBlinking ? 0 : [0, 1, -1, 0],
+          y: isBlinking ? 0 : [0, -1, 1, 0],
+          transition: { repeat: Infinity, duration: 2, ease: "easeInOut" }
+        }
+      default:
+        return {}
+    }
+  }
+
+  const getBlinkAnimation = () => {
+    return {
+      scaleY: isBlinking ? 0.1 : 1,
+      transition: { duration: 0.1 }
     }
   }
 
@@ -114,7 +162,18 @@ const AgentActionConfirmation: React.FC<AgentActionConfirmationProps> = ({
                   className="w-6 h-6 flex items-center justify-center overflow-hidden relative"
                   style={{ backgroundColor: getPhaseColor(currentPhase) }}
                 >
-                  {/* You can keep or modify the eye animation here */}
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="relative z-10">
+                    <motion.g animate={getEyeAnimation()}>
+                      <motion.rect
+                        x="4" y="5" width="2" height="6" rx="1" fill="white"
+                        animate={getBlinkAnimation()}
+                      />
+                      <motion.rect
+                        x="10" y="5" width="2" height="6" rx="1" fill="white"
+                        animate={getBlinkAnimation()}
+                      />
+                    </motion.g>
+                  </svg>
                 </div>
                 <p className="text-xs font-medium">{currentPhase}</p>
               </motion.div>
@@ -164,7 +223,7 @@ const AgentActionConfirmation: React.FC<AgentActionConfirmationProps> = ({
                   {progress}%
                 </motion.span>
                 <motion.span 
-                  className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}
+                  className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.3 }}
@@ -183,7 +242,7 @@ const AgentActionConfirmation: React.FC<AgentActionConfirmationProps> = ({
             </motion.p>
             {action.thought && (
               <motion.p 
-                className={`mt-1 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} leading-relaxed`}
+                className={`mt-1 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} leading-relaxed`}
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
