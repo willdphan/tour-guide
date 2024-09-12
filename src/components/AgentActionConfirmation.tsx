@@ -21,17 +21,22 @@ interface AgentActionConfirmationProps {
   isWaiting: boolean;
 }
 
-const AgentActionConfirmation: React.FC<AgentActionConfirmationProps> = ({ 
+const AgentActionConfirmationContent: React.FC<AgentActionConfirmationProps & { onClose: () => void }> = ({ 
   action, 
   onConfirm, 
   isAgentRunning, 
-  isWaiting 
+  isWaiting,
+  onClose
 }) => {
   const [progress, setProgress] = useState(0)
-  const [isVisible, setIsVisible] = useState(true)
-  const [isDarkMode, setIsDarkMode] = useState(false)  // Changed to false for light mode default
+  const [isDarkMode, setIsDarkMode] = useState(false)
   const [isBlinking, setIsBlinking] = useState(false)
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null)
+
+  useEffect(() => {
+    console.log('AgentActionConfirmation mounted')
+    return () => console.log('AgentActionConfirmation unmounted')
+  }, [])
 
   useEffect(() => {
     if (isWaiting) {
@@ -124,10 +129,6 @@ const AgentActionConfirmation: React.FC<AgentActionConfirmationProps> = ({
     }
   }
 
-  const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode)
-  }
-
   const currentPhase = getCurrentPhase()
 
   // Reset progress when entering Initializing phase
@@ -142,119 +143,130 @@ const AgentActionConfirmation: React.FC<AgentActionConfirmationProps> = ({
   };
 
   return (
-    <AnimatePresence>
-      {isVisible && (
-        <motion.div
-          className={`fixed right-4 bottom-4 z-50 w-64 shadow-md font-Chakra ${
-            isDarkMode ? 'text-white' : 'bg-white text-gray-800'
-          }`}
-          style={{ backgroundColor: isDarkMode ? '#31313C' : undefined }}
-          initial={{ opacity: 0, y: 20, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 20, scale: 0.95 }}
-          transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
-        >
-          <div className="p-4">
-            <div className="flex justify-between items-center mb-2">
-              <motion.div
-                className="flex items-center space-x-2"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1, duration: 0.3 }}
-              >
-                <div 
-                  className="w-6 h-6 flex items-center justify-center overflow-hidden relative"
-                  style={{ backgroundColor: getPhaseColor(currentPhase) }}
-                >
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="relative z-10">
-                    <motion.g animate={getEyeAnimation()}>
-                      <motion.rect
-                        x="4" y="5" width="2" height="6" rx="1" fill="white"
-                        animate={getBlinkAnimation()}
-                      />
-                      <motion.rect
-                        x="10" y="5" width="2" height="6" rx="1" fill="white"
-                        animate={getBlinkAnimation()}
-                      />
-                    </motion.g>
-                  </svg>
-                </div>
-                <p className="text-xs font-medium">{currentPhase}</p>
-              </motion.div>
-              <div className="flex items-center space-x-2">
-                <motion.button
-                  className={`text-${isDarkMode ? 'gray-400 hover:text-gray-200' : 'gray-600 hover:text-gray-800'} transition-colors duration-200`}
-                  onClick={toggleTheme}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                >
-                  {isDarkMode ? <Sun size={14} /> : <Moon size={14} />}
-                </motion.button>
-                <motion.button 
-                  className={`text-${isDarkMode ? 'gray-400 hover:text-gray-200' : 'gray-600 hover:text-gray-800'} transition-colors duration-200`}
-                  aria-label="Close"
-                  onClick={() => onConfirm(false)}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                >
-                  <X size={14} />
-                </motion.button>
-              </div>
+    <motion.div
+      className={`fixed right-4 bottom-4 z-50 w-64 shadow-md font-Chakra ${
+        isDarkMode ? 'text-white' : 'bg-white text-gray-800'
+      }`}
+      style={{ backgroundColor: isDarkMode ? '#31313C' : undefined }}
+      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: 20, scale: 0.95 }}
+      transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
+    >
+      <div className="p-4">
+        <div className="flex justify-between items-center mb-2">
+          <motion.div
+            className="flex items-center space-x-2"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1, duration: 0.3 }}
+          >
+            <div 
+              className="w-6 h-6 flex items-center justify-center overflow-hidden relative"
+              style={{ backgroundColor: getPhaseColor(currentPhase) }}
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="relative z-10">
+                <motion.g animate={getEyeAnimation()}>
+                  <motion.rect
+                    x="4" y="5" width="2" height="6" rx="1" fill="white"
+                    animate={getBlinkAnimation()}
+                  />
+                  <motion.rect
+                    x="10" y="5" width="2" height="6" rx="1" fill="white"
+                    animate={getBlinkAnimation()}
+                  />
+                </motion.g>
+              </svg>
             </div>
-            <div className="space-y-2">
-              <div className={`h-1 w-full ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} overflow-hidden`}>
-                <motion.div 
-                  className="h-full"
-                  initial={{ width: 0 }}
-                  animate={{ 
-                    width: `${progress}%`,
-                    backgroundColor: getPhaseColor(currentPhase)
-                  }}
-                  transition={{ 
-                    duration: 0.5, 
-                    ease: "easeInOut",
-                    backgroundColor: { duration: 1, ease: "easeInOut" }
-                  }}
-                />
-              </div>
-              <div className="flex justify-between items-center">
-                <motion.span 
-                  className="text-xs font-medium font-Chakra"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.2 }}
-                >
-                  {progress}%
-                </motion.span>
-                <motion.span 
-                  className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.3 }}
-                >
-                  {currentPhase === 'Initializing' ? "Planning next step" : (isWaiting ? "In progress" : "Complete")}
-                </motion.span>
-              </div>
-            </div>
-            <motion.p 
-              className="mt-2 text-xs"
+            <p className="text-xs font-medium">{currentPhase}</p>
+          </motion.div>
+          <div className="flex items-center space-x-2">
+            <motion.button
+              className={`text-${isDarkMode ? 'gray-400 hover:text-gray-200' : 'gray-600 hover:text-gray-800'} transition-colors duration-200`}
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              {isDarkMode ? <Sun size={14} /> : <Moon size={14} />}
+            </motion.button>
+            <motion.button 
+              className={`text-${isDarkMode ? 'gray-400 hover:text-gray-200' : 'gray-600 hover:text-gray-800'} transition-colors duration-200`}
+              aria-label="Close"
+              onClick={onClose}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              <X size={14} />
+            </motion.button>
+          </div>
+        </div>
+        <div className="space-y-2">
+          <div className={`h-1 w-full ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} overflow-hidden`}>
+            <motion.div 
+              className="h-full"
+              initial={{ width: 0 }}
+              animate={{ 
+                width: `${progress}%`,
+                backgroundColor: getPhaseColor(currentPhase)
+              }}
+              transition={{ 
+                duration: 0.5, 
+                ease: "easeInOut",
+                backgroundColor: { duration: 1, ease: "easeInOut" }
+              }}
+            />
+          </div>
+          <div className="flex justify-between items-center">
+            <motion.span 
+              className="text-xs font-medium font-Chakra"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
-              dangerouslySetInnerHTML={{ __html: formatPercentage(action.instruction || "Processing...") }}
-            />
-            {action.thought && (
-              <motion.p 
-                className={`mt-1 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} leading-relaxed`}
-                initial={{ opacity: 0, y: 5 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                dangerouslySetInnerHTML={{ __html: formatPercentage(action.thought) }}
-              />
-            )}
+            >
+              {progress}%
+            </motion.span>
+            <motion.span 
+              className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              {currentPhase === 'Initializing' ? "Planning next step" : (isWaiting ? "In progress" : "Complete")}
+            </motion.span>
           </div>
-        </motion.div>
-      )}
+        </div>
+        <motion.p 
+          className="mt-2 text-xs"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          dangerouslySetInnerHTML={{ __html: formatPercentage(action.instruction || "Processing...") }}
+        />
+        {action.thought && (
+          <motion.p 
+            className={`mt-1 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} leading-relaxed`}
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            dangerouslySetInnerHTML={{ __html: formatPercentage(action.thought) }}
+          />
+        )}
+      </div>
+    </motion.div>
+  )
+}
+
+const AgentActionConfirmation: React.FC<AgentActionConfirmationProps> = (props) => {
+  const [isVisible, setIsVisible] = useState(true)
+
+  const handleClose = () => {
+    console.log('Close button clicked')
+    setIsVisible(false)
+  }
+
+  return (
+    <AnimatePresence>
+      {isVisible && <AgentActionConfirmationContent {...props} onClose={handleClose} />}
     </AnimatePresence>
   )
 }
