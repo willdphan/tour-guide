@@ -544,7 +544,7 @@ graph = graph_builder.compile()
 # RUN AGENT #
 #############
 
-async def run_agent(question: str, page=None):
+async def run_agent(question: str, page=None, current_url=None):
     try:
         if page is None:
             # If page is not provided, create a new browser and page
@@ -552,6 +552,9 @@ async def run_agent(question: str, page=None):
                 browser = await p.chromium.launch(headless=False)
                 context = await browser.new_context(ignore_https_errors=True)
                 page = await context.new_page()
+                
+                # Use the provided current_url or default to localhost
+                start_url = current_url or "http://localhost:3000"
                 
                 # Ignore specific console messages
                 page.on("console", lambda msg: None if "message channel closed before a response was received" in msg.text.lower() else print(f"Console: {msg.text}"))
@@ -561,13 +564,14 @@ async def run_agent(question: str, page=None):
                 page.set_default_timeout(30000)  # 30 seconds
                 
                 try:
-                    async for step in _run_agent_with_page(question, page):
+                    async for step in _run_agent_with_page(question, page, start_url):
                         yield step
                 finally:
                     await browser.close()
         else:
             # If page is provided, use it directly
-            async for step in _run_agent_with_page(question, page):
+            start_url = current_url or page.url
+            async for step in _run_agent_with_page(question, page, start_url):
                 yield step
     except PlaywrightError as e:
         if "message channel closed before a response was received" in str(e).lower():
@@ -605,6 +609,84 @@ async def run_agent(question: str, page=None):
             "text_input": None
         }
 
+async def _run_agent_with_page(question: str, page, start_url):
+    print(f"Navigating to start_url: {start_url}")
+    await page.goto(start_url, timeout=60000)
+    print(f"Navigated to {start_url}")
+    
+    # Analyze the current page
+    current_page_info = await enhanced_content_analysis(page)
+    relevant_info = f"Current page information:\n{json.dumps(current_page_info, indent=2)}"
+
+    # Create the augmented input
+    augmented_input = f"Goal: {question}\n\nRelevant information from current page:\n{relevant_info}"
+
+    event_stream = graph.astream(
+        {
+            "page": page,
+            "input": augmented_input,
+            "scratchpad": [],
+            "current_url": start_url,
+            "action_history": [],
+            "html_content": "",
+            "text_content": "",
+        },
+        {
+            "recursion_limit": 150,
+        },
+    )
+
+    async for event in event_stream:
+        if event.type == "end":
+            break
+        elif event.type == "error":
+            print(f"Error in event stream: {event.error}")
+            break
+        elif event.type == "state":
+            state = event.state
+            action = state["prediction"]["action"]
+            args = state["prediction"]["args"]
+            observation = state["observation"]
+            current_url = state["current_url"]
+            html_content = state["html_content"]
+            text_content = state["text_content"]
+            content_analysis = state["content_analysis"]
+            
+            # Extract element description and text input for the instruction
+            element_description = None
+            text_input = None
+            if action.startswith("Click"):
+                element_id = int(args[0])
+                element = content_analysis["elements"][element_id]
+                element_description = f"{element['type']} with text '{element['text']}'"
+            elif action.startswith("Type"):
+                element_id = int(args[0])
+                element = content_analysis["elements"][element_id]
+                element_description = f"{element['type']} with text '{element['text']}'"
+                text_input = args[1]
+            
+            # Generate a friendly and personable instruction
+            instruction = generate_personable_instruction(action, element_description, text_input)
+            
+            # Extract screen location for hovering
+            screen_location = None
+            if action.startswith("Click"):
+                element_id = int(args[0])
+                element = content_analysis["elements"][element_id]
+                if element.get("bounding_box"):
+                    screen_location = element["bounding_box"]
+            
+            # Yield the step
+            yield {
+                "thought": observation,
+                "action": action,
+                "instruction": instruction,
+                "element_description": element_description,
+                "screen_location": screen_location,
+                "hover_before_action": action.startswith("Click"),
+                "text_input": text_input
+            }
+
 def generate_personable_instruction(action, element_description, text_input):
     llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0.7)
     prompt = f"""
@@ -622,18 +704,16 @@ def generate_personable_instruction(action, element_description, text_input):
     response = llm.predict(prompt)
     return response.strip()
 
-async def _run_agent_with_page(question: str, page):
-    # Hardcode the start_url
-    start_url = "http://localhost:3000"
-    
+async def _run_agent_with_page(question: str, page, start_url):
     print(f"Navigating to start_url: {start_url}")
     await page.goto(start_url, timeout=60000)
     print(f"Navigated to {start_url}")
     
-    # Instead of querying Pinecone, we'll analyze the current page
+    # Analyze the current page
     current_page_info = await enhanced_content_analysis(page)
     relevant_info = f"Current page information:\n{json.dumps(current_page_info, indent=2)}"
 
+    # Create the augmented input
     augmented_input = f"Goal: {question}\n\nRelevant information from current page:\n{relevant_info}"
 
     event_stream = graph.astream(
@@ -641,7 +721,7 @@ async def _run_agent_with_page(question: str, page):
             "page": page,
             "input": augmented_input,
             "scratchpad": [],
-            "current_url": page.url,
+            "current_url": start_url,
             "action_history": [],
             "html_content": "",
             "text_content": "",
@@ -806,7 +886,7 @@ async def _run_agent_with_page(question: str, page):
         if final_answer_sent:
             break  # Exit the loop after sending FINAL_ANSWER
 
-async def main():
+async def main(current_url=None):
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=False)
         page = await browser.new_page()
@@ -817,7 +897,8 @@ async def main():
                     break
 
                 try:
-                    agent_generator = run_agent(question, page)
+                    # Pass the current_url to run_agent
+                    agent_generator = run_agent(question, page, current_url)
                     
                     async for step in agent_generator:
                         print(f"Thought: {step['thought']}")
@@ -835,9 +916,9 @@ async def main():
 
                         if step['action'] == "FINAL_ANSWER":
                             print("Task completed!")
+                            # Update current_url after task completion
+                            current_url = page.url
                             break
-
-                        # Remove the permission request
 
                 except Exception as e:
                     print(f"Error in agent execution: {str(e)}")
@@ -846,6 +927,7 @@ async def main():
 
                 print("Agent has completed this task. You can ask another question or type 'quit' to exit.")
                 print("The browser will remain open for the next question or manual interaction.")
+                print(f"Current URL: {current_url}")
 
         except KeyboardInterrupt:
             print("\nExiting program...")
