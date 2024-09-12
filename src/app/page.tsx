@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 
 import { products } from '@/data/products';
 
-import { CollaborativeApp } from "./CollaborativeApp";
+// import { CollaborativeApp } from "./CollaborativeApp";
 
 export default function Page() {
 
@@ -82,7 +82,8 @@ const products: Product[] = [
           </div>
         </div>
       </main>
-    </div><CollaborativeApp /></>
+    </div>
+    </>
    
   );
 };
