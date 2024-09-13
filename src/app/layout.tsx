@@ -33,9 +33,9 @@ export default function RootLayout({ children }: PropsWithChildren) {
     <html lang='en'>
       <body className={cn('font-sans antialiased', montserrat.variable, montserratAlternates.variable)}>
     
-          <div className='m-auto flex h-full max-w-[1440px] flex-col'>
-            <main className='relative flex-1'>
-              <div className='relative h-full'>
+          <div className=''>
+            <main className=''>
+              <div className=''>
               <Room>
                 {children}
                 {/* <ScreenLocationOverlay /> */}

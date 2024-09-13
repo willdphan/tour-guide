@@ -8,7 +8,7 @@ import AgentActionConfirmation from './AgentActionConfirmation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
 import PopUpApple from './popup-apple'
-import PopUpDefault from './popup-default'
+import PopUpDefault from './popup-minimal'
 import { IBM_Plex_Sans } from 'next/font/google'
 import { debounce } from 'lodash';
 

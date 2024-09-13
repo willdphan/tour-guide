@@ -271,39 +271,36 @@ function RoomContent({ children }: { children: ReactNode }) {
   }, [showConfirmation, agentCursor]);
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100vh", overflow: "hidden" }}>
-      {initialCursorPosition && (
-        <Cursor 
-          x={agentCursor ? agentCursor.x : initialCursorPosition.x} 
-          y={agentCursor ? agentCursor.y : initialCursorPosition.y} 
-          color={agentCursorColor} 
-          isActive={isAgentActive}
-        />
-      )}
-      <div
-        style={{
-          position: 'absolute',
-          top: '10px',
-          left: '10px',
-          zIndex: 1000,
-          display: 'flex',
-          gap: '10px',
-        }}
-      >
-        <SpotLightSearch 
-          onSelect={handleSearch}
-          updateMyPresenceFn={updateMyPresenceFn}
-          simulateAgentAction={simulateAgentAction}
-        />
+    <div className="h-screen overflow-hidden flex flex-col">
+      <div className="flex-grow relative overflow-hidden">
+        {initialCursorPosition && (
+          <Cursor 
+            x={agentCursor ? agentCursor.x : initialCursorPosition.x} 
+            y={agentCursor ? agentCursor.y : initialCursorPosition.y} 
+            color={agentCursorColor} 
+            isActive={isAgentActive}
+          />
+        )}
+        <div
+          className="absolute top-4 left-4 z-50 flex gap-4"
+        >
+          <SpotLightSearch 
+            onSelect={handleSearch}
+            updateMyPresenceFn={updateMyPresenceFn}
+            simulateAgentAction={simulateAgentAction}
+          />
+        </div>
+        {showConfirmation && currentAction && (
+          <AgentActionConfirmation
+            action={currentAction}
+            onConfirm={handleActionConfirmation}
+            isAgentRunning={isAgentRunning}
+          />
+        )}
+        <div className="h-full overflow-auto">
+          {children}
+        </div>
       </div>
-      {showConfirmation && currentAction && (
-        <AgentActionConfirmation
-          action={currentAction}
-          onConfirm={handleActionConfirmation}
-          isAgentRunning={isAgentRunning}
-        />
-      )}
-      {children}
     </div>
   );
 }

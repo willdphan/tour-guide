@@ -1,4 +1,4 @@
-import { Roboto } from 'next/font/google';
+import { Marcellus, Roboto } from 'next/font/google';
 import type { Config } from 'tailwindcss';
 import { fontFamily } from 'tailwindcss/defaultTheme';
 
@@ -21,6 +21,7 @@ const config: Config = {
       Roboto: ['Roboto', ...fontFamily.sans],
       Mono: ['IBM Plex Mono', ...fontFamily.sans],
       Chakra: ['Chakra Petch', ...fontFamily.sans],
+      Marcellus: ['Marcellus'],
     },
     container: {
       center: true,

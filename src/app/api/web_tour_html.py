@@ -687,6 +687,51 @@ async def _run_agent_with_page(question: str, page, start_url):
                 "text_input": text_input
             }
 
+            try:
+                if action == "Click":
+                    await click(state)
+                elif action == "Type":
+                    await type_text(state)
+                elif action == "Scroll":
+                    await scroll(state)
+                elif action == "Wait":
+                    await asyncio.sleep(0) # 0 wait time
+                elif action == "GoBack":
+                    await page.go_back()
+                elif action == "Home":
+                    await page.goto("http://localhost:3000/")
+                elif action.startswith("ANSWER"):
+                    break
+            except PlaywrightError as e:
+                if "message channel closed before a response was received" in str(e).lower():
+                    print(f"Ignoring known Playwright error during action: {e}")
+                    continue
+                else:
+                    print(f"Playwright error during action: {e}")
+                    yield {
+                        "thought": "Error occurred",
+                        "action": "ERROR",
+                        "instruction": f"An error occurred during the action: {str(e)}",
+                        "element_description": None,
+                        "screen_location": None,
+                        "hover_before_action": False,
+                        "text_input": None
+                    }
+            except Exception as e:
+                print(f"Unexpected error during action: {e}")
+                yield {
+                    "thought": "Error occurred",
+                    "action": "ERROR",
+                    "instruction": f"An unexpected error occurred during the action: {str(e)}",
+                    "element_description": None,
+                    "screen_location": None,
+                    "hover_before_action": False,
+                    "text_input": None
+                }
+
+            # Add a delay between actions
+            await asyncio.sleep(0.5)  # 0.5-second delay between actions
+
 def generate_personable_instruction(action, element_description, text_input):
     llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0.7)
     prompt = f"""
@@ -837,7 +882,6 @@ async def _run_agent_with_page(question: str, page, start_url):
         # Yield the step information
         yield step_info
 
-        # Execute the action without waiting for permission
         try:
             if action == "Click":
                 await click(state)
