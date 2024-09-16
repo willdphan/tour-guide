@@ -163,8 +163,8 @@ function RoomContent({ children }: { children: ReactNode }) {
               element.click();
               console.log('Clicked element:', element);
               // Visual feedback
-              element.style.border = '2px solid blue';
-              setTimeout(() => element.style.border = '', 1000);
+              element.style.border = '2px solid #365E59';
+              setTimeout(() => element.style.border = '', 2000);
             }
           } else if (action.screen_location) {
             moveMouseTo(action.screen_location.x, action.screen_location.y);
