@@ -99,12 +99,16 @@ class AgentResponse(BaseModel):
 async def click(state: AgentState):
     page = state["page"]
     click_args = state["prediction"]["args"]
+
     if click_args is None or len(click_args) != 1:
         return f"Failed to click element with ID {click_args}"
+    
     element_id = int(click_args[0])
     elements = state["content_analysis"]["elements"]
+
     if element_id < 0 or element_id >= len(elements):
         return f"Invalid element ID: {element_id}"
+    
     element = elements[element_id]
     
     selector = None
@@ -137,6 +141,7 @@ async def click(state: AgentState):
         await page.click(selector, timeout=5000)
         
         return f"Clicked element with ID {element_id}"
+    
     except Exception as e:
         print(f"Failed to click element with ID {element_id}: {str(e)}")
         print(f"Element details: {json.dumps(element, indent=2)}")
@@ -158,23 +163,30 @@ async def click(state: AgentState):
 async def type_text(state: AgentState):
     page = state["page"]
     type_args = state["prediction"]["args"]
+
     if type_args is None or len(type_args) != 2:
         return f"Failed to type in element from bounding box labeled as number {type_args}"
+    
     bbox_id = int(type_args[0])
     bbox = state["bboxes"][bbox_id]
     x, y = bbox["x"], bbox["y"]
     text_content = type_args[1]
+
     await page.mouse.click(x, y)
     select_all = "Meta+A" if platform.system() == "Darwin" else "Control+A"
+
     await page.keyboard.press(select_all)
     await page.keyboard.press("Backspace")
+
     await page.keyboard.type(text_content)
     await page.keyboard.press("Enter")
+
     return f"Typed {text_content} and submitted"
 
 async def scroll(state: AgentState):
     page = state["page"]
     scroll_args = state["prediction"]["args"]
+
     if scroll_args is None or len(scroll_args) != 2:
         return "Failed to scroll due to incorrect arguments. Please specify target and direction."
 
@@ -243,10 +255,29 @@ async def to_home(state: AgentState):
 async def enhanced_content_analysis(page):
     html_content = await page.content()
     soup = BeautifulSoup(html_content, 'html.parser')
-    
+
+    return {
+        'elements': extract_elements(soup),
+        'headings': extract_headings(soup),
+        'links': extract_links(soup),
+        'images': extract_images(soup),
+        'forms': extract_forms(soup),
+        'buttons': extract_buttons(soup),
+        'structured_data': extract_structured_data(soup),
+        'meta_tags': extract_meta_tags(soup),
+        'main_content': extract_main_content(soup),
+        'keywords': extract_keywords(soup),
+        'text_content': extract_text_content(soup)
+    }
+
+######################
+# ELEMENT EXTRACTION #
+######################
+
+def extract_elements(soup):
     elements = []
-    for idx, element in enumerate(soup.find_all(['a', 'button', 'input', 'div', 'span'])):
-        element_info = {
+    for idx, element in enumerate(soup.find_all(['a', 'button', 'input', 'div', 'span', 'nav'])):
+        elements.append({
             'id': idx,
             'type': element.name,
             'text': element.text.strip(),
@@ -254,81 +285,66 @@ async def enhanced_content_analysis(page):
             'class': element.get('class'),
             'html_id': element.get('id'),
             'name': element.get('name')
-        }
-        elements.append(element_info)
-    
-    # Extract other information as before
-    headings = [{'level': h.name, 'text': h.text.strip()} for h in soup.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])]
-    links = [{'text': a.text.strip(), 'href': a.get('href'), 'title': a.get('title')} for a in soup.find_all('a', href=True)]
-    images = [{'src': img.get('src'), 'alt': img.get('alt')} for img in soup.find_all('img')]
-    
-    # Extract form information
+        })
+    return elements
+
+def extract_buttons(soup):
+    return [{'text': btn.text.strip(), 'type': btn.get('type')} for btn in soup.find_all('button')]
+
+def extract_headings(soup):
+    return [{'level': h.name, 'text': h.text.strip()} for h in soup.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])]
+
+def extract_links(soup):
+    return [{'text': a.text.strip(), 'href': a.get('href'), 'title': a.get('title')} for a in soup.find_all('a', href=True)]
+
+def extract_images(soup):
+    return [{'src': img.get('src'), 'alt': img.get('alt')} for img in soup.find_all('img')]
+
+def extract_forms(soup):
     forms = []
     for form in soup.find_all('form'):
-        form_data = {
+        forms.append({
             'action': form.get('action'),
             'method': form.get('method'),
-            'inputs': []
-        }
-        for input_tag in form.find_all('input'):
-            form_data['inputs'].append({
-                'type': input_tag.get('type'),
-                'name': input_tag.get('name'),
-                'placeholder': input_tag.get('placeholder')
-            })
-        forms.append(form_data)
-    
-    # Extract buttons
-    buttons = [{'text': btn.text.strip(), 'type': btn.get('type')} for btn in soup.find_all('button')]
-    
-    # Extract div and span content
-    div_content = [{'class': div.get('class'), 'id': div.get('id'), 'text': div.text.strip()} for div in soup.find_all('div') if div.text.strip()]
-    span_content = [{'class': span.get('class'), 'id': span.get('id'), 'text': span.text.strip()} for span in soup.find_all('span') if span.text.strip()]
-    
-    # Extract structured data
+            'inputs': [{'type': input_tag.get('type'), 'name': input_tag.get('name'), 'placeholder': input_tag.get('placeholder')} 
+                       for input_tag in form.find_all('input')]
+        })
+    return forms
+
+def extract_structured_data(soup):
     structured_data = {}
     for script in soup.find_all('script', {'type': 'application/ld+json'}):
         try:
             data = json.loads(script.string)
             if isinstance(data, list):
-                for item in data:
-                    if '@type' in item:
-                        structured_data[item['@type']] = item
+                structured_data.update({item['@type']: item for item in data if '@type' in item})
             elif '@type' in data:
                 structured_data[data['@type']] = data
         except json.JSONDecodeError:
             pass
-    
-    # Extract meta tags
-    meta_tags = {meta.get('name', meta.get('property', meta.get('http-equiv', ''))) : meta.get('content', '') for meta in soup.find_all('meta')}
-    
-    # Extract main content
-    main_content = soup.find('main').text.strip() if soup.find('main') else ''
-    
-    # Extract navigation items
-    nav_items = [a.text.strip() for a in soup.find_all('nav') if a.text.strip()]
-    
-    # Extract keywords
-    words = soup.get_text(separator=' ', strip=True).lower().split()
+    return structured_data
+
+def extract_meta_tags(soup):
+    return {meta.get('name', meta.get('property', meta.get('http-equiv', ''))) : meta.get('content', '') 
+            for meta in soup.find_all('meta')}
+
+def extract_main_content(soup):
+    main = soup.find('main')
+    return main.text.strip() if main else ''
+
+def extract_text_content(soup):
+    return soup.get_text(separator=' ', strip=True)
+
+def extract_keywords(soup):
+    text_content = extract_text_content(soup)
+    words = text_content.lower().split()
     word_freq = Counter(words)
-    keywords = [word for word, freq in word_freq.most_common(10) if len(word) > 3]
-    
-    return {
-        'elements': elements,
-        'headings': headings,
-        'links': links,
-        'images': images,
-        'forms': forms,
-        'buttons': buttons,
-        'div_content': div_content,
-        'span_content': span_content,
-        'structured_data': structured_data,
-        'meta_tags': meta_tags,
-        'main_content': main_content,
-        'nav_items': nav_items,
-        'keywords': keywords,
-        'text_content': soup.get_text(separator=' ', strip=True)
-    }
+    return [word for word, freq in word_freq.most_common(10) if len(word) > 3]
+
+
+#################
+# ASYNC WRAPPER #
+#################
 
 # Define agent functions
 async def annotate(state):
@@ -338,6 +354,23 @@ async def annotate(state):
     content_analysis = await enhanced_content_analysis(state["page"])
     return {**state, "current_url": current_url, "html_content": html_content, "text_content": text_content, "content_analysis": content_analysis}
 
+
+"""
+Takes the raw data from the extraction functions and formats it to make more readable.
+Page Elements: Lists the first 20 anchor, button, or input elements.
+Buttons: Lists the first 10 button elements.
+Inputs: Lists the first 10 input elements.
+Headings: Lists the first 5 headings.
+Links: Lists the first 5 links with their text and href.
+Images: Lists the first 5 images with their alt text and src.
+Forms: Lists the first 3 forms with their action and method.
+Div Content: Lists the first 5 div elements' content (truncated to 30 characters).
+Span Content: Lists the first 5 span elements' content (truncated to 30 characters).
+Meta Tags: Lists the first 5 meta tags.
+Navigation Items: Lists the first 5 navigation items.
+Keywords: Lists the first 10 keywords.
+Main Content Summary: Shows the first 200 characters of the main content.
+"""
 def format_descriptions(state):
     content_analysis = state.get('content_analysis', {})
     formatted_analysis = f"""
@@ -379,37 +412,73 @@ def format_descriptions(state):
     text_summary = state['text_content'][:500] + "..." if len(state['text_content']) > 500 else state['text_content']
     
     return {
-        **state, 
+        **state, # unpacks the state
         "action_history": formatted_history, 
         "page_info": page_info, 
         "text_summary": text_summary,
         "content_analysis": formatted_analysis
     }
 
+"""
+This function is designed to extract and structure the action and its arguments from the output of a language model (LLM). Here's what it does:
+
+1. It looks for the last line in the input text that starts with "Action: ".
+2. If found, it extracts the action and any associated arguments from this line.
+3. The action is the first word after "Action: ".
+4. Any additional words are considered arguments. Multiple arguments are separated by semicolons.
+5. It cleans up the extracted data by removing extra whitespace and brackets.
+6. If no action is found, it returns a "retry" action with an error message.
+7. The function returns a dictionary with two keys:
+    "action": The extracted action (a string)
+    "args": The extracted arguments (a list of strings, or None if no arguments)
+"""
+
 def parse(text: str) -> dict:
+    # Define the prefix that indicates the start of an action
     action_prefix = "Action: "
+    
+    # Split the input text into lines
     lines = text.strip().split("\n")
+    
+    # Find the last line that starts with "Action: "
     action_line = next((line for line in reversed(lines) if line.startswith(action_prefix)), None)
     
+    # If no action line is found, return a retry action
     if not action_line:
         return {"action": "retry", "args": f"Could not parse LLM Output: {text}"}
     
+    # Remove the "Action: " prefix from the action line
     action_str = action_line[len(action_prefix):]
+    
+    # Split the action string into action and input (if any)
     split_output = action_str.split(" ", 1)
     if len(split_output) == 1:
         action, action_input = split_output[0], None
     else:
         action, action_input = split_output
+    
+    # Strip any whitespace from the action
     action = action.strip()
+    
+    # If there's action input, process it
     if action_input is not None:
         action_input = [inp.strip().strip("[]") for inp in action_input.strip().split(";")]
+    
+    # Return the parsed action and arguments
     return {"action": action, "args": action_input}
 
+"""
+The update_scratchpad function manages an agent's recent actions and observations during web navigation. It appends the latest observation to a text log and adds the current action to a history list. 
+
+The function handles step numbering, limits the history to the last 10 entries, and updates the agent's state. This process maintains a concise record of the agent's recent activities, providing essential context for future decision-making.
+"""
 def update_scratchpad(state: AgentState):
+    # Get current scratchpad and action history
     old = state.get("scratchpad")
     action_history = state.get("action_history", [])
     
     if old and old[0].content:
+        # Extract existing content and determine next step number
         txt = old[0].content
         last_line = txt.rsplit("\n", 1)[-1]
         match = re.match(r"\d+", last_line)
@@ -418,11 +487,14 @@ def update_scratchpad(state: AgentState):
         else:
             step = len(action_history) + 1
     else:
+        # Initialize scratchpad if it's empty
         txt = "Previous action observations:\n"
         step = 1
     
+    # Add new observation to scratchpad
     txt += f"\n{step}. {state['observation']}"
     
+    # Record the current action in history
     action_history.append({
         "step": step,
         "action": state['prediction']['action'],
@@ -430,9 +502,15 @@ def update_scratchpad(state: AgentState):
         "url": state['current_url']
     })
     
+    # Keep only the last 10 actions in history
     action_history = action_history[-10:]
     
+    # Return updated state with new scratchpad and action history
     return {**state, "scratchpad": [SystemMessage(content=txt)], "action_history": action_history}
+
+##########
+# PROMPT #
+##########
 
 # Set up the agent
 custom_prompt = ChatPromptTemplate.from_messages([
@@ -519,7 +597,8 @@ tools = {
 for node_name, tool in tools.items():
     graph_builder.add_node(
         node_name,
-        # Combine tool execution with formatting its output
+        # combine tool execution with formatting its output
+        # bridge between regular Python functions and LangGraph's runnable ecosystem
         RunnableLambda(tool) | (lambda observation: {"observation": observation}),
     )
     # After each tool execution, update the scratchpad
@@ -528,10 +607,13 @@ for node_name, tool in tools.items():
 # Function to select the next action based on the agent's prediction
 def select_tool(state: AgentState):
     action = state["prediction"]["action"]
+
     if action.startswith("ANSWER"):
         return END  # End the process if the action is to answer
+    
     if action == "retry":
         return "agent"  # Go back to the agent if a retry is needed
+    
     return action  # Otherwise, return the action name (corresponding to a tool)
 
 # Add conditional edges from the agent to other nodes based on select_tool function
@@ -544,8 +626,9 @@ graph = graph_builder.compile()
 # RUN AGENT #
 #############
 
+# handles setup of page and errors
+# works with existing page or create new one if needed
 async def run_agent(question: str, page=None, current_url=None):
-    try:
         if page is None:
             # If page is not provided, create a new browser and page
             async with async_playwright() as p:
@@ -559,9 +642,10 @@ async def run_agent(question: str, page=None, current_url=None):
                 # Ignore specific console messages
                 page.on("console", lambda msg: None if "message channel closed before a response was received" in msg.text.lower() else print(f"Console: {msg.text}"))
                 
-                # Set longer timeouts
-                page.set_default_navigation_timeout(60000)  # 60 seconds
-                page.set_default_timeout(30000)  # 30 seconds
+                # max timeout for each full page loads
+                page.set_default_navigation_timeout(30000)
+                # max timeout for agent action
+                page.set_default_timeout(15000)
                 
                 try:
                     async for step in _run_agent_with_page(question, page, start_url):
@@ -573,164 +657,6 @@ async def run_agent(question: str, page=None, current_url=None):
             start_url = current_url or page.url
             async for step in _run_agent_with_page(question, page, start_url):
                 yield step
-    except PlaywrightError as e:
-        if "message channel closed before a response was received" in str(e).lower():
-            print(f"Ignoring known Playwright error: {e}")
-            # You might want to yield a special step here to inform the frontend
-            yield {
-                "thought": "Error occurred",
-                "action": "ERROR",
-                "instruction": "An error occurred, but we're continuing the process.",
-                "element_description": None,
-                "screen_location": None,
-                "hover_before_action": False,
-                "text_input": None
-            }
-        else:
-            # For other Playwright errors, we'll still yield an error step
-            yield {
-                "thought": "Error occurred",
-                "action": "ERROR",
-                "instruction": f"An error occurred: {str(e)}",
-                "element_description": None,
-                "screen_location": None,
-                "hover_before_action": False,
-                "text_input": None
-            }
-    except Exception as e:
-        # For any other exceptions, yield an error step
-        yield {
-            "thought": "Error occurred",
-            "action": "ERROR",
-            "instruction": f"An unexpected error occurred: {str(e)}",
-            "element_description": None,
-            "screen_location": None,
-            "hover_before_action": False,
-            "text_input": None
-        }
-
-async def _run_agent_with_page(question: str, page, start_url):
-    print(f"Navigating to start_url: {start_url}")
-    await page.goto(start_url, timeout=60000)
-    print(f"Navigated to {start_url}")
-    
-    # Analyze the current page
-    current_page_info = await enhanced_content_analysis(page)
-    relevant_info = f"Current page information:\n{json.dumps(current_page_info, indent=2)}"
-
-    # Create the augmented input
-    augmented_input = f"Goal: {question}\n\nRelevant information from current page:\n{relevant_info}"
-
-    event_stream = graph.astream(
-        {
-            "page": page,
-            "input": augmented_input,
-            "scratchpad": [],
-            "current_url": start_url,
-            "action_history": [],
-            "html_content": "",
-            "text_content": "",
-        },
-        {
-            "recursion_limit": 150,
-        },
-    )
-
-    async for event in event_stream:
-        if event.type == "end":
-            break
-        elif event.type == "error":
-            print(f"Error in event stream: {event.error}")
-            break
-        elif event.type == "state":
-            state = event.state
-            action = state["prediction"]["action"]
-            args = state["prediction"]["args"]
-            observation = state["observation"]
-            current_url = state["current_url"]
-            html_content = state["html_content"]
-            text_content = state["text_content"]
-            content_analysis = state["content_analysis"]
-            
-            # Extract element description and text input for the instruction
-            element_description = None
-            text_input = None
-            if action.startswith("Click"):
-                element_id = int(args[0])
-                element = content_analysis["elements"][element_id]
-                element_description = f"{element['type']} with text '{element['text']}'"
-            elif action.startswith("Type"):
-                element_id = int(args[0])
-                element = content_analysis["elements"][element_id]
-                element_description = f"{element['type']} with text '{element['text']}'"
-                text_input = args[1]
-            
-            # Generate a friendly and personable instruction
-            instruction = generate_personable_instruction(action, element_description, text_input)
-            
-            # Extract screen location for hovering
-            screen_location = None
-            if action.startswith("Click"):
-                element_id = int(args[0])
-                element = content_analysis["elements"][element_id]
-                if element.get("bounding_box"):
-                    screen_location = element["bounding_box"]
-            
-            # Yield the step
-            yield {
-                "thought": observation,
-                "action": action,
-                "instruction": instruction,
-                "element_description": element_description,
-                "screen_location": screen_location,
-                "hover_before_action": action.startswith("Click"),
-                "text_input": text_input
-            }
-
-            try:
-                if action == "Click":
-                    await click(state)
-                elif action == "Type":
-                    await type_text(state)
-                elif action == "Scroll":
-                    await scroll(state)
-                elif action == "Wait":
-                    await asyncio.sleep(0) # 0 wait time
-                elif action == "GoBack":
-                    await page.go_back()
-                elif action == "Home":
-                    await page.goto("http://localhost:3000/")
-                elif action.startswith("ANSWER"):
-                    break
-            except PlaywrightError as e:
-                if "message channel closed before a response was received" in str(e).lower():
-                    print(f"Ignoring known Playwright error during action: {e}")
-                    continue
-                else:
-                    print(f"Playwright error during action: {e}")
-                    yield {
-                        "thought": "Error occurred",
-                        "action": "ERROR",
-                        "instruction": f"An error occurred during the action: {str(e)}",
-                        "element_description": None,
-                        "screen_location": None,
-                        "hover_before_action": False,
-                        "text_input": None
-                    }
-            except Exception as e:
-                print(f"Unexpected error during action: {e}")
-                yield {
-                    "thought": "Error occurred",
-                    "action": "ERROR",
-                    "instruction": f"An unexpected error occurred during the action: {str(e)}",
-                    "element_description": None,
-                    "screen_location": None,
-                    "hover_before_action": False,
-                    "text_input": None
-                }
-
-            # Add a delay between actions
-            await asyncio.sleep(0.5)  # 0.5-second delay between actions
 
 def generate_personable_instruction(action, element_description, text_input):
     llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0.7)
@@ -824,6 +750,11 @@ async def _run_agent_with_page(question: str, page, start_url):
                         element_description = element['text']
                         
                         # Get the bounding box of the element
+                        """
+                        It returns an object with the element's position (x, y) and size (width, height) relative to the entire document - not just the visible viewport!
+
+                        By knowing the exact position of an element, the code can determine if scrolling is necessary to bring the element into view.
+                        """
                         bbox = await page.evaluate(f"""() => {{
                             const element = document.querySelector('[id="{element['html_id']}"]') || 
                                             document.querySelector('[name="{element['name']}"]') ||
@@ -853,6 +784,7 @@ async def _run_agent_with_page(question: str, page, start_url):
                         elif action == "Scroll":
                             direction = "up" if action_input[1].lower() == "up" else "down"
                             instruction = generate_personable_instruction("Scroll", element_description, direction)
+
             elif action == "Wait":
                 instruction = generate_personable_instruction("Wait", None, None)
             elif action == "GoBack":
@@ -863,7 +795,6 @@ async def _run_agent_with_page(question: str, page, start_url):
                 final_answer_sent = True  # Set the flag when sending FINAL_ANSWER
                 instruction =  generate_personable_instruction(action_input[0], None, None) if action_input else generate_personable_instruction("Answer", None, None)
                 
-        
             else:
                 instruction = generate_personable_instruction(action, None, str(action_input))
         except Exception as e:
@@ -897,6 +828,7 @@ async def _run_agent_with_page(question: str, page, start_url):
                 await page.goto("http://localhost:3000/")
             elif action.startswith("ANSWER"):
                 break
+
         except PlaywrightError as e:
             if "message channel closed before a response was received" in str(e).lower():
                 print(f"Ignoring known Playwright error during action: {e}")

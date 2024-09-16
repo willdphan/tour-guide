@@ -12,8 +12,6 @@ import PopUpDefault from './popup-minimal'
 import { IBM_Plex_Sans } from 'next/font/google'
 import { debounce } from 'lodash';
 
-// ... existing utility functions ...
-
 export const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 interface SpotLightSearchProps {
@@ -33,6 +31,7 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
   const [finalAction, setFinalAction] = useState<any>(null);
   const [isProcessingAction, setIsProcessingAction] = useState(false);
   const lastActionRef = useRef<string | null>(null);
+  const [phase, setPhase] = useState<'Initializing' | 'Analyzing' | 'Processing' | 'Finalizing'>('Initializing')
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -45,6 +44,26 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
     document.addEventListener('keydown', down)
     return () => document.removeEventListener('keydown', down)
   }, [])
+
+  // const getPhaseColor = (currentPhase: string) => {
+  //   switch (currentPhase) {
+  //     case 'Analyzing': return '#3B82F6'
+  //     case 'Processing': return '#2563EB'
+  //     case 'Finalizing': return '#1D4ED8'
+  //     case 'Initializing': return '#60A5FA'
+  //     default: return '#3B82F6'
+  //   }
+  // }
+
+  const getPhaseColor = (phase: string) => {
+    switch (phase) {
+      case 'Initializing': return '#528A82' // Lightest green (unchanged)
+      case 'Analyzing': return '#44756E'    // Slightly darker green
+      case 'Processing': return '#365E59'   // Darker green
+      case 'Finalizing': return '#26433F'   // Darkest green (as requested)
+      default: return '#1D3330'             // Default color (middle shade)
+    }
+  }
 
   const handleNewAction = useCallback(
     debounce(async (action: any) => {
@@ -66,9 +85,19 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
         
         if (action.action === 'Wait') {
           setIsWaiting(true);
+          setPhase('Initializing');
         } else {
           setIsWaiting(false);
           setCurrentAction(action);
+          
+          // Set phase based on action
+          if (action.action === 'FINAL_ANSWER') {
+            setPhase('Finalizing');
+          } else if (action.action.startsWith('HUMAN_ACTION')) {
+            setPhase('Processing');
+          } else {
+            setPhase('Analyzing');
+          }
           
           // Simulate the action
           await simulateAgentAction(action);
@@ -206,12 +235,12 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
         throw new Error('Function not implemented.')
       } } isAgentRunning={false} isWaiting={false}/> */}
 
-
       {isWaiting && (
         <AgentActionConfirmation
           action={{ action: 'Wait', instruction: '' }}
           onConfirm={() => {}}
           isWaiting={true}
+          backgroundColor={getPhaseColor('Initializing')}
         />
       )}
       {currentAction && !finalAction && (
@@ -219,6 +248,7 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
           action={currentAction}
           onConfirm={() => {}}
           isWaiting={false}
+          backgroundColor={getPhaseColor(phase)}
         />
       )}
       {finalAction && (
@@ -226,6 +256,7 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
           action={finalAction}
           onConfirm={() => {}}
           isWaiting={false}
+          backgroundColor={getPhaseColor('Finalizing')}
         />
       )}
       {isAgentProcessing && !currentAction && !isWaiting && !finalAction && (
@@ -233,6 +264,7 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
           action={{ action: 'One sec, planning my next step...', instruction: 'One sec, planning my next step...' }}
           onConfirm={() => {}}
           isWaiting={false}
+          backgroundColor={getPhaseColor('Analyzing')}
         />
       )}
     </>

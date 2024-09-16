@@ -83,13 +83,23 @@ const AgentActionConfirmationContent: React.FC<AgentActionConfirmationProps & { 
 
   const getPhaseColor = (phase: string) => {
     switch (phase) {
-      case 'Analyzing': return '#3B82F6'
-      case 'Processing': return '#2563EB'
-      case 'Finalizing': return '#1D4ED8'
-      case 'Initializing': return '#60A5FA'
-      default: return '#3B82F6'
+      case 'Initializing': return '#528A82' // Lightest green (unchanged)
+      case 'Analyzing': return '#44756E'    // Slightly darker green
+      case 'Processing': return '#365E59'   // Darker green
+      case 'Finalizing': return '#26433F'   // Darkest green (as requested)
+      default: return '#1D3330'             // Default color (middle shade)
     }
   }
+
+  // const getPhaseColor = (phase: string) => {
+  //   switch (phase) {
+  //     case 'Analyzing': return '#3B82F6'
+  //     case 'Processing': return '#2563EB'
+  //     case 'Finalizing': return '#1D4ED8'
+  //     case 'Initializing': return '#60A5FA'
+  //     default: return '#3B82F6'
+  //   }
+  // }
 
   const getEyeAnimation = () => {
     switch (currentPhase) {
