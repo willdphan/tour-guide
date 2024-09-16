@@ -13,7 +13,6 @@ import {
 import AgentActionConfirmation from './AgentActionConfirmation';
 
 function Cursor({ x, y, color, isActive }: { x: number; y: number; color: string; isActive: boolean }) {
-  // console.log('Rendering cursor with color:', color);
   return (
     <div
       style={{
@@ -36,7 +35,7 @@ function Cursor({ x, y, color, isActive }: { x: number; y: number; color: string
       >
         <path
           d="M5.65376 12.3673H5.46026L5.31717 12.4976L0.500002 16.8829L0.500002 1.19841L11.7841 12.3673H5.65376Z"
-          fill={color}
+          fill="#365E59"
         />
         <path
           d="M5.65376 12.3673H5.46026L5.31717 12.4976L0.500002 16.8829L0.500002 1.19841L11.7841 12.3673H5.65376Z"
@@ -47,15 +46,15 @@ function Cursor({ x, y, color, isActive }: { x: number; y: number; color: string
         style={{
           position: "absolute",
           top: "100%",
-          left: "100%", // Changed from 100% to 50%
-          backgroundColor: color,
+          left: "100%",
+          backgroundColor: "#365E59",
           color: "white",
           padding: "2px 4px",
           borderRadius: "4px",
           fontSize: "12px",
           whiteSpace: "nowrap",
-          marginTop: "-12px", // Adjust this to fine-tune vertical position
-          marginLeft: "-5px", // Reduced from 5px to 2px
+          marginTop: "-12px",
+          marginLeft: "-5px",
           transform: "translateX(-10%)", 
         }}
       >
