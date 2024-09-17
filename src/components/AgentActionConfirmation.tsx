@@ -1,24 +1,17 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Sun, Moon } from 'lucide-react'
-import { IBM_Plex_Sans } from 'next/font/google'
-
-const ibmPlexSans = IBM_Plex_Sans({
-  weight: ['300', '400', '500', '600', '700'],
-  subsets: ['latin'],
-  display: 'swap',
-})
 
 interface AgentActionConfirmationProps {
   action: {
     thought?: string;
     action: string;
     instruction: string;
-    // ... other action properties
   };
   onConfirm: (confirmed: boolean) => void;
   isAgentRunning: boolean;
   isWaiting: boolean;
+  initialResponse: string;
 }
 
 const AgentActionConfirmationContent: React.FC<AgentActionConfirmationProps & { onClose: () => void }> = ({ 
@@ -26,7 +19,8 @@ const AgentActionConfirmationContent: React.FC<AgentActionConfirmationProps & { 
   onConfirm, 
   isAgentRunning, 
   isWaiting,
-  onClose
+  onClose,
+  initialResponse
 }) => {
   const [progress, setProgress] = useState(0)
   const [isDarkMode, setIsDarkMode] = useState(false)
@@ -91,6 +85,7 @@ const AgentActionConfirmationContent: React.FC<AgentActionConfirmationProps & { 
     }
   }
 
+  // blue
   // const getPhaseColor = (phase: string) => {
   //   switch (phase) {
   //     case 'Analyzing': return '#3B82F6'

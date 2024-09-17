@@ -635,34 +635,59 @@ graph = graph_builder.compile()
 # handles setup of page and errors
 # works with existing page or create new one if needed
 async def run_agent(question: str, page=None, current_url=None):
-        if page is None:
-            # If page is not provided, create a new browser and page
-            async with async_playwright() as p:
-                browser = await p.chromium.launch(headless=False)
-                context = await browser.new_context(ignore_https_errors=True)
-                page = await context.new_page()
-                
-                # Use the provided current_url or default to localhost
-                start_url = current_url or "http://localhost:3000"
-                
-                # Ignore specific console messages
-                page.on("console", lambda msg: None if "message channel closed before a response was received" in msg.text.lower() else print(f"Console: {msg.text}"))
-                
-                # max timeout for each full page loads
-                page.set_default_navigation_timeout(30000)
-                # max timeout for agent action
-                page.set_default_timeout(15000)
-                
-                try:
-                    async for step in _run_agent_with_page(question, page, start_url):
-                        yield step
-                finally:
-                    await browser.close()
-        else:
-            # If page is provided, use it directly
-            start_url = current_url or page.url
-            async for step in _run_agent_with_page(question, page, start_url):
-                yield step
+    # Add this function to generate an initial response
+    def generate_initial_response(question: str):
+        llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0.7)
+        prompt = f"""
+        Confirm you got the query with "Okay!" or "Gotcha" or something similar. Restate the following user query as a friendly, concise instruction for a web navigation assistant while also guiding the user.
+
+        Keep it brief and engaging, as if a helpful friend is acknowledging the task.
+        No need for extra information or small talk. Avoid using emojis. Add some emotion. This is the first response, so DO NOT conclude the chat here.
+
+        User Query: {question}
+        """
+        response = llm.predict(prompt)
+        return response.strip()
+
+    # Generate and yield the initial response
+    initial_response = generate_initial_response(question)
+    yield {
+        "action": "INITIAL_RESPONSE",
+        "instruction": initial_response,
+        "element_description": None,
+        "screen_location": None,
+        "hover_before_action": False,
+        "text_input": None
+    }
+
+    if page is None:
+        # If page is not provided, create a new browser and page
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=False)
+            context = await browser.new_context(ignore_https_errors=True)
+            page = await context.new_page()
+            
+            # Use the provided current_url or default to localhost
+            start_url = current_url or "http://localhost:3000"
+            
+            # Ignore specific console messages
+            page.on("console", lambda msg: None if "message channel closed before a response was received" in msg.text.lower() else print(f"Console: {msg.text}"))
+            
+            # max timeout for each full page loads
+            page.set_default_navigation_timeout(30000)
+            # max timeout for agent action
+            page.set_default_timeout(15000)
+            
+            try:
+                async for step in _run_agent_with_page(question, page, start_url):
+                    yield step
+            finally:
+                await browser.close()
+    else:
+        # If page is provided, use it directly
+        start_url = current_url or page.url
+        async for step in _run_agent_with_page(question, page, start_url):
+            yield step
 
 def generate_personable_instruction(action, element_description, text_input):
     llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0.7)

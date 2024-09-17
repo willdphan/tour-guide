@@ -31,7 +31,9 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
   const [finalAction, setFinalAction] = useState<any>(null);
   const [isProcessingAction, setIsProcessingAction] = useState(false);
   const lastActionRef = useRef<string | null>(null);
-  const [phase, setPhase] = useState<'Initializing' | 'Analyzing' | 'Processing' | 'Finalizing'>('Initializing')
+  const [phase, setPhase] = useState<'Initializing' | 'Analyzing' | 'Processing' | 'Finalizing'>
+  ('Initializing')
+  const [initialResponse, setInitialResponse] = useState('')
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -154,7 +156,7 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
 
         const reader = response.body?.getReader()
         const decoder = new TextDecoder()
-
+        let isFirstResponse = true;
         while (true) {
           const { value, done } = await reader!.read()
           if (done) break
@@ -176,7 +178,16 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
                 console.log('Received data:', parsedData)
                 
                 await handleNewAction(parsedData)
-
+                
+                if(isFirstResponse) {
+                if(parsedData.action === 'INITIAL_RESPONSE') {
+                  setInitialResponse(parsedData.instruction)
+                } else {
+                  setInitialResponse(parsedData.thought || parsedData.instruction || '')
+                }
+                isFirstResponse = false
+                continue
+              }
                 if (parsedData.action === 'FINAL_ANSWER') {
                   setIsWaiting(false)
                   setIsAgentProcessing(false)
