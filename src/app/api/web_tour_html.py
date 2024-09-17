@@ -23,6 +23,7 @@ import re
 from typing import List, Optional, TypedDict, Dict
 from dotenv import load_dotenv
 from urllib.parse import urlparse
+from langgraph.graph import END
 
 from langchain_core.messages import BaseMessage, SystemMessage
 from langchain_core.output_parsers import StrOutputParser
@@ -38,6 +39,8 @@ from bs4 import BeautifulSoup
 from collections import Counter
 
 from pydantic import BaseModel
+from PIL import Image
+import io
 
 # Load environment variables
 load_dotenv()
@@ -75,6 +78,7 @@ class AgentState(TypedDict):
     html_content: str
     text_content: str
     content_analysis: dict
+    screenshot: Optional[str]  # Base64 encoded screenshot
 
 class ScreenLocation(BaseModel):
     x: float
@@ -352,14 +356,62 @@ def extract_keywords(soup):
 # ASYNC WRAPPER #
 #################
 
+# Define mark_page function, THIS MARKS BOUNDING BOXES.
+# done with the mark_page.js file
+import os
+
+# Construct the path to mark_page.js relative to the current file
+current_dir = os.path.dirname(os.path.abspath(__file__))
+mark_page_js_path = os.path.join(current_dir, "mark_page.js")
+
+# Read mark_page.js
+try:
+    with open(mark_page_js_path, "r") as f:
+        mark_page_script = f.read()
+except FileNotFoundError:
+    print(f"Error: Could not find mark_page.js at {mark_page_js_path}")
+    mark_page_script = ""  # Set to empty string or handle this error as appropriate for your application
+
+# decorator for chaining operations
+# a way to wrap a function with another function, adding functionality before 
+# or after the wrapped function executes
+@chain_decorator
+# asynchronous function to mark elements on the page
+async def mark_page(page):
+    # execute the marking script on the page
+    await page.evaluate(mark_page_script)
+    # try to mark the page up to 10 times
+    for _ in range(30):
+        try:
+            # execute the markPage function and get bounding boxes
+            bboxes = await page.evaluate("markPage()")
+            # exit loop if successful
+            break
+        except:
+            # wait for 3 seconds before retrying
+            await asyncio.sleep(2)
+    # take a screenshot of the marked page
+    screenshot = await page.screenshot()
+    # # remove the markings from the page
+    # await page.evaluate("unmarkPage()")
+    # return the screenshot and bounding boxes
+    return {
+        # encode the screenshot as base64
+        "img": base64.b64encode(screenshot).decode(),
+        # return the bounding boxes
+        "bboxes": bboxes,
+    }
+
 # Define agent functions
 async def annotate(state):
     current_url = state["page"].url
     html_content = await state["page"].content()
     text_content = await state["page"].evaluate("() => document.body.innerText")
     content_analysis = await enhanced_content_analysis(state["page"])
-    return {**state, "current_url": current_url, "html_content": html_content, "text_content": text_content, "content_analysis": content_analysis}
+    marked_page = await mark_page.with_retry().ainvoke(state["page"])
+    screenshot = marked_page["img"]
 
+    return {**state, **marked_page, "current_url": current_url, "html_content": html_content, "text_content": text_content, "content_analysis": content_analysis, "screenshot": screenshot}
 
 """
 Takes the raw data from the extraction functions and formats it to make more readable.
@@ -417,12 +469,16 @@ def format_descriptions(state):
     
     text_summary = state['text_content'][:500] + "..." if len(state['text_content']) > 500 else state['text_content']
     
+    # Add screenshot information
+    screenshot_info = "Screenshot: A labeled screenshot of the current webpage is available for analysis."
+    
     return {
         **state, # unpacks the state
         "action_history": formatted_history, 
         "page_info": page_info, 
         "text_summary": text_summary,
-        "content_analysis": formatted_analysis
+        "content_analysis": formatted_analysis,
+        "screenshot_info": screenshot_info
     }
 
 """
@@ -518,32 +574,39 @@ def update_scratchpad(state: AgentState):
 # PROMPT #
 ##########
 
-# Set up the agent
+# Use a vision-capable model
+llm = ChatOpenAI(model="gpt-4o-mini", max_tokens=4096)
+
+# Modify the custom_prompt to include explicit instructions for using the screenshot
 custom_prompt = ChatPromptTemplate.from_messages([
-    ("system", """You are a web navigation assistant. Your task is to guide the user based on their specific query or request. 
-    In each iteration, you will receive an Observation that includes HTML content analysis and the current URL. 
-    Analyze the HTML content to determine your next action, regardless of whether elements are visible on the screen or not.
+    ("system", """You are a web navigation assistant with vision capabilities. Your task is to guide the user based on their specific query or request. 
+    In each iteration, you will receive:
+    1. HTML content analysis
+    2. The current URL
+    3. A screenshot of the webpage
+    
+    The screenshot features Numerical Labels placed in the TOP LEFT corner of each Web Element.
+    You must analyze BOTH the HTML content AND the screenshot to determine your next action.
+    
+    When reasoning about your next action, explicitly reference both the parsed data and visual elements from the screenshot.
 
-    You have access to enhanced content analysis, including:
-    - Detailed page elements (links, buttons, inputs, divs, spans) with their text content and attributes
-    - Each element has a unique ID that you can use for interactions
-
-    Use this information to make informed decisions about navigation and interaction.
-    You can interact with any element present in the HTML, even if it's not currently visible on the screen.
+    Pay special attention to visual elements such as logos, images, and layout.
 
     Current goal: {input}
 
     Choose one of the following actions:
     1. Click a Web Element (use the element ID from the content analysis).
     2. Type content into an input field.
-    3. Wait for page load.
-    4. Go back to the previous page.
-    5. Return to the home page to start over.
-    6. Respond with the final answer
+    3. Scroll up, down, left, or right.
+    4. Wait for page load.
+    5. Go back to the previous page.
+    6. Return to the home page to start over.
+    7. Respond with the final answer
 
     Action should STRICTLY follow the format:
     - Click [Element_ID] 
     - Type [Element_ID]; [Content] 
+    - Scroll [Element_ID or WINDOW]; [up/down/left/right]
     - Wait 
     - GoBack
     - Home
@@ -553,18 +616,38 @@ custom_prompt = ChatPromptTemplate.from_messages([
     1) Execute only one action per iteration.
     2) When clicking or typing, use the element ID from the content analysis.
     3) You can interact with any element present in the HTML, regardless of its visibility on the screen.
-    4) Pay close attention to the current URL and HTML structure to determine if you've reached the desired page or information.
+    4) Pay attention to the current URL and HTML structure to determine if you've reached the desired page or information.
     5) If you find yourself in a loop, try a different approach or consider ending the task.
+    6) Analyze the screenshot to identify the Numerical Label corresponding to the Web Element that requires interaction.
 
     Your reply should strictly follow the format:
     Thought: {{Your brief thoughts}}
     Action: {{One Action format you choose}}"""),
     MessagesPlaceholder(variable_name="scratchpad"),
-    ("human", "{input}\n\nCurrent URL: {current_url}\n\nEnhanced Content Analysis:\n{content_analysis}\n\nAction History:\n{action_history}"),
+    ("human", """
+    Analyze the provided screenshot and HTML content. 
+    Describe what you see in the screenshot, including any logos, images, or distinctive visual elements.
+    How does the visual information compare with the parsed HTML data?
+
+    Current URL: {current_url}
+
+    Enhanced Content Analysis:
+    {content_analysis}
+
+    Action History:
+    {action_history}
+
+    Screenshot Info:
+    {screenshot_info}
+
+    Screenshot: {screenshot}
+
+    Based on this combined analysis of visual and HTML data, what is your next action?
+    Remember to explicitly mention visual elements you observe, including any logos.
+    """),
 ])
 
 prompt = custom_prompt
-llm = ChatOpenAI(model="gpt-4o-mini", max_tokens=4096)
 agent = annotate | RunnablePassthrough.assign(
     prediction=format_descriptions | prompt | llm | StrOutputParser() | parse
 )
@@ -613,14 +696,22 @@ for node_name, tool in tools.items():
 # Function to select the next action based on the agent's prediction
 def select_tool(state: AgentState):
     action = state["prediction"]["action"]
+    print(f"Selecting tool for action: {action}")  # Add this line for debugging
 
     if action.startswith("ANSWER"):
-        return END  # End the process if the action is to answer
-    
+        print("Ending execution with ANSWER")  # Add this line
+        return END
+
     if action == "retry":
-        return "agent"  # Go back to the agent if a retry is needed
-    
-    return action  # Otherwise, return the action name (corresponding to a tool)
+        print("Retrying with agent")  # Add this line
+        return "agent"
+
+    if action in tools:
+        print(f"Selected tool: {action}")  # Add this line
+        return action
+
+    print(f"Unknown action: {action}. Defaulting to agent.")  # Add this line
+    return "agent"  # Default to agent if action is unknown
 
 # Add conditional edges from the agent to other nodes based on select_tool function
 graph_builder.add_conditional_edges("agent", select_tool)
@@ -689,6 +780,14 @@ async def run_agent(question: str, page=None, current_url=None):
         async for step in _run_agent_with_page(question, page, start_url):
             yield step
 
+
+# Modify the prepare_image_for_llm function to return a dict format suitable for the vision model
+def prepare_image_for_llm(base64_image):
+    return {
+        "type": "image_url",
+        "image_url": f"data:image/jpeg;base64,{base64_image}"
+    }
+
 def generate_personable_instruction(action, element_description, text_input):
     llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0.7)
     prompt = f"""
@@ -727,6 +826,7 @@ async def _run_agent_with_page(question: str, page, start_url):
             "action_history": [],
             "html_content": "",
             "text_content": "",
+            "screenshot": None,  # Initialize screenshot as None
         },
         {
             "recursion_limit": 150,
@@ -740,10 +840,13 @@ async def _run_agent_with_page(question: str, page, start_url):
             continue
         
         state = event["agent"]
+        full_response = state.get("output", "")
+        print(f"Full model response: {full_response}")  # Add this line
+        
         pred = state.get("prediction") or {}
         action = pred.get("action")
         action_input = pred.get("args")
-        thought = state.get("output", "").split("Thought:", 1)[-1].split("Action:", 1)[0].strip()
+        thought = full_response.split("Thought:", 1)[-1].split("Action:", 1)[0].strip()
 
         # Check if we've already sent a FINAL_ANSWER
         if final_answer_sent:
@@ -818,7 +921,7 @@ async def _run_agent_with_page(question: str, page, start_url):
                             text_input = action_input[1]
                             instruction = generate_personable_instruction("Type", element_description, text_input)
                         elif action == "Scroll":
-                            direction = "up" if action_input[1].lower() == "up" else "down"
+                            direction = action_input[1].lower()
                             instruction = generate_personable_instruction("Scroll", element_description, direction)
 
             elif action == "Wait":
@@ -898,13 +1001,20 @@ async def _run_agent_with_page(question: str, page, start_url):
         # Add a delay between actions
         # await asyncio.sleep(0.5)  # 0.5-second delay between actions
 
+        # Take a new screenshot after each action
+        screenshot = await page.screenshot()
+        print(f"Screenshot captured: {len(screenshot)} bytes")
+        state["screenshot"] = prepare_image_for_llm(base64.b64encode(screenshot).decode())
+        print(f"Screenshot prepared for LLM: {state['screenshot']}")
+
         if final_answer_sent:
             break  # Exit the loop after sending FINAL_ANSWER
 
-async def main(current_url=None):
+async def main(current_url="http://localhost:3000"):
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=False)
         page = await browser.new_page()
+        await page.goto(current_url)
         try:
             while True:
                 question = input("Enter your question (or 'quit' to exit): ")
@@ -916,20 +1026,23 @@ async def main(current_url=None):
                     agent_generator = run_agent(question, page, current_url)
                     
                     async for step in agent_generator:
-                        print(f"Thought: {step['thought']}")
-                        print(f"Action: {step['action']}")
-                        print(f"Instruction: {step['instruction']}")
-                        if step['element_description']:
-                            print(f"Element Description: {step['element_description']}")
-                        if step['screen_location']:
-                            print(f"Screen Location: {step['screen_location']}")
-                        if step['hover_before_action']:
-                            print("Hovering before action")
-                        if step['text_input']:
-                            print(f"Text Input: {step['text_input']}")
+                        if step['action'] == "INITIAL_RESPONSE":
+                            print(f"Initial Response: {step['instruction']}")
+                        else:
+                            print(f"Thought: {step['thought']}")
+                            print(f"Action: {step['action']}")
+                            print(f"Instruction: {step['instruction']}")
+                            if step['element_description']:
+                                print(f"Element Description: {step['element_description']}")
+                            if step['screen_location']:
+                                print(f"Screen Location: {step['screen_location']}")
+                            if step['hover_before_action']:
+                                print("Hovering before action")
+                            if step['text_input']:
+                                print(f"Text Input: {step['text_input']}")
                         print("---")  # Separator between steps
 
-                        if step['action'] == "FINAL_ANSWER":
+                        if step['action'].startswith("ANSWER"):
                             print("Task completed!")
                             # Update current_url after task completion
                             current_url = page.url
