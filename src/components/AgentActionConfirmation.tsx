@@ -144,12 +144,12 @@ const AgentActionConfirmationContent: React.FC<AgentActionConfirmationProps & { 
   }, [currentPhase])
 
   const formatPercentage = (text: string) => {
-    return text.replace(/(\d+(\.\d+)?%)/g, (match) => `<span class="font-Chakra">${match}</span>`);
+    return text.replace(/(\d+(\.\d+)?%)/g, (match) => `<span class="">${match}</span>`);
   };
 
   return (
     <motion.div
-      className={`fixed right-4 bottom-4 z-50 w-64 shadow-md font-Chakra ${
+      className={`fixed right-4 bottom-4 z-50 w-64 shadow-md  ${
         isDarkMode ? 'text-white' : 'bg-white text-gray-800'
       }`}
       style={{ backgroundColor: isDarkMode ? '#31313C' : undefined }}
@@ -183,7 +183,7 @@ const AgentActionConfirmationContent: React.FC<AgentActionConfirmationProps & { 
                 </motion.g>
               </svg>
             </div>
-            <p className="text-xs font-medium">{currentPhase}</p>
+            <p className="text-sm font-medium font-Marcellus">{currentPhase}</p>
           </motion.div>
           <div className="flex items-center space-x-2">
             <motion.button
@@ -223,7 +223,7 @@ const AgentActionConfirmationContent: React.FC<AgentActionConfirmationProps & { 
           </div>
           <div className="flex justify-between items-center">
             <motion.span 
-              className="text-xs font-medium font-Chakra"
+              className="text-xs font-medium "
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}

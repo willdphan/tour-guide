@@ -34,6 +34,8 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
   const [phase, setPhase] = useState<'Initializing' | 'Analyzing' | 'Processing' | 'Finalizing'>
   ('Initializing')
   const [initialResponse, setInitialResponse] = useState('')
+  const [shouldAbort, setShouldAbort] = useState(false);
+  const [abortController, setAbortController] = useState<AbortController | null>(null);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -128,15 +130,19 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
 
   const handleKeyDown = useCallback(async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      e.preventDefault()
-      console.log('Enter key pressed, search query:', search)
-      setIsWaiting(true)
-      setIsAgentProcessing(true)
-      setOpen(false)
+      e.preventDefault();
+      console.log('Enter key pressed, search query:', search);
+      setIsWaiting(true);
+      setIsAgentProcessing(true);
+      setOpen(false);
+      setShouldAbort(false);
+
+      const controller = new AbortController();
+      setAbortController(controller);
 
       try {
-        const currentUrl = window.location.href
-        console.log(`Current URL: ${currentUrl}`)
+        const currentUrl = window.location.href;
+        console.log(`Current URL: ${currentUrl}`);
 
         const response = await fetch(`http://127.0.0.1:8000/api/run-agent`, {
           method: 'POST',
@@ -147,71 +153,101 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
           body: JSON.stringify({
             question: search,
             currentUrl: currentUrl
-          })
-        })
+          }),
+          signal: controller.signal
+        });
 
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        const reader = response.body?.getReader()
-        const decoder = new TextDecoder()
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
         let isFirstResponse = true;
         while (true) {
-          const { value, done } = await reader!.read()
-          if (done) break
+          if (shouldAbort) {
+            console.log('Aborting process');
+            reader?.cancel();
+            break;
+          }
+          const { value, done } = await reader!.read();
+          if (done) break;
           
-          const chunk = decoder.decode(value)
-          const lines = chunk.split('\n\n')
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n\n');
           
           for (const line of lines) {
             if (line.startsWith('data: ')) {
-              const jsonData = line.slice(6)
+              const jsonData = line.slice(6);
               if (jsonData === '[DONE]') {
-                console.log('Stream completed')
-                setIsWaiting(false)
-                setIsAgentProcessing(false)
-                break
+                console.log('Stream completed');
+                setIsWaiting(false);
+                setIsAgentProcessing(false);
+                break;
               }
               try {
-                const parsedData = JSON.parse(jsonData)
-                console.log('Received data:', parsedData)
+                const parsedData = JSON.parse(jsonData);
+                console.log('Received data:', parsedData);
                 
-                await handleNewAction(parsedData)
+                if (shouldAbort) {
+                  console.log('Aborting process');
+                  break;
+                }
+                
+                await handleNewAction(parsedData);
                 
                 if(isFirstResponse) {
                 if(parsedData.action === 'INITIAL_RESPONSE') {
-                  setInitialResponse(parsedData.instruction)
+                  setInitialResponse(parsedData.instruction);
                 } else {
-                  setInitialResponse(parsedData.thought || parsedData.instruction || '')
+                  setInitialResponse(parsedData.thought || parsedData.instruction || '');
                 }
-                isFirstResponse = false
-                continue
+                isFirstResponse = false;
+                continue;
               }
                 if (parsedData.action === 'FINAL_ANSWER') {
-                  setIsWaiting(false)
-                  setIsAgentProcessing(false)
+                  setIsWaiting(false);
+                  setIsAgentProcessing(false);
                 } else {
-                  setIsAgentProcessing(true)
+                  setIsAgentProcessing(true);
                 }
               } catch (error) {
-                console.error('Error parsing JSON:', error)
+                console.error('Error parsing JSON:', error);
               }
             }
           }
         }
       } catch (error) {
-        console.error('Error fetching search results:', error)
-        setIsAgentProcessing(false)
-        setIsWaiting(false)
+        if (error.name === 'AbortError') {
+          console.log('Fetch aborted');
+        } else {
+          console.error('Error fetching search results:', error);
+        }
+      } finally {
+        setIsAgentProcessing(false);
+        setIsWaiting(false);
+        setAbortController(null);
       }
     }
-  }, [search, simulateAgentAction, handleNewAction])
+  }, [search, simulateAgentAction, handleNewAction, shouldAbort, abortController]);
+
+  const handleAbort = useCallback(() => {
+    setShouldAbort(true);
+    if (abortController) {
+      abortController.abort();
+    }
+    setIsWaiting(false);
+    setIsAgentProcessing(false);
+    setCurrentAction(null);
+    setFinalAction(null);
+    setSearch(''); // Clear the search input
+    console.log('Agent process aborted');
+  }, [abortController]);
 
   return (
     <>
      <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="p-0 overflow-hidden font-Chakra bg-white backdrop-blur-xs">
+      <DialogContent className="p-0 overflow-hidden bg-white backdrop-blur-xs">
         <Command className="border-none">
           <div className="flex items-center !rounded-t-xl w-full relative text-gray-500">
             <CommandInput
@@ -226,7 +262,7 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
               <kbd className="px-1.5 py-0.5 text-xs text-gray-500 bg-gray-200 inline-flex items-center justify-center w-6 h-6">
                 <span className="text-base font-semibold">⌘</span>
               </kbd>
-              <kbd className="px-1.5 py-0.5 text-xs text-gray-500 bg-gray-200 inline-flex items-center justify-center w-6 h-6 font-Chakra">
+              <kbd className="px-1.5 py-0.5 text-xs text-gray-500 bg-gray-200 inline-flex items-center justify-center w-6 h-6 font-Marcellus">
                 <span className="text-sm">K</span>
               </kbd>
             </div>
@@ -252,6 +288,7 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
           onConfirm={() => {}}
           isWaiting={true}
           backgroundColor={getPhaseColor('Initializing')}
+          onClose={handleAbort}
         />
       )}
       {currentAction && !finalAction && (
@@ -260,6 +297,7 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
           onConfirm={() => {}}
           isWaiting={false}
           backgroundColor={getPhaseColor(phase)}
+          onClose={handleAbort}
         />
       )}
       {finalAction && (
@@ -268,6 +306,7 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
           onConfirm={() => {}}
           isWaiting={false}
           backgroundColor={getPhaseColor('Finalizing')}
+          onClose={handleAbort}
         />
       )}
       {isAgentProcessing && !currentAction && !isWaiting && !finalAction && (
@@ -276,6 +315,7 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
           onConfirm={() => {}}
           isWaiting={false}
           backgroundColor={getPhaseColor('Analyzing')}
+          onClose={handleAbort}
         />
       )}
     </>

@@ -290,7 +290,7 @@ export default function Component() {
       width="8"
       height="16"
       rx="4"
-      fill="black"
+      fill="#26433F"
     />
     <rect
       x="20"
@@ -298,11 +298,11 @@ export default function Component() {
       width="8"
       height="28"
       rx="4"
-      fill="black"
+      fill="#26433F"
     />
   </g>
 </svg>
-            <span className="text-sm font-medium">/sales@oppopay.io</span>
+            <span className="text-sm font-medium">/sales@navi.com</span>
           </div>
           {/* <nav className="hidden lg:flex space-x-8">
             <Link href="#" className="text-sm">Product</Link>
@@ -327,10 +327,10 @@ export default function Component() {
                     <Star className="w-4 h-4" />
                   </div>
                   <span className="text-sm font-medium ">5.0 Rated</span>
-                  <span className="text-sm text-[#9D6A39]">Over 12.5K — Ratings on Hunt</span>
+                  <span className="text-sm text-[#9D6A39]">Over 12.5K Imaginary Ratings</span>
                 </div>
 
-                <h1 className="text-8xl lg:text-8xl xl:text-9xl  font-serif leading-none pt-4 pb-8 font-Marcellus lg:mr-16">Payment</h1>
+                <h1 className="text-8xl lg:text-8xl xl:text-9xl  font-serif leading-none pt-4 pb-8 font-Marcellus lg:mr-16">Navi</h1>
 
                
                 <blockquote className="text-md font-medium border-t-[1px] border-black pt-4 lg:mr-16">
@@ -347,7 +347,7 @@ export default function Component() {
   </Link>
 </div>
 
-                  "The Best Platform To Use For International Payout and Bank Transfers, Highly Recommend"
+                  "Don't tell anyone, but I'm the best to guide you. No one else compares. Shhh."
                 </blockquote>
 
                 <div className="flex items-center space-x-4 border-b-[1px] lg:mr-16 border-black pb-4 pt-4  text-xs">
@@ -386,8 +386,8 @@ export default function Component() {
     </div>
   </div>
   <div>
-    <p className="text-sm font-bold font-Marcellus">Robert J.</p>
-    <p className="text-xs text-[#9D6A39] font-[500]">UX / Motion Designer</p>
+    <p className="text-sm font-bold font-Marcellus">Navi</p>
+    <p className="text-xs text-[#9D6A39] font-[500]">AI Tourguide</p>
   </div>
 </div>
 
@@ -432,10 +432,13 @@ export default function Component() {
 
 
   
-<footer className="w-full bg-[#FDF9ED]">
+        <footer className="w-full bg-[#FDF9ED]">
   <div className="py-0 pb-10 lg:pb-0">
-    <div className="max-w-full mx-auto px-4 md:px-8"> {/* Changed max-w-screen-xl to max-w-full */}
-      <div className="mt-6">
+    <div className="max-w-full mx-auto px-4 md:px-8">
+      <div className="">
+        <div className="flex justify-center items-center h-8">
+          <div className="text-center text-sm text-[#9D6A39] opacity-50 pb-4">Imaginary Clients</div>
+        </div>
         <ul className="flex flex-wrap items-center justify-between md:justify-around"> 
                         {/* LOGO 1 */}
                         <li className="w-1/2 md:w-auto mb-4 md:mb-0 flex justify-center">
