@@ -626,7 +626,7 @@ custom_prompt = ChatPromptTemplate.from_messages([
     MessagesPlaceholder(variable_name="scratchpad"),
     ("human", """
     Analyze the provided screenshot and HTML content. 
-    Describe what you see in the screenshot, including any logos, images, or distinctive visual elements.
+    Describe what you see in the screenshot, including any logos, images, or distinctive visual elements. Never mention any element number.
     How does the visual information compare with the parsed HTML data?
 
     Current URL: {current_url}
