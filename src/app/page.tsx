@@ -16,14 +16,15 @@ interface Stage {
   emote: string;
   color: string;
   textColor: string;
+  borderColor: string;
 }
 
 // Replace the products array with stages
 const stages: Stage[] = [
-  { id: 1, name: "Initializing", description: "Getting ready to start your journey", emote: "neutral", color: "#365E59", textColor: "white" },
-  { id: 2, name: "Analyzing", description: "Examining the path ahead", emote: "thinking", color: "#FDF9ED", textColor: "black" },
-  { id: 3, name: "Processing", description: "Calculating the best route for you", emote: "working", color: "#365E59", textColor: "white" },
-  { id: 4, name: "Finalizing", description: "Preparing your personalized experience", emote: "happy", color: "#FDF9ED", textColor: "black" },
+  { id: 1, name: "Initialize", description: "Getting ready to start your journey", emote: "neutral", color: "#27433F", textColor: "white", borderColor: "#FDF9ED" },
+  { id: 2, name: "Analyze", description: "Examining the path ahead", emote: "thinking", color: "#FDF9ED", textColor: "#27433F", borderColor: "#27433F" },
+  { id: 3, name: "Process", description: "Calculating the best route for you", emote: "working", color: "#27433F", textColor: "white", borderColor: "#FDF9ED" },
+  { id: 4, name: "Finalize", description: "Preparing your personalized experience", emote: "happy", color: "#FDF9ED", textColor: "#27433F", borderColor: "#27433F" },
 ];
 
 interface AgentActionConfirmationProps {
@@ -51,7 +52,12 @@ const PopUpDefault: React.FC<AgentActionConfirmationProps> = ({
   const [notifications, setNotifications] = useState<string[]>([])
   const [isDarkMode, setIsDarkMode] = useState(true)
 
-  const phases = ['Initializing', 'Analyzing', 'Processing', 'Finalizing']
+  const phases = [
+    { name: 'Initializing', description: 'Okay, let us change your email in settings' },
+    { name: 'Analyzing', description: 'Working on it! Just one second.' },
+    { name: 'Processing', description: 'Alright, changing the email now.' },
+    { name: 'Finalizing', description: 'Done! Email is now changed.' }
+  ];
   
 
   useEffect(() => {
@@ -79,7 +85,7 @@ const PopUpDefault: React.FC<AgentActionConfirmationProps> = ({
         setCurrentPhase((prevPhase) => {
           const nextPhase = (prevPhase + 1) % phases.length
           setNotifications((prevNotifications) => {
-            const newNotifications = [phases[nextPhase], ...prevNotifications]
+            const newNotifications = [phases[nextPhase].name, ...prevNotifications]
             return newNotifications.slice(0, 4)
           })
           if (nextPhase === 0) {
@@ -124,7 +130,7 @@ const PopUpDefault: React.FC<AgentActionConfirmationProps> = ({
   }
 
   const getEyeAnimation = () => {
-    switch (phases[currentPhase]) {
+    switch (phases[currentPhase].name) {
       case 'Analyzing':
         return {
           x: isBlinking ? 0 : [0, 2, -2, 1, -1, 2, -2, 0],
@@ -181,7 +187,7 @@ const PopUpDefault: React.FC<AgentActionConfirmationProps> = ({
               >
                 <div 
                   className="w-6 h-6 flex items-center justify-center overflow-hidden relative"
-                  style={{ backgroundColor: getPhaseColor(phases[currentPhase]) }}
+                  style={{ backgroundColor: getPhaseColor(phases[currentPhase].name) }}
                 >
                   <svg width="32" height="38" viewBox="0 0 32 38" fill="none" xmlns="http://www.w3.org/2000/svg" className="relative z-10">
                     <motion.g animate={getEyeAnimation()}>
@@ -206,7 +212,7 @@ const PopUpDefault: React.FC<AgentActionConfirmationProps> = ({
                     </motion.g>
                   </svg>
                 </div>
-                <p className="text-sm font-medium font-Marcellus">{phases[currentPhase]}</p>
+                <p className="text-sm font-medium font-Marcellus">{phases[currentPhase].name}</p>
               </motion.div>
               <div className="flex items-center space-x-2">
                 <motion.button
@@ -235,7 +241,7 @@ const PopUpDefault: React.FC<AgentActionConfirmationProps> = ({
                   initial={{ width: 0 }}
                   animate={{ 
                     width: `${progress}%`,
-                    backgroundColor: getPhaseColor(phases[currentPhase])
+                    backgroundColor: getPhaseColor(phases[currentPhase].name)
                   }}
                   transition={{ 
                     duration: 0.5, 
@@ -269,7 +275,7 @@ const PopUpDefault: React.FC<AgentActionConfirmationProps> = ({
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
             >
-              {phases[currentPhase]}
+            {phases[currentPhase].description}
             </motion.p>
             {action?.thought && (
               <motion.p 
@@ -441,7 +447,7 @@ export default function Component() {
     Apply Now — It's Free
   </Link>
   <Link href="#" className="border px-6 py-3 border-black rounded-full text-sm font-medium hover:bg-[#26433F] hover:text-white hover:border-white">
-    Our Process
+    Our Story
   </Link>
 </div>
               </div>
@@ -527,7 +533,13 @@ export default function Component() {
         <div className="flex space-x-4 sm:space-x-6 h-[calc(100vh-230px)] sm:h-[calc(100vh-220px)] lg:h-[calc(100vh-180px)]">
         {stages.map((stage) => (
   <div key={stage.id} className="flex-shrink-0 w-64 sm:w-80 lg:w-96 xl:w-[28rem] h-full relative">
-    <div className="w-full h-full flex flex-col items-center justify-center p-8" style={{ backgroundColor: stage.color }}>
+    <div 
+      className="w-full h-full flex flex-col items-center justify-center p-8 border-[1px] " 
+      style={{ 
+        backgroundColor: stage.color, 
+        borderColor: stage.borderColor
+      }}
+    >
       <div className="w-32 h-32 mb-8">
         <svg width="100%" height="100%" viewBox="0 0 32 38" fill="none" xmlns="http://www.w3.org/2000/svg">
           <motion.g
@@ -556,8 +568,8 @@ export default function Component() {
           </motion.g>
         </svg>
       </div>
-      <h3 className="text-3xl font-semibold mb-4" style={{ color: stage.textColor }}>{stage.name}</h3>
-      <p className="text-xl text-center" style={{ color: stage.textColor }}>{stage.description}</p>
+      <h3 className="text-3xl font-semibold mb-4 font-Marcellus" style={{ color: stage.textColor }}>{stage.name}</h3>
+      <p className="text-md text-center" style={{ color: stage.textColor }}>{stage.description}</p>
     </div>
   </div>
 ))}
