@@ -296,7 +296,7 @@ function RoomContent({ children }: { children: ReactNode }) {
             isAgentRunning={isAgentRunning}
           />
         )}
-        <div className="h-full overflow-auto">
+        <div className="h-full overflow-auto bg-[#FDF9ED]">
           {children}
         </div>
       </div>

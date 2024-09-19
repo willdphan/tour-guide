@@ -9,11 +9,22 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X, Sun, Moon } from 'lucide-react'
 import { IBM_Plex_Sans } from 'next/font/google'
 
-const ibmPlexSans = IBM_Plex_Sans({ 
-  weight: ['300', '400', '500', '600', '700'], 
-  subsets: ['latin'], 
-  display: 'swap',
-})
+interface Stage {
+  id: number;
+  name: string;
+  description: string;
+  emote: string;
+  color: string;
+  textColor: string;
+}
+
+// Replace the products array with stages
+const stages: Stage[] = [
+  { id: 1, name: "Initializing", description: "Getting ready to start your journey", emote: "neutral", color: "#365E59", textColor: "white" },
+  { id: 2, name: "Analyzing", description: "Examining the path ahead", emote: "thinking", color: "#FDF9ED", textColor: "black" },
+  { id: 3, name: "Processing", description: "Calculating the best route for you", emote: "working", color: "#365E59", textColor: "white" },
+  { id: 4, name: "Finalizing", description: "Preparing your personalized experience", emote: "happy", color: "#FDF9ED", textColor: "black" },
+];
 
 interface AgentActionConfirmationProps {
   action?: {
@@ -41,6 +52,7 @@ const PopUpDefault: React.FC<AgentActionConfirmationProps> = ({
   const [isDarkMode, setIsDarkMode] = useState(true)
 
   const phases = ['Initializing', 'Analyzing', 'Processing', 'Finalizing']
+  
 
   useEffect(() => {
     let progressTimer: NodeJS.Timeout
@@ -277,6 +289,39 @@ const PopUpDefault: React.FC<AgentActionConfirmationProps> = ({
 }
 
 export default function Component() {
+
+  const getEyeAnimation = (emote: string) => {
+    switch (emote) {
+      case "neutral":
+        return {
+          x: 0,
+          y: 0,
+          transition: { repeat: Infinity, duration: 3, ease: "easeInOut" }
+        };
+      case "thinking":
+        return {
+          x: [0, 2, -2, 1, -1, 2, -2, 0],
+          y: [-1, 1, -1, 2, -2, 1, -1, 0],
+          transition: { repeat: Infinity, duration: 3, ease: "easeInOut" }
+        };
+      case "working":
+        return {
+          x: [-2, 2, -1, 1, 0, -2, 2, -1, 1, 0],
+          y: [1, -1, 2, -2, 0, -1, 1, -2, 2, 0],
+          transition: { repeat: Infinity, duration: 1.5, ease: "linear" }
+        };
+      case "happy":
+        return {
+          x: [0, 2, 0, -2, 1, -1, 2, -2, 1, -1, 0],
+          y: [0, -1, 2, -1, 1, -2, 1, 0, -1, 2, 0],
+          transition: { repeat: Infinity, duration: 4, ease: "easeInOut" }
+        };
+      default:
+        return {};
+    }
+  };
+
+
   return (
     <div className="max-h-screen min-h-screen bg-[#FDF9ED] flex flex-col items-center ">
       <div className="w-full max-w-6xl px-6 lg:px-8 bg-[#FDF9ED]">
@@ -302,7 +347,7 @@ export default function Component() {
     />
   </g>
 </svg>
-            <span className="text-sm font-medium">/sales@navi.com</span>
+            <span className="text-sm font-medium">/fakesales@navi.com</span>
           </div>
           {/* <nav className="hidden lg:flex space-x-8">
             <Link href="#" className="text-sm">Product</Link>
@@ -434,9 +479,9 @@ export default function Component() {
   
         <footer className="w-full bg-[#FDF9ED]">
   <div className="py-0 pb-10 lg:pb-0">
-    <div className="max-w-full mx-auto px-4 md:px-8">
-      <div className="">
-        <div className="flex justify-center items-center h-8">
+    <div className="max-w-full max-h-screen mx-auto px-4 md:px-8">
+      <div className=" ">
+        <div className="flex justify-center items-center h-8 ">
           <div className="text-center text-sm text-[#9D6A39] opacity-50 pb-4">Imaginary Clients</div>
         </div>
         <ul className="flex flex-wrap items-center justify-between md:justify-around"> 
@@ -476,6 +521,48 @@ export default function Component() {
 
                     </ul>
                 </div>
+
+                 {/* Product Carousel */}
+      <div className="w-full overflow-x-auto max-h-screen my-24 bg-[#FDF9ED]">
+        <div className="flex space-x-4 sm:space-x-6 h-[calc(100vh-230px)] sm:h-[calc(100vh-220px)] lg:h-[calc(100vh-180px)]">
+        {stages.map((stage) => (
+  <div key={stage.id} className="flex-shrink-0 w-64 sm:w-80 lg:w-96 xl:w-[28rem] h-full relative">
+    <div className="w-full h-full flex flex-col items-center justify-center p-8" style={{ backgroundColor: stage.color }}>
+      <div className="w-32 h-32 mb-8">
+        <svg width="100%" height="100%" viewBox="0 0 32 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <motion.g
+            animate={getEyeAnimation(stage.emote)}
+          >
+            <motion.rect
+              x="11"
+              y="14"
+              width="3"
+              height="7"
+              rx="1.5"
+              fill={stage.textColor}
+              animate={{ scaleY: [1, 0.1, 1] }}
+              transition={{ repeat: Infinity, duration: 3, times: [0, 0.02, 0.04] }}
+            />
+            <motion.rect
+              x="18"
+              y="14"
+              width="3"
+              height="10"
+              rx="1.5"
+              fill={stage.textColor}
+              animate={{ scaleY: [1, 0.1, 1] }}
+              transition={{ repeat: Infinity, duration: 3, times: [0, 0.02, 0.04] }}
+            />
+          </motion.g>
+        </svg>
+      </div>
+      <h3 className="text-3xl font-semibold mb-4" style={{ color: stage.textColor }}>{stage.name}</h3>
+      <p className="text-xl text-center" style={{ color: stage.textColor }}>{stage.description}</p>
+    </div>
+  </div>
+))}
+        </div>
+      </div>
             </div>
         </div>
         </footer>
