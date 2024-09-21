@@ -82,8 +82,8 @@ const PopUpDefault: React.FC<AgentActionConfirmationProps> = ({
 
   const phases = [
     // { name: 'Initializing', description: 'Finding font and new doc buttons.' },
-    { name: 'Analyzing', description: 'Working on it! Just one second.' },
-    { name: 'Processing', description: 'Alright, showing you now!' },
+    { name: 'Analyzing', description: 'Looking for Font button.' },
+    { name: 'Processing', description: 'Looking for new doc button.' },
     { name: 'Finalizing', description: 'Done, Hope that helped!' },
   ];
   
@@ -384,9 +384,9 @@ export default function Component() {
 
   return (
     // <div className="flex items-center justify-center min-h-screen bg-white/80 p-4">
-    <div className="flex items-center justify-center min-h-screen bg-white/80  p-4">
+    <div className="flex items-center justify-center min-h-screen bg-white/80 p-4 ">
       <div ref={containerRef} className="relative w-full max-w-3xl font-montserrat">
-        <Card className="relative z-1 p-6 shadow-lg bg-[#FDF9ED] border-[#2F4F4F] border rounded-none">
+        <Card className="relative z-1 p-6 shadow-lg bg-[#FDF9ED] border-[#2F4F4F] border rounded-none h-[20.2em] overflow-hidden">
           <div className="flex items-center space-x-2 mb-4">
             <select ref={normalButtonRef} className="border px-2 py-1 text-sm bg-[#FDF9ED] text-[#2F4F4F] border-[#2F4F4F]">
               <option>Normal</option>
@@ -428,7 +428,7 @@ export default function Component() {
   For a personalized experience, Navi uses parses HTML and uses vision.
 </p>
 <p className="text-[#2F4F4F]">
- With Command+K, ask Navi anything. Navi will guide you through your task - or even do it for you!
+ With Command+K, ask Navi anything. Navi will guide you through your task - or even do it for you! Navi can input click, scroll, hover, text, etc. If you have any questions, feel free to contact.
 </p>
         </Card>
         <Cursor x={cursorPosition.x} y={cursorPosition.y} color="#2F4F4F" label="Navi" />
