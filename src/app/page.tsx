@@ -364,13 +364,13 @@ export default function Component() {
           <div className="flex items-center space-x-4">
             <Link href="#" className="text-sm hidden text-[#9D6A39] font-[500] lg:inline-block">Log in</Link>
             <Link href="#" className="bg-black text-white px-4 py-2 rounded-full text-sm font-[500]">
-              Apply Now — It's Free
-            </Link>
+  Apply Now — It's Free
+</Link>
           </div>
         </header>
 
         <main className="flex-1 ">
-  <div className="container py-16 px-4 lg:px-8 bg-[#FDF9ED]"> {/* Added horizontal padding */}
+  <div className="container py-10 px-4 lg:px-8 bg-[#FDF9ED]"> {/* Added horizontal padding */}
     <div className="flex flex-col lg:flex-row lg:items-center lg:space-x-16"> {/* Added space between columns */}
       <div className="lg:w-1/2 mb-8 lg:mb-0 space-y-0"> {/* Added bottom margin for mobile */}
                 <div className="flex items-center space-x-2 ">
@@ -443,7 +443,7 @@ export default function Component() {
 </div>
 
 <div className="flex space-x-4 pt-12">
-  <Link href="#" className="bg-black text-white px-6 py-3 rounded-full text-sm font-medium">
+  <Link href="/about" className="bg-black text-white px-6 py-3 rounded-full text-sm font-medium">
     Apply Now — It's Free
   </Link>
   <Link href="#" className="border px-6 py-3 border-black rounded-full text-sm font-medium hover:bg-[#26433F] hover:text-white hover:border-white">
@@ -465,13 +465,12 @@ export default function Component() {
                     Your browser does not support the video tag.
                   </video>
                   <div className="absolute inset-0 bg-black opacity-0"></div>
-                  <div className="absolute inset-x-0 left-34 bottom-5 md:left-44 md:bottom-10 lg:left-44 lg:bottom-6 xl:bottom-4 xl:left-40 flex justify-center">
+                  <div className="absolute inset-x-0 left-34 bottom-5 md:left-44 md:bottom-10 lg:left-44 lg:bottom-6 xl:bottom-4 xl:left-48 flex justify-center">
                     <PopUpDefault
                       action={{}}
                       onConfirm={() => {}}
                       isAgentRunning={false}
                       isWaiting={false}
-           
                     />
                   </div>
                 </div>
@@ -484,9 +483,9 @@ export default function Component() {
 
   
         <footer className="w-full bg-[#FDF9ED]">
-  <div className="py-0 pb-10 lg:pb-0">
+  <div className="py-0 pb-10 lg:pb-0 pt-8">
     <div className="max-w-full max-h-screen mx-auto px-4 md:px-8">
-      <div className=" ">
+      <div className="">
         <div className="flex justify-center items-center h-8 ">
           <div className="text-center text-sm text-[#9D6A39] opacity-50 pb-4">Imaginary Clients</div>
         </div>
