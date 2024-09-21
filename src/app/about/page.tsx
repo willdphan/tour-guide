@@ -81,10 +81,10 @@ const PopUpDefault: React.FC<AgentActionConfirmationProps> = ({
   const [isDarkMode, setIsDarkMode] = useState(true)
 
   const phases = [
-    { name: 'Initializing', description: 'Okay, let us find the font and new doc buttons.' },
+    // { name: 'Initializing', description: 'Finding font and new doc buttons.' },
     { name: 'Analyzing', description: 'Working on it! Just one second.' },
     { name: 'Processing', description: 'Alright, showing you now!' },
-    { name: 'Finalizing', description: 'Hope you found what you are looking for' },
+    { name: 'Finalizing', description: 'Done, Hope that helped!' },
   ];
   
 
@@ -383,7 +383,8 @@ export default function Component() {
   }, []);
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-white/80 p-4">
+    // <div className="flex items-center justify-center min-h-screen bg-white/80 p-4">
+    <div className="flex items-center justify-center min-h-screen bg-white/80  p-4">
       <div ref={containerRef} className="relative w-full max-w-3xl font-montserrat">
         <Card className="relative z-1 p-6 shadow-lg bg-[#FDF9ED] border-[#2F4F4F] border rounded-none">
           <div className="flex items-center space-x-2 mb-4">
