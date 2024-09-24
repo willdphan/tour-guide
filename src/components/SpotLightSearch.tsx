@@ -36,6 +36,8 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
   const [initialResponse, setInitialResponse] = useState('')
   const [shouldAbort, setShouldAbort] = useState(false);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
+  const [actionQueue, setActionQueue] = useState<any[]>([]);
+  const [isProcessingQueue, setIsProcessingQueue] = useState(false);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -49,16 +51,6 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
     return () => document.removeEventListener('keydown', down)
   }, [])
 
-  // const getPhaseColor = (currentPhase: string) => {
-  //   switch (currentPhase) {
-  //     case 'Analyzing': return '#3B82F6'
-  //     case 'Processing': return '#2563EB'
-  //     case 'Finalizing': return '#1D4ED8'
-  //     case 'Initializing': return '#60A5FA'
-  //     default: return '#3B82F6'
-  //   }
-  // }
-
   const getPhaseColor = (phase: string) => {
     switch (phase) {
       case 'Initializing': return '#528A82' // Lightest green (unchanged)
@@ -69,21 +61,17 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
     }
   }
 
-  const handleNewAction = useCallback(
-    debounce(async (action: any) => {
-      if (isProcessingAction) return;
-      
-      // Create a unique key for the action
-      const actionKey = `${action.action}-${action.element_description || ''}-${Date.now()}`;
-      
-      if (actionKey === lastActionRef.current) {
-        console.log('Duplicate action detected, skipping:', action);
-        return;
-      }
-      
-      setIsProcessingAction(true);
-      lastActionRef.current = actionKey;
-      
+  const handleNewAction = useCallback((action: any) => {
+    setActionQueue(prevQueue => [...prevQueue, action]);
+  }, []);
+
+  useEffect(() => {
+    const processQueue = async () => {
+      if (isProcessingQueue || actionQueue.length === 0) return;
+
+      setIsProcessingQueue(true);
+      const action = actionQueue[0];
+
       try {
         console.log('Processing action:', action);
         
@@ -108,25 +96,22 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
           
           if (action.action === 'FINAL_ANSWER') {
             setFinalAction(action);
-            // Keep the final action visible for 10 seconds (adjust as needed)
-            // await sleep(10000);
+            await sleep(5000); // Display final action for 5 seconds
             setFinalAction(null);
           } else {
-            // Display the action for 3 seconds
-            await sleep(3000);
-            
-            setCurrentAction(null);
-            
-            // Add a 1-second pause between actions
-            // await sleep(1000);
+            await sleep(3000); // Display action for 3 seconds
           }
+          
+          setCurrentAction(null);
         }
       } finally {
-        setIsProcessingAction(false);
+        setActionQueue(prevQueue => prevQueue.slice(1));
+        setIsProcessingQueue(false);
       }
-    }, 0),
-    [simulateAgentAction]
-  );
+    };
+
+    processQueue();
+  }, [actionQueue, isProcessingQueue, simulateAgentAction]);
 
   const handleKeyDown = useCallback(async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -194,7 +179,7 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
                   break;
                 }
                 
-                await handleNewAction(parsedData);
+                handleNewAction(parsedData);
                 
                 if(isFirstResponse) {
                 if(parsedData.action === 'INITIAL_RESPONSE') {
@@ -282,39 +267,17 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
         throw new Error('Function not implemented.')
       } } isAgentRunning={false} isWaiting={false}/> */}
 
-      {isWaiting && (
+      {(isWaiting || currentAction || finalAction || (isAgentProcessing && !currentAction && !isWaiting && !finalAction)) && (
         <AgentActionConfirmation
-          action={{ action: 'Wait', instruction: '' }}
+          action={
+            isWaiting ? { action: 'Wait', instruction: '' } :
+            currentAction ? currentAction :
+            finalAction ? finalAction :
+            { action: 'One sec, planning my next step...', instruction: 'One sec, planning my next step...' }
+          }
           onConfirm={() => {}}
-          isWaiting={true}
-          backgroundColor={getPhaseColor('Initializing')}
-          onClose={handleAbort}
-        />
-      )}
-      {currentAction && !finalAction && (
-        <AgentActionConfirmation
-          action={currentAction}
-          onConfirm={() => {}}
-          isWaiting={false}
+          isWaiting={isWaiting}
           backgroundColor={getPhaseColor(phase)}
-          onClose={handleAbort}
-        />
-      )}
-      {finalAction && (
-        <AgentActionConfirmation
-          action={finalAction}
-          onConfirm={() => {}}
-          isWaiting={false}
-          backgroundColor={getPhaseColor('Finalizing')}
-          onClose={handleAbort}
-        />
-      )}
-      {isAgentProcessing && !currentAction && !isWaiting && !finalAction && (
-        <AgentActionConfirmation
-          action={{ action: 'One sec, planning my next step...', instruction: 'One sec, planning my next step...' }}
-          onConfirm={() => {}}
-          isWaiting={false}
-          backgroundColor={getPhaseColor('Analyzing')}
           onClose={handleAbort}
         />
       )}

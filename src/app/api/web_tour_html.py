@@ -591,6 +591,7 @@ custom_prompt = ChatPromptTemplate.from_messages([
     When reasoning about your next action, explicitly reference both the parsed data and visual elements from the screenshot.
 
     Pay special attention to visual elements such as logos, images, and layout.
+    
 
     Current goal: {input}
 
@@ -618,7 +619,7 @@ custom_prompt = ChatPromptTemplate.from_messages([
     3) You can interact with any element present in the HTML, regardless of its visibility on the screen.
     4) Pay attention to the current URL and HTML structure to determine if you've reached the desired page or information.
     5) If you find yourself in a loop, try a different approach or consider ending the task.
-    6) Analyze the screenshot to identify the Numerical Label corresponding to the Web Element that requires interaction.
+    6) Analyze the screenshot to identify the Numerical Label corresponding to the Web Element that requires interaction. DO NOT MENTION THE NUMERICAL LABEL INSTRUCTION.
 
     Your reply should strictly follow the format:
     Thought: {{Your brief thoughts}}
@@ -730,7 +731,9 @@ async def run_agent(question: str, page=None, current_url=None):
     def generate_initial_response(question: str):
         llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0.7)
         prompt = f"""
-        Confirm you got the query with "Okay!" or "Gotcha" or something similar. Restate the following user query as a friendly, concise instruction for a web navigation assistant while also guiding the user.
+        Confirm you got the query with "Okay!" or "Gotcha" or something similar. Restate the following user query as a friendly, concise instruction for a web navigation assistant while also guiding the user. DO NOT PROVIDE INSTRUCTION IN THIS RESPONSE. For example:
+
+        "Gotcha, lets try to [enter user request here]."
 
         Keep it brief and engaging, as if a helpful friend is acknowledging the task.
         No need for extra information or small talk. Avoid using emojis. Add some emotion. This is the first response, so DO NOT conclude the chat here.
@@ -810,30 +813,28 @@ async def _run_agent_with_page(question: str, page, start_url):
     await page.goto(start_url, timeout=60000)
     print(f"Navigated to {start_url}")
     
-    # Analyze the current page
+    # Capture initial screenshot and metadata
+    screenshot = await page.screenshot()
     current_page_info = await enhanced_content_analysis(page)
-    relevant_info = f"Current page information:\n{json.dumps(current_page_info, indent=2)}"
-
-    # Create the augmented input
-    augmented_input = f"Goal: {question}\n\nRelevant information from current page:\n{relevant_info}"
-
+    
     event_stream = graph.astream(
         {
             "page": page,
-            "input": augmented_input,
+            "input": question,
             "scratchpad": [],
             "current_url": start_url,
             "action_history": [],
-            "html_content": "",
-            "text_content": "",
-            "screenshot": None,  # Initialize screenshot as None
+            "html_content": await page.content(),
+            "text_content": await page.evaluate("() => document.body.innerText"),
+            "screenshot": prepare_image_for_llm(base64.b64encode(screenshot).decode()),
+            "content_analysis": current_page_info,
         },
         {
             "recursion_limit": 150,
         },
     )
 
-    final_answer_sent = False  # Add this flag
+    final_answer_sent = False
 
     async for event in event_stream:
         if "agent" not in event:
@@ -841,7 +842,7 @@ async def _run_agent_with_page(question: str, page, start_url):
         
         state = event["agent"]
         full_response = state.get("output", "")
-        print(f"Full model response: {full_response}")  # Add this line
+        print(f"Full model response: {full_response}")
         
         pred = state.get("prediction") or {}
         action = pred.get("action")
@@ -969,6 +970,17 @@ async def _run_agent_with_page(question: str, page, start_url):
                 await page.goto("http://localhost:3000/")
             elif action.startswith("ANSWER"):
                 break
+            
+            # After each action, update the state with new screenshot and metadata
+            screenshot = await page.screenshot()
+            current_page_info = await enhanced_content_analysis(page)
+            state.update({
+                "screenshot": prepare_image_for_llm(base64.b64encode(screenshot).decode()),
+                "content_analysis": current_page_info,
+                "html_content": await page.content(),
+                "text_content": await page.evaluate("() => document.body.innerText"),
+                "current_url": page.url,
+            })
         
         # error handling
         except PlaywrightError as e:
@@ -997,15 +1009,6 @@ async def _run_agent_with_page(question: str, page, start_url):
                 "hover_before_action": False,
                 "text_input": None
             }
-
-        # Add a delay between actions
-        # await asyncio.sleep(0.5)  # 0.5-second delay between actions
-
-        # Take a new screenshot after each action
-        screenshot = await page.screenshot()
-        print(f"Screenshot captured: {len(screenshot)} bytes")
-        state["screenshot"] = prepare_image_for_llm(base64.b64encode(screenshot).decode())
-        print(f"Screenshot prepared for LLM: {state['screenshot']}")
 
         if final_answer_sent:
             break  # Exit the loop after sending FINAL_ANSWER
