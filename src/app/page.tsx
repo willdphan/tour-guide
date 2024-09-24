@@ -8,24 +8,7 @@ import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Sun, Moon } from 'lucide-react'
 import { IBM_Plex_Sans } from 'next/font/google'
-
-interface Stage {
-  id: number;
-  name: string;
-  description: string;
-  emote: string;
-  color: string;
-  textColor: string;
-  borderColor: string;
-}
-
-// Replace the products array with stages
-const stages: Stage[] = [
-  { id: 1, name: "Initialize", description: "Getting ready to start your journey", emote: "neutral", color: "#27433F", textColor: "white", borderColor: "#FDF9ED" },
-  { id: 2, name: "Analyze", description: "Examining the path ahead", emote: "thinking", color: "#FDF9ED", textColor: "#27433F", borderColor: "#27433F" },
-  { id: 3, name: "Process", description: "Calculating the best route for you", emote: "working", color: "#27433F", textColor: "white", borderColor: "#FDF9ED" },
-  { id: 4, name: "Finalize", description: "Preparing your personalized experience", emote: "happy", color: "#FDF9ED", textColor: "#27433F", borderColor: "#27433F" },
-];
+import { stages } from './stagesData';
 
 interface AgentActionConfirmationProps {
   action?: {
@@ -531,15 +514,16 @@ export default function Component() {
       <div className="w-full overflow-x-auto max-h-screen my-24 bg-[#FDF9ED]">
         <div className="flex space-x-4 sm:space-x-6 h-[calc(100vh-230px)] sm:h-[calc(100vh-220px)] lg:h-[calc(100vh-180px)]">
         {stages.map((stage) => (
-  <div key={stage.id} className="flex-shrink-0 w-64 sm:w-80 lg:w-96 xl:w-[28rem] h-full relative">
-    <div 
-      className="w-full h-full flex flex-col items-center justify-center p-8 border-[1px] " 
-      style={{ 
-        backgroundColor: stage.color, 
-        borderColor: stage.borderColor
-      }}
-    >
-      <div className="w-32 h-32 mb-8">
+  <Link key={stage.id} href={stage.link}>
+    <div className="flex-shrink-0 w-64 sm:w-80 lg:w-96 xl:w-[28rem] h-full relative">
+      <div 
+        className="w-full h-full flex flex-col items-center justify-center p-8 border-[1px] " 
+        style={{ 
+          backgroundColor: stage.color, 
+          borderColor: stage.borderColor
+        }}
+      >
+        <div className="w-32 h-32 mb-8">
         <svg width="100%" height="100%" viewBox="0 0 32 38" fill="none" xmlns="http://www.w3.org/2000/svg">
           <motion.g
             animate={getEyeAnimation(stage.emote)}
@@ -570,7 +554,7 @@ export default function Component() {
       <h3 className="text-3xl font-semibold mb-4 font-Marcellus" style={{ color: stage.textColor }}>{stage.name}</h3>
       <p className="text-md text-center" style={{ color: stage.textColor }}>{stage.description}</p>
     </div>
-  </div>
+  </div></Link>
 ))}
         </div>
       </div>
