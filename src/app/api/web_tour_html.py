@@ -73,7 +73,6 @@ class AgentState(TypedDict):
     observation: str
     current_url: str
     action_history: List[dict]
-    page_height: int
     viewport_height: int
     html_content: str
     text_content: str
@@ -465,7 +464,7 @@ def format_descriptions(state):
     action_history = state.get("action_history", [])
     formatted_history = "\n".join([f"{a['step']}. {a['action']} {a['args']} (URL: {a['url']})" for a in action_history])
     
-    page_info = f"Page height: {state['page_height']}px, Viewport height: {state['viewport_height']}px"
+    # page_info = f"Page height: {state['page_height']}px, Viewport height: {state['viewport_height']}px"
     
     text_summary = state['text_content'][:500] + "..." if len(state['text_content']) > 500 else state['text_content']
     
@@ -475,7 +474,7 @@ def format_descriptions(state):
     return {
         **state, # unpacks the state
         "action_history": formatted_history, 
-        "page_info": page_info, 
+        # "page_info": page_info, 
         "text_summary": text_summary,
         "content_analysis": formatted_analysis,
         "screenshot_info": screenshot_info

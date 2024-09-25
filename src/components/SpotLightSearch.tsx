@@ -85,7 +85,7 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
           // Set phase based on action
           if (action.action === 'FINAL_ANSWER') {
             setPhase('Finalizing');
-          } else if (action.action.startsWith('HUMAN_ACTION')) {
+          } else if (action.action && typeof action.action === 'string' && action.action.startsWith('HUMAN_ACTION')) {
             setPhase('Processing');
           } else {
             setPhase('Analyzing');
