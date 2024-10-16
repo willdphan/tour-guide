@@ -1,3 +1,5 @@
+// LOCATION OF AGENT ACTION VISUAL
+
 import React, { useEffect, useState } from 'react';
 
 const ScreenLocationOverlay: React.FC = () => {

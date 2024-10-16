@@ -1,7 +1,9 @@
+// APPLE-STYLED POPUPS
+// component pop-up with apply styling
+
 import { AnimatePresence, motion } from "framer-motion"
 import { useState, useEffect } from "react"
 import { X } from "lucide-react"  // Add this import
-import Spline from '@splinetool/react-spline/next'
 
 export default function PopUpApple() {
   const [progress, setProgress] = useState(0)

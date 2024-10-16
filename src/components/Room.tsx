@@ -3,13 +3,6 @@ import { useCallback,useEffect, useState, useRef } from 'react';
 import { ReactNode } from "react";
 
 import SpotLightSearch from '@/components/SpotLightSearch';
-import { LiveObject } from "@liveblocks/client";
-import { useMyPresence, useOthers, useSelf, useUpdateMyPresence } from "@liveblocks/react";
-import {
-  ClientSideSuspense,
-  LiveblocksProvider,
-  RoomProvider,
-} from "@liveblocks/react/suspense";
 import AgentActionConfirmation from './AgentActionConfirmation';
 
 function Cursor({ x, y, color, isActive }: { x: number; y: number; color: string; isActive: boolean }) {
@@ -65,21 +58,13 @@ function Cursor({ x, y, color, isActive }: { x: number; y: number; color: string
 }
 
 function RoomContent({ children }: { children: ReactNode }) {
-  const [myPresence, updateMyPresence] = useMyPresence();
-  const updateMyPresenceFn = useUpdateMyPresence();
-  const others = useOthers();
-  const self = useSelf();
-  const myId = self?.id;
-
   const [agentCursor, setAgentCursor] = useState<{ x: number; y: number } | null>(null);
   const [initialCursorPosition, setInitialCursorPosition] = useState<{ x: number; y: number } | null>(null);
   const [isAgentActive, setIsAgentActive] = useState(false);
-
   const [userQuery, setUserQuery] = useState('');
   const [currentAction, setCurrentAction] = useState<any | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [agentCursorColor, setAgentCursorColor] = useState("#0000FF"); // Blue
-
   const [isAgentRunning, setIsAgentRunning] = useState(false);
 
   // Set initial cursor position to bottom right
@@ -99,17 +84,6 @@ function RoomContent({ children }: { children: ReactNode }) {
     console.log("Agent cursor color set to:", agentCursorColor);
   }, [agentCursorColor]);
 
-  useEffect(() => {
-    const handleMouseMove = (event: MouseEvent) => {
-      updateMyPresence({
-        cursor: { x: event.clientX, y: event.clientY },
-      });
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, [updateMyPresence]);
-
   const simulateAgentAction = useCallback(async (action: any) => {
     console.log('Simulating action:', action);
     setCurrentAction(action);
@@ -118,10 +92,6 @@ function RoomContent({ children }: { children: ReactNode }) {
     const moveMouseTo = (x: number, y: number) => {
       if (x !== undefined && y !== undefined) {
         setAgentCursor({ x, y });
-        updateMyPresenceFn({
-          cursor: { x, y },
-          isAgent: true,
-        });
         console.log(`Moved cursor to (${x}, ${y})`);
       }
     };
@@ -240,14 +210,10 @@ function RoomContent({ children }: { children: ReactNode }) {
           console.log('Unknown action:', action.action, action.instruction);
       }
     }
-  }, [setAgentCursor, updateMyPresenceFn]);
+  }, []);
 
   const handleSearch = useCallback((selectedItem: { title: string, description: string }) => {
     setUserQuery(selectedItem.title);
-  }, []);
-
-  const updateCursorColors = useCallback((newAgentColor: string) => {
-    setAgentCursorColor(newAgentColor);
   }, []);
 
   const handleActionConfirmation = (confirmed: boolean) => {
@@ -285,7 +251,6 @@ function RoomContent({ children }: { children: ReactNode }) {
         >
           <SpotLightSearch 
             onSelect={handleSearch}
-            updateMyPresenceFn={updateMyPresenceFn}
             simulateAgentAction={simulateAgentAction}
           />
         </div>
@@ -293,8 +258,7 @@ function RoomContent({ children }: { children: ReactNode }) {
           <AgentActionConfirmation
             action={currentAction}
             onConfirm={handleActionConfirmation}
-            isAgentRunning={isAgentRunning}
-          />
+            isAgentRunning={isAgentRunning} isWaiting={false} initialResponse={''}          />
         )}
         <div className="h-full overflow-auto bg-[#FDF9ED]">
           {children}
@@ -305,20 +269,5 @@ function RoomContent({ children }: { children: ReactNode }) {
 }
 
 export function Room({ children }: { children: ReactNode }) {
-  return (
-    <LiveblocksProvider publicApiKey={"pk_dev_JHXXlhVbiyY12zGe6mVyVYyAZKm7leqR36yvH_1rY_0Cxxk25HAFapwtmrkUzZz8"}>
-      <RoomProvider id="tour" initialStorage={{
-        // ✅ This is a client component, so everything works!
-        session: new LiveObject(),
-      }} initialPresence={{
-        cursorType: '',
-        cursor: null,
-        isAgent: false
-      }}>
-        <ClientSideSuspense fallback={<div>Loading…</div>}>
-          {() => <RoomContent>{children}</RoomContent>}
-        </ClientSideSuspense>
-      </RoomProvider>
-    </LiveblocksProvider>
-  );
+  return <RoomContent>{children}</RoomContent>;
 }

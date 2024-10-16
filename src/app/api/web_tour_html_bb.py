@@ -649,6 +649,7 @@ custom_prompt = ChatPromptTemplate.from_messages([
 ])
 
 prompt = custom_prompt
+# Modify the agent definition to process HTML and image simultaneously
 agent = annotate | RunnablePassthrough.assign(
     prediction=format_descriptions | prompt | llm | StrOutputParser() | parse
 ) | RunnableLambda(lambda x: mark_page(x["page"], x["browserbase_instance"]))
@@ -982,6 +983,7 @@ async def _run_agent_with_page(question: str, page, start_url, browserbase_insta
                 "text_content": await page.evaluate("() => document.body.innerText"),
                 "current_url": page.url,
             })
+
         
         # error handling
         except PlaywrightError as e:
