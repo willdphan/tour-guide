@@ -3,13 +3,10 @@
 import { PropsWithChildren } from 'react';
 import dynamic from 'next/dynamic';
 import { Montserrat, Montserrat_Alternates } from 'next/font/google';
-
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/utils/cn';
-
-import { Room } from '../components/Room';
-
 import '@/styles/globals.css';
+import { NaviWrapper } from '@/components/NaviAssistant';
 
 const Analytics = dynamic(() => 
   import('@vercel/analytics/react').then((mod) => mod.Analytics),
@@ -35,10 +32,10 @@ export default function RootLayout({ children }: PropsWithChildren) {
           <div className=''>
             <main className=''>
               <div className=''>
-              <Room>
+              <NaviWrapper>
                 {children}
                 {/* <ScreenLocationOverlay /> */}
-                </Room>
+                </NaviWrapper>
               </div>
             </main>
           </div>

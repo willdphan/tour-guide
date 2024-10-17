@@ -10,7 +10,8 @@ import Popup from './Popup';
 import Cursor from './Cursor';
 import { simulateAgent } from '@/utils/actionExecuter';
 
-function RoomContent({ children }: { children: ReactNode }) {
+// SPOTLIGHT AND NAVI POPUP
+function NaviInterface({ children }: { children: ReactNode }) {
   const [agentCursor, setAgentCursor] = useState<{ x: number; y: number } | null>(null);
   const [initialCursorPosition, setInitialCursorPosition] = useState<{ x: number; y: number } | null>(null);
   const [isAgentActive, setIsAgentActive] = useState(false);
@@ -97,6 +98,6 @@ function RoomContent({ children }: { children: ReactNode }) {
   );
 }
 
-export function Room({ children }: { children: ReactNode }) {
-  return <RoomContent>{children}</RoomContent>;
+export function NaviWrapper({ children }: { children: ReactNode }) {
+  return <NaviInterface>{children}</NaviInterface>;
 }

@@ -1,4 +1,6 @@
 "use client"
+// TEMPLATE HOME PAGE LAYOUT
+
 import Image from 'next/image'
 import Link from 'next/link'
 import { Star, ArrowUpRight, CheckCircle2, AlertCircle } from 'lucide-react'
@@ -6,44 +8,10 @@ import PopUpDefault from '@/components/PopupHome'
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { IBM_Plex_Sans } from 'next/font/google'
 import { stages } from './stagesData';
-
+import { getHomeEyeAnimation } from '@/utils/animations'
 
 export default function Component() {
-
-  const getEyeAnimation = (emote: string) => {
-    switch (emote) {
-      case "neutral":
-        return {
-          x: 0,
-          y: 0,
-          transition: { repeat: Infinity, duration: 3, ease: "easeInOut" }
-        };
-      case "thinking":
-        return {
-          x: [0, 2, -2, 1, -1, 2, -2, 0],
-          y: [-1, 1, -1, 2, -2, 1, -1, 0],
-          transition: { repeat: Infinity, duration: 3, ease: "easeInOut" }
-        };
-      case "working":
-        return {
-          x: [-2, 2, -1, 1, 0, -2, 2, -1, 1, 0],
-          y: [1, -1, 2, -2, 0, -1, 1, -2, 2, 0],
-          transition: { repeat: Infinity, duration: 1.5, ease: "linear" }
-        };
-      case "happy":
-        return {
-          x: [0, 2, 0, -2, 1, -1, 2, -2, 1, -1, 0],
-          y: [0, -1, 2, -1, 1, -2, 1, 0, -1, 2, 0],
-          transition: { repeat: Infinity, duration: 4, ease: "easeInOut" }
-        };
-      default:
-        return {};
-    }
-  };
-
-
   return (
     <div className="max-h-screen min-h-screen bg-[#FDF9ED] flex flex-col items-center ">
       <div className="w-full max-w-6xl px-6 lg:px-8 bg-[#FDF9ED]">
@@ -259,7 +227,7 @@ export default function Component() {
         <div className="w-32 h-32 mb-8">
         <svg width="100%" height="100%" viewBox="0 0 32 38" fill="none" xmlns="http://www.w3.org/2000/svg">
           <motion.g
-            animate={getEyeAnimation(stage.emote)}
+            animate={getHomeEyeAnimation(stage.emote)}
           >
             <motion.rect
               x="11"

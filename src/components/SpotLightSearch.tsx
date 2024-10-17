@@ -257,12 +257,6 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
           </Command>
         </DialogContent>
       </Dialog>
-
-    {/* <PopUpApple/> */}
-    {/* <PopUpDefault onConfirm={function (confirmed: boolean): void {
-        throw new Error('Function not implemented.')
-      } } isAgentRunning={false} isWaiting={false}/> */}
-
       {(isWaiting || currentAction || finalAction || (isAgentProcessing && !currentAction && !isWaiting && !finalAction)) && (
         <Popup
           action={

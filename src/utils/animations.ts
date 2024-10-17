@@ -29,3 +29,35 @@ export const getEyeAnimation = (currentPhase: string, isBlinking: boolean) => {
       transition: { duration: 0.1 }
     }
   }
+
+
+  export const getHomeEyeAnimation = (emote: string) => {
+    switch (emote) {
+      case "neutral":
+        return {
+          x: 0,
+          y: 0,
+          transition: { repeat: Infinity, duration: 3, ease: "easeInOut" }
+        };
+      case "thinking":
+        return {
+          x: [0, 2, -2, 1, -1, 2, -2, 0],
+          y: [-1, 1, -1, 2, -2, 1, -1, 0],
+          transition: { repeat: Infinity, duration: 3, ease: "easeInOut" }
+        };
+      case "working":
+        return {
+          x: [-2, 2, -1, 1, 0, -2, 2, -1, 1, 0],
+          y: [1, -1, 2, -2, 0, -1, 1, -2, 2, 0],
+          transition: { repeat: Infinity, duration: 1.5, ease: "linear" }
+        };
+      case "happy":
+        return {
+          x: [0, 2, 0, -2, 1, -1, 2, -2, 1, -1, 0],
+          y: [0, -1, 2, -1, 1, -2, 1, 0, -1, 2, 0],
+          transition: { repeat: Infinity, duration: 4, ease: "easeInOut" }
+        };
+      default:
+        return {};
+    }
+  };
