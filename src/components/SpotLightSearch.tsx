@@ -1,16 +1,10 @@
 'use client'
 
 import React, { useState, useCallback, useEffect, useRef } from 'react'
-import { Search } from 'lucide-react'
 import { Command, CommandInput, CommandList, CommandGroup, CommandItem } from '@/components/ui/command'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
-import AgentActionConfirmation from './AgentActionConfirmation'
-import { motion, AnimatePresence } from 'framer-motion'
-import { X } from 'lucide-react'
-import PopUpApple from './popup-apple'
-import PopUpDefault from './popup-minimal'
-import { IBM_Plex_Sans } from 'next/font/google'
-import { debounce } from 'lodash';
+import Popup from './Popup'
+import { getPhaseColor } from './popup-minimal'
 
 export const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -24,13 +18,10 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [agentRunning, setAgentRunning] = useState(false)
-  const [agentResponse, setAgentResponse] = useState('')
   const [currentAction, setCurrentAction] = useState<any>(null);
   const [isWaiting, setIsWaiting] = useState(false)
   const [isAgentProcessing, setIsAgentProcessing] = useState(false)
   const [finalAction, setFinalAction] = useState<any>(null);
-  const [isProcessingAction, setIsProcessingAction] = useState(false);
-  const lastActionRef = useRef<string | null>(null);
   const [phase, setPhase] = useState<'Initializing' | 'Analyzing' | 'Processing' | 'Finalizing'>
   ('Initializing')
   const [initialResponse, setInitialResponse] = useState('')
@@ -51,15 +42,6 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
     return () => document.removeEventListener('keydown', down)
   }, [])
 
-  const getPhaseColor = (phase: string) => {
-    switch (phase) {
-      case 'Initializing': return '#528A82' // Lightest green (unchanged)
-      case 'Analyzing': return '#44756E'    // Slightly darker green
-      case 'Processing': return '#365E59'   // Darker green
-      case 'Finalizing': return '#26433F'   // Darkest green (as requested)
-      default: return '#1D3330'             // Default color (middle shade)
-    }
-  }
 
   const handleNewAction = useCallback((action: any) => {
     setActionQueue(prevQueue => [...prevQueue, action]);
@@ -229,6 +211,20 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
     console.log('Agent process aborted');
   }, [abortController]);
 
+  // Add the handleActionConfirmation function
+  const handleActionConfirmation = (confirmed: boolean) => {
+    if (confirmed) {
+      console.log('Action confirmed:', currentAction);
+      // Perform the action here
+      // You might want to call simulateAgentAction here if needed
+    } else {
+      console.log('Action cancelled:', currentAction);
+      setIsAgentActive(false);
+    }
+    setCurrentAction(null);
+    setShowConfirmation(false);
+  };
+
   return (
     <>
      <Dialog open={open} onOpenChange={setOpen}>
@@ -268,14 +264,14 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
       } } isAgentRunning={false} isWaiting={false}/> */}
 
       {(isWaiting || currentAction || finalAction || (isAgentProcessing && !currentAction && !isWaiting && !finalAction)) && (
-        <AgentActionConfirmation
+        <Popup
           action={
             isWaiting ? { action: 'Wait', instruction: '' } :
             currentAction ? currentAction :
             finalAction ? finalAction :
             { action: 'One sec, planning my next step...', instruction: 'One sec, planning my next step...' }
           }
-          onConfirm={() => {}}
+          onConfirm={handleActionConfirmation}
           isWaiting={isWaiting}
           backgroundColor={getPhaseColor(phase)}
           onClose={handleAbort}
@@ -284,5 +280,4 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({ onSelect, updateMyPre
     </>
   )
 }
-
 export default SpotLightSearch

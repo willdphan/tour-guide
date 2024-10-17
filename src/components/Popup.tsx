@@ -1,26 +1,19 @@
+// ACTUAL POPUP IMPLEMENTATION
+
 import React, { useEffect, useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Sun, Moon } from 'lucide-react'
 
-interface AgentActionConfirmationProps {
-  action: {
-    thought?: string;
-    action: string;
-    instruction: string;
-  };
-  onConfirm: (confirmed: boolean) => void;
-  isAgentRunning: boolean;
+interface PopupProps {
+  action: any;
   isWaiting: boolean;
-  initialResponse: string;
+  onClose: () => void; // Make sure this is included
 }
 
-const AgentActionConfirmationContent: React.FC<AgentActionConfirmationProps & { onClose: () => void }> = ({ 
+const PopupContent: React.FC<PopupProps & { onClose: () => void }> = ({ 
   action, 
-  onConfirm, 
-  isAgentRunning, 
   isWaiting,
   onClose,
-  initialResponse
 }) => {
   const [progress, setProgress] = useState(0)
   const [isDarkMode, setIsDarkMode] = useState(false)
@@ -28,8 +21,8 @@ const AgentActionConfirmationContent: React.FC<AgentActionConfirmationProps & { 
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
-    console.log('AgentActionConfirmation mounted')
-    return () => console.log('AgentActionConfirmation unmounted')
+    console.log('Popup mounted')
+    return () => console.log('Popup unmounted')
   }, [])
 
   useEffect(() => {
@@ -84,17 +77,6 @@ const AgentActionConfirmationContent: React.FC<AgentActionConfirmationProps & { 
       default: return '#1D3330'             // Default color (middle shade)
     }
   }
-
-  // blue
-  // const getPhaseColor = (phase: string) => {
-  //   switch (phase) {
-  //     case 'Analyzing': return '#3B82F6'
-  //     case 'Processing': return '#2563EB'
-  //     case 'Finalizing': return '#1D4ED8'
-  //     case 'Initializing': return '#60A5FA'
-  //     default: return '#3B82F6'
-  //   }
-  // }
 
   const getEyeAnimation = () => {
     switch (currentPhase) {
@@ -261,7 +243,7 @@ const AgentActionConfirmationContent: React.FC<AgentActionConfirmationProps & { 
   )
 }
 
-const AgentActionConfirmation: React.FC<AgentActionConfirmationProps> = (props) => {
+const Popup: React.FC<PopupProps> = (props) => {
   const [isVisible, setIsVisible] = useState(true)
 
   const handleClose = () => {
@@ -271,9 +253,9 @@ const AgentActionConfirmation: React.FC<AgentActionConfirmationProps> = (props) 
 
   return (
     <AnimatePresence>
-      {isVisible && <AgentActionConfirmationContent {...props} onClose={handleClose} />}
+      {isVisible && <PopupContent {...props} onClose={handleClose} />}
     </AnimatePresence>
   )
 }
 
-export default AgentActionConfirmation
+export default Popup

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Sun, Moon } from 'lucide-react'  // Add Sun and Moon here
 import { IBM_Plex_Sans } from 'next/font/google'
+import { getEyeAnimation, getBlinkAnimation } from '@/utils/animations'
 
 const ibmPlexSans = IBM_Plex_Sans({
   weight: ['300', '400', '500', '600', '700'],
@@ -9,22 +10,26 @@ const ibmPlexSans = IBM_Plex_Sans({
   display: 'swap',
 })
 
-interface AgentActionConfirmationProps {
+export const getPhaseColor = (phase: string) => {
+  switch (phase) {
+    case 'Initializing': return '#528A82' // Lightest green (unchanged)
+    case 'Analyzing': return '#44756E'    // Slightly darker green
+    case 'Processing': return '#365E59'   // Darker green
+    case 'Finalizing': return '#26433F'   // Darkest green (as requested)
+    default: return '#1D3330'             // Default color (middle shade)
+  }
+}
+
+interface PopupProps {
   action?: {
     action?: string
     instruction?: string
     thought?: string
   }
-  onConfirm: (confirmed: boolean) => void
-  isAgentRunning: boolean
-  isWaiting: boolean
 }
 
-const PopUpDefault: React.FC<AgentActionConfirmationProps> = ({ 
+const PopUpDefault: React.FC<PopupProps> = ({ 
   action = {}, 
-  onConfirm, 
-  isAgentRunning, 
-  isWaiting 
 }) => {
   const [progress, setProgress] = useState(0)
   const [isVisible, setIsVisible] = useState(true)
@@ -60,76 +65,16 @@ const PopUpDefault: React.FC<AgentActionConfirmationProps> = ({
     setCurrentPhase(phases[cycleIndex])
   }, [cycleIndex])
 
-  useEffect(() => {
-    const blinkInterval = setInterval(() => {
-      setIsBlinking(true)
-      setTimeout(() => setIsBlinking(false), 200)
-    }, 3000)
-
-    return () => clearInterval(blinkInterval)
-  }, [])
-
-  const getPhaseColor = (phase: string) => {
-    switch (phase) {
-      case 'Analyzing':
-        return '#3B82F6' // Blue-500
-      case 'Processing':
-        return '#2563EB' // Blue-600
-      case 'Finalizing':
-        return '#1D4ED8' // Blue-700
-      default:
-        return '#3B82F6' // Blue-500
-    }
-  }
-
-  const getEyeAnimation = () => {
-    switch (currentPhase) {
-      case 'Analyzing':
-        return {
-          x: isBlinking ? 0 : [0, 2, -2, 1, -1, 2, -2, 0],
-          y: isBlinking ? 0 : [-1, 1, -1, 2, -2, 1, -1, 0],
-          transition: { repeat: Infinity, duration: 3, ease: "easeInOut" }
-        }
-      case 'Processing':
-        return {
-          x: isBlinking ? 0 : [-2, 2, -1, 1, 0, -2, 2, -1, 1, 0],
-          y: isBlinking ? 0 : [1, -1, 2, -2, 0, -1, 1, -2, 2, 0],
-          transition: { repeat: Infinity, duration: 1.5, ease: "linear" }
-        }
-      case 'Finalizing':
-        return {
-          x: isBlinking ? 0 : [0, 2, 0, -2, 1, -1, 2, -2, 1, -1, 0],
-          y: isBlinking ? 0 : [0, -1, 2, -1, 1, -2, 1, 0, -1, 2, 0],
-          transition: { repeat: Infinity, duration: 4, ease: "easeInOut" }
-        }
-      default:
-        return {}
-    }
-  }
-
-  const getBlinkAnimation = () => {
-    return {
-      scaleY: isBlinking ? 0.1 : 1,
-      transition: { duration: 0.1 }
-    }
-  }
-
   const getCurrentPhaseIndex = () => {
     return phases.indexOf(currentPhase)
-  }
-
-  const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode)
   }
 
   return (
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          className={`fixed right-4 bottom-4 z-50 w-64 shadow-md ${ibmPlexSans.className} ${
-            isDarkMode ? 'text-white' : 'bg-white text-gray-800'
-          }`}
-          style={{ backgroundColor: isDarkMode ? '#31313C' : undefined }}
+          className={`fixed right-4 bottom-4 z-50 w-64 shadow-md ${ibmPlexSans.className}`}
+          style={{ backgroundColor: 'white' }}
           initial={{ opacity: 0, y: 20, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 20, scale: 0.95 }}
@@ -148,7 +93,7 @@ const PopUpDefault: React.FC<AgentActionConfirmationProps> = ({
                   style={{ backgroundColor: getPhaseColor(currentPhase) }}
                 >
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="relative z-10">
-                    <motion.g animate={getEyeAnimation()}>
+                    <motion.g animate={getEyeAnimation(currentPhase, isBlinking)}>
                       <motion.rect
                         x="4"
                         y="5"
@@ -156,7 +101,7 @@ const PopUpDefault: React.FC<AgentActionConfirmationProps> = ({
                         height="6"
                         rx="1"
                         fill="white"
-                        animate={getBlinkAnimation()}
+                        animate={getBlinkAnimation(isBlinking)}
                       />
                       <motion.rect
                         x="10"
@@ -165,7 +110,7 @@ const PopUpDefault: React.FC<AgentActionConfirmationProps> = ({
                         height="6"
                         rx="1"
                         fill="white"
-                        animate={getBlinkAnimation()}
+                        animate={getBlinkAnimation(isBlinking)}
                       />
                     </motion.g>
                   </svg>
@@ -174,17 +119,13 @@ const PopUpDefault: React.FC<AgentActionConfirmationProps> = ({
               </motion.div>
               <div className="flex items-center space-x-2">
                 <motion.button
-                  className={`text-${isDarkMode ? 'gray-400 hover:text-gray-200' : 'gray-600 hover:text-gray-800'} transition-colors duration-200`}
-                  onClick={toggleTheme}
+                  className={`text-gray-600 hover:text-gray-800 transition-colors duration-200`}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                 >
-                  {isDarkMode ? <Sun size={14} /> : <Moon size={14} />}
                 </motion.button>
                 <motion.button 
-                  className={`text-${isDarkMode ? 'gray-400 hover:text-gray-200' : 'gray-600 hover:text-gray-800'} transition-colors duration-200`}
-                  aria-label="Close"
-                  onClick={() => onConfirm(false)}
+                  className={`text-gray-600 hover:text-gray-800 transition-colors duration-200`}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                 >
@@ -193,7 +134,7 @@ const PopUpDefault: React.FC<AgentActionConfirmationProps> = ({
               </div>
             </div>
             <div className="space-y-2">
-              <div className={`h-1 w-full ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} overflow-hidden`}>
+              <div className={`h-1 w-full bg-gray-200 overflow-hidden`}>
                 <motion.div 
                   className="h-full"
                   initial={{ width: 0 }}
@@ -218,7 +159,7 @@ const PopUpDefault: React.FC<AgentActionConfirmationProps> = ({
                   {progress}%
                 </motion.span>
                 <motion.span 
-                  className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}
+                  className={`text-xs text-gray-500`}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.3 }}
@@ -237,7 +178,7 @@ const PopUpDefault: React.FC<AgentActionConfirmationProps> = ({
             </motion.p>
             {action?.thought && (
               <motion.p 
-                className={`mt-1 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} leading-relaxed`}
+                className={`mt-1 text-xs text-gray-500 leading-relaxed`}
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}

@@ -1,4 +1,4 @@
-// LOCATION OF AGENT ACTION VISUAL
+// VISUAL/LOCATION OF AGENT ACTION
 
 import React, { useEffect, useState } from 'react';
 

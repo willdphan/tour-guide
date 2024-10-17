@@ -10,7 +10,7 @@ import { X, Sun, Moon } from 'lucide-react'
 import { IBM_Plex_Sans } from 'next/font/google'
 import { stages } from './stagesData';
 
-interface AgentActionConfirmationProps {
+interface PopupProps {
   action?: {
     action?: string
     instruction?: string
@@ -21,7 +21,7 @@ interface AgentActionConfirmationProps {
   isWaiting: boolean
 }
 
-const PopUpDefault: React.FC<AgentActionConfirmationProps> = ({ 
+const PopUpDefault: React.FC<PopupProps> = ({ 
   action = {}, 
   onConfirm, 
   isAgentRunning, 

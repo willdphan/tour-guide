@@ -55,7 +55,7 @@ function Cursor({ x, y, color, label }: CursorProps) {
   );
 }
 
-interface AgentActionConfirmationProps {
+interface PopupProps {
   action: {
     thought?: string;
     action: string;
@@ -66,7 +66,7 @@ interface AgentActionConfirmationProps {
   isWaiting: boolean;
 }
 
-const PopUpDefault: React.FC<AgentActionConfirmationProps> = ({ 
+const PopUpDefault: React.FC<PopupProps> = ({ 
   action = {}, 
   onConfirm, 
   isAgentRunning, 

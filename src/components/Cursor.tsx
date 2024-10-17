@@ -8,6 +8,7 @@ interface CursorProps {
 }
 
 export default function Cursor({ x, y, color, isActive }: { x: number; y: number; color: string; isActive: boolean }) {
+
     return (
       <div
         style={{
