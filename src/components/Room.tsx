@@ -1,6 +1,7 @@
 "use client";
 
-// HIGHER-LEVEL COMPONENT, SPOTLIGHT SEARCH, CURSOR POSITIONING, SIMULATE AGENT ACTION OVER APP
+// HIGHER-LEVEL COMPONENT, SPOTLIGHT SEARCH, CURSOR POSITIONING, 
+// SIMULATE AGENT ACTION OVER APP - ALL PUT TOGETHER
 
 import { useCallback,useEffect, useState } from 'react';
 import { ReactNode } from "react";
@@ -16,10 +17,7 @@ function RoomContent({ children }: { children: ReactNode }) {
   const [userQuery, setUserQuery] = useState('');
   const [currentAction, setCurrentAction] = useState<any | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [isAgentRunning, setIsAgentRunning] = useState(false);
 
-  const agentCursorColor = "#0000FF"; // Blue
-  
   // SIMULATE AGENT ACTIONS
   // simulate agent actions from actionExecuter.tsx
   const simulateAgentAction = useCallback((action: any) => {
@@ -43,10 +41,6 @@ function RoomContent({ children }: { children: ReactNode }) {
     setShowConfirmation(true);
   }, [simulateAgentAction]);
 
-  useEffect(() => {
-    const {innerWidth, innerHeight} = window;
-  })
-
   // CURSOR STARTING POSITION
   // set initial cursor position to bottom right
   useEffect(() => {
@@ -67,18 +61,14 @@ function RoomContent({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('resize', updateInitialPosition);
   }, []); // run on mount
 
-
-
   return (
     <div className="h-screen overflow-hidden flex flex-col">
       <div className="flex-grow relative overflow-hidden">
         {initialCursorPosition && (
           <Cursor 
-            x={agentCursor ? agentCursor.x : initialCursorPosition.x} 
-            y={agentCursor ? agentCursor.y : initialCursorPosition.y} 
-            color={agentCursorColor} 
-            isActive={isAgentActive}
-          />
+            x={agentCursor ? agentCursor.x : initialCursorPosition.x}
+            y={agentCursor ? agentCursor.y : initialCursorPosition.y}
+            isActive={isAgentActive}  />
         )}
         <div
           className="absolute top-4 left-4 z-50 flex gap-4"
@@ -95,8 +85,9 @@ function RoomContent({ children }: { children: ReactNode }) {
         {showConfirmation && currentAction && (
           <Popup
             action={currentAction}
-            onConfirm={(confirmed) => console.log('Confirmation status:', confirmed)}
-            isAgentRunning={isAgentRunning} isWaiting={false} initialResponse={''}          />
+            isWaiting={false}
+            onClose={() => setShowConfirmation(false)}
+          />
         )}
         <div className="h-full overflow-auto bg-[#FDF9ED]">
           {children}

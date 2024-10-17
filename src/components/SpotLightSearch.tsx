@@ -4,7 +4,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react'
 import { Command, CommandInput, CommandList, CommandGroup, CommandItem } from '@/components/ui/command'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import Popup from './Popup'
-import { getPhaseColor } from './popup-minimal'
+import { getPhaseColor } from './PopupMinimal'
 
 export const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 

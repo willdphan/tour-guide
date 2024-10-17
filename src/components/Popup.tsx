@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Sun, Moon } from 'lucide-react'
+import { X } from 'lucide-react'
 
 interface PopupProps {
   action: any;
@@ -16,7 +16,6 @@ const PopupContent: React.FC<PopupProps & { onClose: () => void }> = ({
   onClose,
 }) => {
   const [progress, setProgress] = useState(0)
-  const [isDarkMode, setIsDarkMode] = useState(false)
   const [isBlinking, setIsBlinking] = useState(false)
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -131,10 +130,8 @@ const PopupContent: React.FC<PopupProps & { onClose: () => void }> = ({
 
   return (
     <motion.div
-      className={`fixed right-4 bottom-4 z-50 w-64 shadow-md  ${
-        isDarkMode ? 'text-white' : 'bg-white text-gray-800'
-      }`}
-      style={{ backgroundColor: isDarkMode ? '#31313C' : undefined }}
+      className={`fixed right-4 bottom-4 z-50 w-64 shadow-md  bg-white text-gray-800`}
+      style={{ backgroundColor: 'white' }}
       initial={{ opacity: 0, y: 20, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: 20, scale: 0.95 }}
@@ -169,15 +166,15 @@ const PopupContent: React.FC<PopupProps & { onClose: () => void }> = ({
           </motion.div>
           <div className="flex items-center space-x-2">
             <motion.button
-              className={`text-${isDarkMode ? 'gray-400 hover:text-gray-200' : 'gray-600 hover:text-gray-800'} transition-colors duration-200`}
-              onClick={() => setIsDarkMode(!isDarkMode)}
+              className={`text-gray-600 hover:text-gray-800 transition-colors duration-200`}
+          
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
             >
-              {isDarkMode ? <Sun size={14} /> : <Moon size={14} />}
+           
             </motion.button>
             <motion.button 
-              className={`text-${isDarkMode ? 'gray-400 hover:text-gray-200' : 'gray-600 hover:text-gray-800'} transition-colors duration-200`}
+              className={`text-gray-600 hover:text-gray-800 transition-colors duration-200`}
               aria-label="Close"
               onClick={onClose}
               whileHover={{ scale: 1.1 }}
@@ -188,7 +185,7 @@ const PopupContent: React.FC<PopupProps & { onClose: () => void }> = ({
           </div>
         </div>
         <div className="space-y-2">
-          <div className={`h-1 w-full ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} overflow-hidden`}>
+          <div className={`h-1 w-full bg-gray-200 overflow-hidden`}>
             <motion.div 
               className="h-full"
               initial={{ width: 0 }}
@@ -213,7 +210,7 @@ const PopupContent: React.FC<PopupProps & { onClose: () => void }> = ({
               {progress}%
             </motion.span>
             <motion.span 
-              className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}
+              className={`text-xs text-gray-600`}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
@@ -231,7 +228,7 @@ const PopupContent: React.FC<PopupProps & { onClose: () => void }> = ({
         />
         {action.thought && (
           <motion.p 
-            className={`mt-1 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} leading-relaxed`}
+            className={`mt-1 text-xs text-gray-600 leading-relaxed`}
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}

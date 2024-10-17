@@ -3,11 +3,10 @@ import React from "react";
 interface CursorProps {
     x: number, 
     y: number,
-    color: string,
     isActive: boolean
 }
 
-export default function Cursor({ x, y, color, isActive }: { x: number; y: number; color: string; isActive: boolean }) {
+export default function Cursor({ x, y,  isActive }: CursorProps) {
 
     return (
       <div

@@ -1,4 +1,4 @@
-// VISUAL/LOCATION OF AGENT ACTION
+// VISUAL/LOCATION OF AGENT ACTION. RED BOUNDING BOX.
 
 import React, { useEffect, useState } from 'react';
 

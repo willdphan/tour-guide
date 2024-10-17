@@ -8,7 +8,6 @@ import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/utils/cn';
 
 import { Room } from '../components/Room';
-import ScreenLocationOverlay from '../components/ScreenLocationOverlay';
 
 import '@/styles/globals.css';
 

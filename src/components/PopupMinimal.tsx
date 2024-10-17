@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Sun, Moon } from 'lucide-react'  // Add Sun and Moon here
+import { X } from 'lucide-react'
 import { IBM_Plex_Sans } from 'next/font/google'
 import { getEyeAnimation, getBlinkAnimation } from '@/utils/animations'
 
