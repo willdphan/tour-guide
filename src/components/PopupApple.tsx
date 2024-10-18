@@ -1,5 +1,5 @@
 // APPLE-STYLED POPUPS
-// component pop-up with apply styling
+// component pop-up with apple styling. just different styling
 
 import { AnimatePresence, motion } from "framer-motion"
 import { useState, useEffect } from "react"
@@ -34,20 +34,11 @@ export default function PopUpApple() {
     }
   }, [progress])
 
-  const boxStyle: React.CSSProperties = {
-    position: 'fixed',
-    right: '24px',
-    bottom: '24px',
-    zIndex: 9999,
-    maxWidth: '320px',
-    width: '100%',
-  }
-
   return (
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          style={boxStyle}
+          className="fixed right-6 bottom-6 z-[9999] max-w-[320px] w-full"
           initial={{ opacity: 0, y: 20, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 20, scale: 0.95 }}

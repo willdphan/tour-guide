@@ -6,7 +6,7 @@ import dynamic from "next/dynamic";
 import { Montserrat, Montserrat_Alternates } from "next/font/google";
 import { Toaster } from "@/components/ui/toaster";
 import { cn } from "@/utils/cn";
-import "@/styles/globals.css";
+import "public/globals.css";
 import { NaviWrapper } from "@/components/NaviAssistant";
 
 const Analytics = dynamic(
@@ -14,6 +14,7 @@ const Analytics = dynamic(
   { ssr: false }
 );
 
+// TODO: Convert to tailwind
 const montserrat = Montserrat({
   variable: "--font-montserrat",
   subsets: ["latin"],

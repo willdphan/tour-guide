@@ -6,7 +6,7 @@ import { Star, ArrowUpRight } from "lucide-react";
 import PopUpDefault from "@/components/PopupHome";
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { stages } from "./stagesData";
+import { stages } from "../utils/stagesData";
 import { getHomeEyeAnimation } from "@/utils/animations";
 
 export default function Component() {
