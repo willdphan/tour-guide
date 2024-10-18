@@ -4,26 +4,12 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
-import { getHomeEyeAnimation } from "@/utils/animations";
+import { getHomeEyeAnimation, getBlinkAnimation } from "@/utils/animations";
 import { stages } from "@/utils/stagesData";
+import { getPhaseColor } from "@/utils/animations";
+import { PopupProps } from "@/types/action-response";
 
-interface PopupProps {
-  action?: {
-    action?: string;
-    instruction?: string;
-    thought?: string;
-  };
-  onConfirm: (confirmed: boolean) => void;
-  isAgentRunning: boolean;
-  isWaiting: boolean;
-}
-
-const PopUpDefault: React.FC<PopupProps> = ({
-  action = {},
-  onConfirm,
-  isAgentRunning,
-  isWaiting,
-}) => {
+const PopUpDefault: React.FC<PopupProps> = ({ action = {} }) => {
   const [progress, setProgress] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
   const [currentPhase, setCurrentPhase] = useState(0);
@@ -42,88 +28,53 @@ const PopUpDefault: React.FC<PopupProps> = ({
   ];
 
   useEffect(() => {
-    let progressTimer: NodeJS.Timeout;
-    let phaseTimer: NodeJS.Timeout;
-    let resetTimer: NodeJS.Timeout;
+    const PROGRESS_INTERVAL = 25;
+    const PHASE_INTERVAL = 2000;
+    const RESET_INTERVAL = 3000;
+
+    const updateProgress = () => {
+      setProgress((prev) => (prev >= 100 ? 100 : prev + 1.25));
+    };
+
+    const updatePhase = () => {
+      setCurrentPhase((prev) => {
+        const next = (prev + 1) % phases.length;
+        setNotifications((prevNotifs) =>
+          [phases[next].name, ...prevNotifs].slice(0, 4)
+        );
+        if (next === 0) setIsResetting(true);
+        return next;
+      });
+    };
 
     const startAnimation = () => {
       setIsResetting(false);
       setProgress(0);
       setCurrentPhase(0);
       setNotifications([]);
-
-      progressTimer = setInterval(() => {
-        setProgress((prevProgress) => {
-          if (prevProgress >= 100) {
-            clearInterval(progressTimer);
-            return 100;
-          }
-          return prevProgress + 1.25; // Increase by 1.25% every 25ms to reach 100% in 2 seconds
-        });
-      }, 25);
-
-      phaseTimer = setInterval(() => {
-        setCurrentPhase((prevPhase) => {
-          const nextPhase = (prevPhase + 1) % phases.length;
-          setNotifications((prevNotifications) => {
-            const newNotifications = [
-              phases[nextPhase].name,
-              ...prevNotifications,
-            ];
-            return newNotifications.slice(0, 4);
-          });
-          if (nextPhase === 0) {
-            clearInterval(progressTimer);
-            clearInterval(phaseTimer);
-            setIsResetting(true);
-          }
-          return nextPhase;
-        });
-      }, 2000); // Change phase every 2 seconds
     };
+
+    const progressTimer = setInterval(updateProgress, PROGRESS_INTERVAL);
+    const phaseTimer = setInterval(updatePhase, PHASE_INTERVAL);
+    const resetTimer = setInterval(
+      () => isResetting && startAnimation(),
+      RESET_INTERVAL
+    );
+
+    // Add blinking effect
+    const blinkInterval = setInterval(() => {
+      setIsBlinking(true);
+      setTimeout(() => setIsBlinking(false), 100);
+    }, 3000);
 
     startAnimation();
 
-    resetTimer = setInterval(() => {
-      if (isResetting) {
-        startAnimation();
-      }
-    }, 3000); // Check every 3 seconds if we need to restart the animation
-
-    const blinkInterval = setInterval(() => {
-      setIsBlinking(true);
-      setTimeout(() => setIsBlinking(false), 200);
-    }, 3000);
-
     return () => {
-      clearInterval(progressTimer);
-      clearInterval(phaseTimer);
-      clearInterval(resetTimer);
-      clearInterval(blinkInterval);
+      [progressTimer, phaseTimer, resetTimer, blinkInterval].forEach(
+        clearInterval
+      );
     };
   }, [isResetting]);
-
-  const getPhaseColor = (phase: string) => {
-    switch (phase) {
-      case "Initializing":
-        return "#528A82"; // Lightest green (unchanged)
-      case "Analyzing":
-        return "#44756E"; // Slightly darker green
-      case "Processing":
-        return "#365E59"; // Darker green
-      case "Finalizing":
-        return "#26433F"; // Darkest green (as requested)
-      default:
-        return "#1D3330"; // Default color (middle shade)
-    }
-  };
-
-  const getBlinkAnimation = () => {
-    return {
-      scaleY: isBlinking ? 0.1 : 1,
-      transition: { duration: 0.1 },
-    };
-  };
 
   return (
     <AnimatePresence>
@@ -162,21 +113,21 @@ const PopUpDefault: React.FC<PopupProps> = ({
                     >
                       <motion.rect
                         x="11"
-                        y="14" // Changed from 10 to 14
+                        y="14"
                         width="3"
                         height="7"
                         rx="1.5"
                         fill="white"
-                        animate={getBlinkAnimation()}
+                        animate={getBlinkAnimation(isBlinking)}
                       />
                       <motion.rect
                         x="18"
-                        y="14" // Changed from 10 to 14
+                        y="14"
                         width="3"
                         height="10"
                         rx="1.5"
                         fill="white"
-                        animate={getBlinkAnimation()}
+                        animate={getBlinkAnimation(isBlinking)}
                       />
                     </motion.g>
                   </svg>
@@ -194,7 +145,6 @@ const PopUpDefault: React.FC<PopupProps> = ({
                 <motion.button
                   className={`text-gray-600 transition-colors duration-200 hover:text-gray-800`}
                   aria-label="Close"
-                  onClick={() => onConfirm(false)}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                 >

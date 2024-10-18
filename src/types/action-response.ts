@@ -19,6 +19,7 @@ export interface Stage {
 
 export interface PopupProps {
   action?: {
+    description: string;
     action?: string
     instruction?: string
     thought?: string

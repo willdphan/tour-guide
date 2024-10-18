@@ -17,43 +17,30 @@ export const PopupContent: React.FC<
 > = ({ action, isWaiting, onClose }) => {
   const [progress, setProgress] = useState(0);
   const [isBlinking, setIsBlinking] = useState(false);
-
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const currentPhase = getCurrentPhase({ isWaiting, action });
+  const blinkAnimation = getBlinkAnimation(isBlinking);
 
   // is isWaiting is true, update progress every 100ms
   // progress increases by 1 each time, but it stops at 99% to give the impression
   // that it's almost complete but still waiting.
   useEffect(() => {
+    const updateProgress = () => {
+      setProgress((prev) => (prev >= 99 ? 99 : prev + 1));
+    };
+
     let intervalId: NodeJS.Timeout | null = null;
 
     if (isWaiting) {
-      // Start the progress interval when waiting
-      intervalId = setInterval(() => {
-        // callback
-        setProgress((prevProgress) => Math.min(prevProgress + 1, 99));
-      }, 100);
+      intervalId = setInterval(updateProgress, 100);
     } else {
-      // Set progress to 100% when not waiting
       setProgress(100);
     }
 
-    // Cleanup function
     return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
+      if (intervalId) clearInterval(intervalId);
     };
   }, [isWaiting]);
-
-  // BLINK INTERVALS
-  useEffect(() => {
-    const blinkInterval = setInterval(() => {
-      setIsBlinking(true);
-      setTimeout(() => setIsBlinking(false), 200);
-    }, 3000);
-
-    return () => clearInterval(blinkInterval);
-  }, []);
 
   // Reset progress when entering Initializing phase
   useEffect(() => {
@@ -101,7 +88,7 @@ export const PopupContent: React.FC<
                     height="6"
                     rx="1"
                     fill="white"
-                    animate={getBlinkAnimation(isBlinking)}
+                    animate={blinkAnimation}
                   />
                   <motion.rect
                     x="10"
@@ -110,7 +97,7 @@ export const PopupContent: React.FC<
                     height="6"
                     rx="1"
                     fill="white"
-                    animate={getBlinkAnimation(isBlinking)}
+                    animate={blinkAnimation}
                   />
                 </motion.g>
               </svg>
