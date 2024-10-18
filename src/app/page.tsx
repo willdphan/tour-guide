@@ -1,5 +1,5 @@
 "use client";
-// TEMPLATE HOME PAGE LAYOUT
+// TEMPLATE HOME PAGE DESIGN
 
 import Link from "next/link";
 import { Star, ArrowUpRight } from "lucide-react";

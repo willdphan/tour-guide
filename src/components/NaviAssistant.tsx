@@ -6,12 +6,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { ReactNode } from "react";
 import SpotLightSearch from "@/components/SpotLightSearch";
-import Popup from "./PopupNavi";
+import Popup from "./Popup";
 import Cursor from "./Cursor";
 import { simulateAgent } from "@/utils/actionExecuter";
 
 // SPOTLIGHT AND NAVI POPUP
-function NaviInterface({ children }: { children: ReactNode }) {
+export default function NaviInterface({ children }: { children: ReactNode }) {
   const [agentCursor, setAgentCursor] = useState<{
     x: number;
     y: number;
@@ -105,8 +105,4 @@ function NaviInterface({ children }: { children: ReactNode }) {
       </div>
     </div>
   );
-}
-
-export function NaviWrapper({ children }: { children: ReactNode }) {
-  return <NaviInterface>{children}</NaviInterface>;
 }

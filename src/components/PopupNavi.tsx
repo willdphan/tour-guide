@@ -12,35 +12,35 @@ import { ExtendedPopupProps } from "@/types/action-response";
 import { getCurrentPhase } from "@/utils/phase";
 import { formatPercentage } from "@/utils/percentage";
 
-export const PopupContent: React.FC<ExtendedPopupProps & { onClose: () => void }> = ({
-  action,
-  isWaiting,
-  onClose,
-}) => {
+export const PopupContent: React.FC<
+  ExtendedPopupProps & { onClose: () => void }
+> = ({ action, isWaiting, onClose }) => {
   const [progress, setProgress] = useState(0);
   const [isBlinking, setIsBlinking] = useState(false);
-  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  const currentPhase = getCurrentPhase({ isWaiting, action });
+
+  // is isWaiting is true, update progress every 100ms
+  // progress increases by 1 each time, but it stops at 99% to give the impression
+  // that it's almost complete but still waiting.
   useEffect(() => {
+    let intervalId: NodeJS.Timeout | null = null;
+
     if (isWaiting) {
-      progressIntervalRef.current = setInterval(() => {
-        setProgress((prevProgress) => {
-          if (prevProgress >= 99) {
-            return 99;
-          }
-          return prevProgress + 1;
-        });
+      // Start the progress interval when waiting
+      intervalId = setInterval(() => {
+        // callback
+        setProgress((prevProgress) => Math.min(prevProgress + 1, 99));
       }, 100);
     } else {
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-      }
+      // Set progress to 100% when not waiting
       setProgress(100);
     }
 
+    // Cleanup function
     return () => {
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
+      if (intervalId) {
+        clearInterval(intervalId);
       }
     };
   }, [isWaiting]);
@@ -54,8 +54,6 @@ export const PopupContent: React.FC<ExtendedPopupProps & { onClose: () => void }
 
     return () => clearInterval(blinkInterval);
   }, []);
-
-  const currentPhase = getCurrentPhase({ isWaiting, action });
 
   // Reset progress when entering Initializing phase
   useEffect(() => {

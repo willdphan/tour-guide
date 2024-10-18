@@ -1,5 +1,5 @@
 "use client";
-// PAGE LAYOUT
+// ROOT PAGE LAYOUT
 
 import { PropsWithChildren } from "react";
 import dynamic from "next/dynamic";
@@ -7,7 +7,7 @@ import { Montserrat, Montserrat_Alternates } from "next/font/google";
 import { Toaster } from "@/components/ui/toaster";
 import { cn } from "@/utils/cn";
 import "public/globals.css";
-import { NaviWrapper } from "@/components/NaviAssistant";
+import NaviWrapper from "@/components/NaviWrapper";
 
 const Analytics = dynamic(
   () => import("@vercel/analytics/react").then((mod) => mod.Analytics),
@@ -39,6 +39,7 @@ export default function RootLayout({ children }: PropsWithChildren) {
         <div className="">
           <main className="">
             <div className="">
+              {/* wrapped around children for popup navigation */}
               <NaviWrapper>
                 {children}
                 {/* <ScreenLocationOverlay /> */}
