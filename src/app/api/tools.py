@@ -173,21 +173,3 @@ async def to_home(state: AgentState):
     page = state["page"]
     await page.goto("https://tour-guide-liard.vercel.app/")
     return "Navigated to home page."
-
-async def enhanced_content_analysis(page):
-    html_content = await page.content()
-    soup = BeautifulSoup(html_content, 'html.parser')
-
-    return {
-        'elements': extract_elements(soup),
-        'headings': extract_headings(soup),
-        'links': extract_links(soup),
-        'images': extract_images(soup),
-        'forms': extract_forms(soup),
-        'buttons': extract_buttons(soup),
-        'structured_data': extract_structured_data(soup),
-        'meta_tags': extract_meta_tags(soup),
-        'main_content': extract_main_content(soup),
-        'keywords': extract_keywords(soup),
-        'text_content': extract_text_content(soup)
-    }

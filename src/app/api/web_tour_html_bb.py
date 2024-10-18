@@ -27,8 +27,6 @@ from langgraph.graph import END
 
 from langchain_core.messages import BaseMessage, SystemMessage
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_core.runnables import RunnablePassthrough, RunnableLambda, chain as chain_decorator
 from langchain_openai import ChatOpenAI
 from langchain import hub
 from langgraph.graph import END, StateGraph
@@ -50,8 +48,8 @@ from .extract import (
     extract_text_content,
     extract_keywords
 )
-from .tools import *
-
+from .extract import parse, format_descriptions, parse, enhanced_content_analysis
+from .mark import annotate
 
 from pydantic import BaseModel
 from PIL import Image
@@ -70,185 +68,7 @@ os.environ["LANGCHAIN_PROJECT"] = "Web-Voyager"
 os.environ["LANGCHAIN_API_KEY"] = os.getenv("LANGCHAIN_API_KEY")
 os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
 
-###############
-# AGENT TOOLS #
-###############
 
-#################
-# ASYNC WRAPPER #
-#################
-
-# Define mark_page function, THIS MARKS BOUNDING BOXES.
-# done with the mark_page.js file
-import os
-
-# Construct the path to mark_page.js relative to the current file
-current_dir = os.path.dirname(os.path.abspath(__file__))
-mark_page_js_path = os.path.join(current_dir, "mark_page.js")
-
-# Read mark_page.js
-try:
-    with open(mark_page_js_path, "r") as f:
-        mark_page_script = f.read()
-except FileNotFoundError:
-    print(f"Error: Could not find mark_page.js at {mark_page_js_path}")
-    mark_page_script = ""  # Set to empty string or handle this error as appropriate for your application
-
-# decorator for chaining operations
-# a way to wrap a function with another function, adding functionality before 
-# or after the wrapped function executes
-@chain_decorator
-# asynchronous function to mark elements on the page
-async def mark_page(page, browserbase_instance):
-    # execute the marking script on the page
-    await page.evaluate(mark_page_script)
-    # try to mark the page up to 10 times
-    for _ in range(30):
-        try:
-            # execute the markPage function and get bounding boxes
-            bboxes = await page.evaluate("markPage()")
-            # exit loop if successful
-            break
-        except:
-            # wait for 3 seconds before retrying
-            await asyncio.sleep(2)
-    # take a screenshot using Browserbase
-    screenshot = browserbase_instance.screenshot(page.url, full_page=True)
-    # return the screenshot and bounding boxes
-    return {
-        # use the Browserbase screenshot
-        "img": screenshot,
-        # return the bounding boxes
-        "bboxes": bboxes,
-    }
-
-# Define agent functions
-async def annotate(state):
-    current_url = state["page"].url
-    html_content = await state["page"].content()
-    text_content = await state["page"].evaluate("() => document.body.innerText")
-    content_analysis = await enhanced_content_analysis(state["page"])
-    marked_page = await mark_page.with_retry().ainvoke(state["page"], state["browserbase_instance"])
-    screenshot = marked_page["img"]
-
-    return {**state, **marked_page, "current_url": current_url, "html_content": html_content, "text_content": text_content, "content_analysis": content_analysis, "screenshot": screenshot}
-
-"""
-Takes the raw data from the extraction functions and formats it to make more readable.
-Page Elements: Lists the first 20 anchor, button, or input elements.
-Buttons: Lists the first 10 button elements.
-Inputs: Lists the first 10 input elements.
-Headings: Lists the first 5 headings.
-Links: Lists the first 5 links with their text and href.
-Images: Lists the first 5 images with their alt text and src.
-Forms: Lists the first 3 forms with their action and method.
-Div Content: Lists the first 5 div elements' content (truncated to 30 characters).
-Span Content: Lists the first 5 span elements' content (truncated to 30 characters).
-Meta Tags: Lists the first 5 meta tags.
-Navigation Items: Lists the first 5 navigation items.
-Keywords: Lists the first 10 keywords.
-Main Content Summary: Shows the first 200 characters of the main content.
-"""
-# TODO: put into another file
-def format_descriptions(state):
-    content_analysis = state.get('content_analysis', {})
-    formatted_analysis = f"""
-    Page Elements:
-    {', '.join([f"<{e['type']} id={e['id']}>{e['text'][:30]} href={e['href']}" for e in content_analysis.get('elements', []) if e['type'] in ['a', 'button', 'input']][:20])}
-    
-    Buttons:
-    {', '.join([f"<button id={e['id']}>{e['text'][:30]}" for e in content_analysis.get('elements', []) if e['type'] == 'button'][:10])}
-    
-    Inputs:
-    {', '.join([f"<input id={e['id']} type={e.get('id_attr', '')}" for e in content_analysis.get('elements', []) if e['type'] == 'input'][:10])}
-    
-    Headings: {', '.join([f"{h['level']}: {h['text']}" for h in content_analysis.get('headings', [])][:5])}
-    
-    Links: {', '.join([f"{link['text']} ({link['href']})" for link in content_analysis.get('links', [])][:5])}
-    
-    Images: {', '.join([f"{img['alt']} ({img['src']})" for img in content_analysis.get('images', [])][:5])}
-    
-    Forms: {', '.join([f"Action: {form['action']}, Method: {form['method']}" for form in content_analysis.get('forms', [])][:3])}
-    
-    Div Content: {', '.join([f"{div['text'][:30]}..." for div in content_analysis.get('div_content', [])][:5])}
-    
-    Span Content: {', '.join([f"{span['text'][:30]}..." for span in content_analysis.get('span_content', [])][:5])}
-    
-    Meta Tags: {', '.join([f"{k}: {v}" for k, v in list(content_analysis.get('meta_tags', {}).items())[:5]])}
-    
-    Navigation Items: {', '.join(content_analysis.get('nav_items', [])[:5])}
-    
-    Keywords: {', '.join(content_analysis.get('keywords', [])[:10])}
-    
-    Main Content Summary: {content_analysis.get('main_content', '')[:200]}...
-    """
-    
-    action_history = state.get("action_history", [])
-    formatted_history = "\n".join([f"{a['step']}. {a['action']} {a['args']} (URL: {a['url']})" for a in action_history])
-    
-    # page_info = f"Page height: {state['page_height']}px, Viewport height: {state['viewport_height']}px"
-    
-    text_summary = state['text_content'][:500] + "..." if len(state['text_content']) > 500 else state['text_content']
-    
-    # Add screenshot information
-    screenshot_info = "Screenshot: A labeled screenshot of the current webpage is available for analysis."
-    
-    return {
-        **state, # unpacks the state
-        "action_history": formatted_history, 
-        # "page_info": page_info, 
-        "text_summary": text_summary,
-        "content_analysis": formatted_analysis,
-        "screenshot_info": screenshot_info
-    }
-
-"""
-This function is designed to extract and structure the action and its arguments from the output of a language model (LLM). Here's what it does:
-
-1. It looks for the last line in the input text that starts with "Action: ".
-2. If found, it extracts the action and any associated arguments from this line.
-3. The action is the first word after "Action: ".
-4. Any additional words are considered arguments. Multiple arguments are separated by semicolons.
-5. It cleans up the extracted data by removing extra whitespace and brackets.
-6. If no action is found, it returns a "retry" action with an error message.
-7. The function returns a dictionary with two keys:
-    "action": The extracted action (a string)
-    "args": The extracted arguments (a list of strings, or None if no arguments)
-"""
-# TODO: Put into another file
-def parse(text: str) -> dict:
-    # Define the prefix that indicates the start of an action
-    action_prefix = "Action: "
-    
-    # Split the input text into lines
-    lines = text.strip().split("\n")
-    
-    # Find the last line that starts with "Action: "
-    action_line = next((line for line in reversed(lines) if line.startswith(action_prefix)), None)
-    
-    # If no action line is found, return a retry action
-    if not action_line:
-        return {"action": "retry", "args": f"Could not parse LLM Output: {text}"}
-    
-    # Remove the "Action: " prefix from the action line
-    action_str = action_line[len(action_prefix):]
-    
-    # Split the action string into action and input (if any)
-    split_output = action_str.split(" ", 1)
-    if len(split_output) == 1:
-        action, action_input = split_output[0], None
-    else:
-        action, action_input = split_output
-    
-    # Strip any whitespace from the action
-    action = action.strip()
-    
-    # If there's action input, process it
-    if action_input is not None:
-        action_input = [inp.strip().strip("[]") for inp in action_input.strip().split(";")]
-    
-    # Return the parsed action and arguments
-    return {"action": action, "args": action_input}
 
 """
 The update_scratchpad function manages an agent's recent actions and observations during web navigation. It appends the latest observation to a text log and adds the current action to a history list. 
@@ -430,6 +250,9 @@ def prepare_image_for_llm(base64_image):
         "type": "image_url",
         "image_url": f"data:image/jpeg;base64,{base64_image}"
     }
+
+
+
 
 def generate_personable_instruction(action, element_description, text_input):
     llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0.7)
