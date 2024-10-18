@@ -99,6 +99,7 @@ export default function NaviInterface({ children }: { children: ReactNode }) {
             action={currentAction}
             isWaiting={false}
             onClose={() => setShowConfirmation(false)}
+            backgroundColor={""}
           />
         )}
         <div className="h-full overflow-auto bg-[#FDF9ED]">{children}</div>

@@ -32,3 +32,9 @@ export interface ExtendedPopupProps extends PopupProps {
   backgroundColor: string;
   onClose: () => void;
 }
+
+export interface CursorProps {
+  x: number;
+  y: number;
+  isActive: boolean;
+}

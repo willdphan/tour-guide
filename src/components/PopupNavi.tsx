@@ -19,7 +19,6 @@ export const PopupContent: React.FC<
   const [isBlinking, setIsBlinking] = useState(false);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const currentPhase = getCurrentPhase({ isWaiting, action });
-  const blinkAnimation = getBlinkAnimation(isBlinking);
 
   // is isWaiting is true, update progress every 100ms
   // progress increases by 1 each time, but it stops at 99% to give the impression
@@ -48,6 +47,16 @@ export const PopupContent: React.FC<
       setProgress(0);
     }
   }, [currentPhase]);
+
+  // Add new useEffect for blinking
+  useEffect(() => {
+    const blinkInterval = setInterval(() => {
+      setIsBlinking(true);
+      setTimeout(() => setIsBlinking(false), 100);
+    }, 3000);
+
+    return () => clearInterval(blinkInterval);
+  }, []);
 
   return (
     <motion.div
@@ -88,7 +97,7 @@ export const PopupContent: React.FC<
                     height="6"
                     rx="1"
                     fill="white"
-                    animate={blinkAnimation}
+                    animate={getBlinkAnimation(isBlinking)}
                   />
                   <motion.rect
                     x="10"
@@ -97,7 +106,7 @@ export const PopupContent: React.FC<
                     height="6"
                     rx="1"
                     fill="white"
-                    animate={blinkAnimation}
+                    animate={getBlinkAnimation(isBlinking)}
                   />
                 </motion.g>
               </svg>

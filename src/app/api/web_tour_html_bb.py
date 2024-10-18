@@ -34,14 +34,30 @@ from langchain import hub
 from langgraph.graph import END, StateGraph
 from playwright.async_api import Page, async_playwright, Error as PlaywrightError
 from browserbase import Browserbase
-
-import bs4
 from bs4 import BeautifulSoup
-from collections import Counter
+from collections import Counter 
+from .prompts import custom_prompt, initial_response_prompt, personable_prompt
+from .extract import (
+    extract_elements,
+    extract_buttons,
+    extract_headings,
+    extract_links,
+    extract_images,
+    extract_forms,
+    extract_structured_data,
+    extract_meta_tags,
+    extract_main_content,
+    extract_text_content,
+    extract_keywords
+)
+from .tools import *
+
 
 from pydantic import BaseModel
 from PIL import Image
 import io
+
+from .types import BBox, Prediction, AgentState, ScreenLocation, Step, AgentResponse
 
 # Load environment variables
 load_dotenv()
@@ -54,305 +70,9 @@ os.environ["LANGCHAIN_PROJECT"] = "Web-Voyager"
 os.environ["LANGCHAIN_API_KEY"] = os.getenv("LANGCHAIN_API_KEY")
 os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
 
-# Define types
-class BBox(TypedDict):
-    x: float
-    y: float
-    text: str
-    type: str
-    ariaLabel: str
-
-class Prediction(TypedDict):
-    action: str
-    args: Optional[List[str]]
-
-class AgentState(TypedDict):
-    page: Page
-    input: str
-    img: str
-    bboxes: List[BBox]
-    prediction: Prediction
-    scratchpad: List[BaseMessage]
-    observation: str
-    current_url: str
-    action_history: List[dict]
-    viewport_height: int
-    html_content: str
-    text_content: str
-    content_analysis: dict
-    screenshot: Optional[str]  # Base64 encoded screenshot
-
-class ScreenLocation(BaseModel):
-    x: float
-    y: float
-    width: float
-    height: float
-
-class Step(BaseModel):
-    thought: str
-    action: str
-    instruction: str
-    element_description: Optional[str] = None
-    screen_location: Optional[dict] = None
-    hover_before_action: bool = False
-    text_input: Optional[str] = None
-    duration: float = 2.0  # Default duration in seconds
-
-class AgentResponse(BaseModel):
-    steps: List[Step]
-    final_answer: Optional[str] = None
-    current_url: str
-
 ###############
 # AGENT TOOLS #
 ###############
-
-# Define tools
-async def click(state: AgentState):
-    page = state["page"]
-    click_args = state["prediction"]["args"]
-
-    if click_args is None or len(click_args) != 1:
-        return f"Failed to click element with ID {click_args}"
-    
-    element_id = int(click_args[0])
-    elements = state["content_analysis"]["elements"]
-
-    if element_id < 0 or element_id >= len(elements):
-        return f"Invalid element ID: {element_id}"
-    
-    element = elements[element_id]
-    
-    selector = None
-    if element['html_id']:
-        selector = f"#{element['html_id']}"
-    elif element['name']:
-        selector = f"[name='{element['name']}']"
-    elif element['href']:
-        selector = f"a[href='{element['href']}']"
-    else:
-        selector = f"{element['type']}:has-text('{element['text']}')"
-    
-    try:
-        print(f"Attempting to click element with selector: {selector}")
-        
-        # First, try to scroll the element into view
-        await page.evaluate(f"""
-            (selector) => {{
-                const element = document.querySelector(selector);
-                if (element) {{
-                    element.scrollIntoView({{behavior: 'smooth', block: 'center', inline: 'center'}});
-                }}
-            }}
-        """, selector)
-        
-        # Wait a bit for any animations to complete
-        await page.wait_for_timeout(1000)
-        
-        # Now try to click the element
-        await page.click(selector, timeout=5000)
-        
-        return f"Clicked element with ID {element_id}"
-    
-    except Exception as e:
-        print(f"Failed to click element with ID {element_id}: {str(e)}")
-        print(f"Element details: {json.dumps(element, indent=2)}")
-        
-        # If click fails, try to execute click via JavaScript
-        try:
-            await page.evaluate(f"""
-                (selector) => {{
-                    const element = document.querySelector(selector);
-                    if (element) {{
-                        element.click();
-                    }}
-                }}
-            """, selector)
-            return f"Clicked element with ID {element_id} using JavaScript"
-        except Exception as js_e:
-            return f"Failed to click element with ID {element_id} even with JavaScript: {str(js_e)}"
-
-async def type_text(state: AgentState):
-    page = state["page"]
-    type_args = state["prediction"]["args"]
-
-    if type_args is None or len(type_args) != 2:
-        return f"Failed to type in element from bounding box labeled as number {type_args}"
-    
-    bbox_id = int(type_args[0])
-    bbox = state["bboxes"][bbox_id]
-    x, y = bbox["x"], bbox["y"]
-    text_content = type_args[1]
-
-    await page.mouse.click(x, y)
-    select_all = "Meta+A" if platform.system() == "Darwin" else "Control+A"
-
-    await page.keyboard.press(select_all)
-    await page.keyboard.press("Backspace")
-
-    await page.keyboard.type(text_content)
-    await page.keyboard.press("Enter")
-
-    return f"Typed {text_content} and submitted"
-
-async def scroll(state: AgentState):
-    page = state["page"]
-    scroll_args = state["prediction"]["args"]
-
-    if scroll_args is None or len(scroll_args) != 2:
-        return "Failed to scroll due to incorrect arguments. Please specify target and direction."
-
-    target, direction = scroll_args
-
-    if target.upper() == "WINDOW":
-        vertical_scroll_amount = 500
-        horizontal_scroll_amount = 300
-        if direction.lower() == "up":
-            scroll_x, scroll_y = 0, -vertical_scroll_amount
-        elif direction.lower() == "down":
-            scroll_x, scroll_y = 0, vertical_scroll_amount
-        elif direction.lower() == "left":
-            scroll_x, scroll_y = -horizontal_scroll_amount, 0
-        elif direction.lower() == "right":
-            scroll_x, scroll_y = horizontal_scroll_amount, 0
-        else:
-            return f"Invalid scroll direction: {direction}"
-        await page.evaluate(f"window.scrollBy({scroll_x}, {scroll_y})")
-    else:
-        try:
-            target_id = int(target)
-            bbox = state["bboxes"][target_id]
-            x, y = bbox["x"], bbox["y"]
-            vertical_scroll_amount = 200
-            horizontal_scroll_amount = 100
-            if direction.lower() == "up":
-                delta_x, delta_y = 0, -vertical_scroll_amount
-            elif direction.lower() == "down":
-                delta_x, delta_y = 0, vertical_scroll_amount
-            elif direction.lower() == "left":
-                delta_x, delta_y = -horizontal_scroll_amount, 0
-            elif direction.lower() == "right":
-                delta_x, delta_y = horizontal_scroll_amount, 0
-            else:
-                return f"Invalid scroll direction: {direction}"
-            await page.mouse.move(x, y)
-            await page.mouse.wheel(delta_x, delta_y)
-        except ValueError:
-            return f"Invalid target for scrolling: {target}"
-        except IndexError:
-            return f"Invalid bounding box ID: {target}"
-
-    return f"Scrolled {direction} in {'window' if target.upper() == 'WINDOW' else f'element {target}'}"
-
-async def wait(state: AgentState):
-    sleep_time = 2
-    await asyncio.sleep(sleep_time)
-    return f"Waited for {sleep_time}s."
-
-async def go_back(state: AgentState):
-    page = state["page"]
-    await page.go_back()
-    return f"Navigated back a page to {page.url}."
-
-async def to_google(state: AgentState):
-    page = state["page"]
-    await page.goto("https://google.com")
-    return "Navigated to Google."
-
-async def to_home(state: AgentState):
-    page = state["page"]
-    await page.goto("https://tour-guide-liard.vercel.app/")
-    return "Navigated to home page."
-
-async def enhanced_content_analysis(page):
-    html_content = await page.content()
-    soup = BeautifulSoup(html_content, 'html.parser')
-
-    return {
-        'elements': extract_elements(soup),
-        'headings': extract_headings(soup),
-        'links': extract_links(soup),
-        'images': extract_images(soup),
-        'forms': extract_forms(soup),
-        'buttons': extract_buttons(soup),
-        'structured_data': extract_structured_data(soup),
-        'meta_tags': extract_meta_tags(soup),
-        'main_content': extract_main_content(soup),
-        'keywords': extract_keywords(soup),
-        'text_content': extract_text_content(soup)
-    }
-
-######################
-# ELEMENT EXTRACTION #
-######################
-
-def extract_elements(soup):
-    elements = []
-    for idx, element in enumerate(soup.find_all(['a', 'button', 'input', 'div', 'span', 'nav'])):
-        elements.append({
-            'id': idx,
-            'type': element.name,
-            'text': element.text.strip(),
-            'href': element.get('href'),
-            'class': element.get('class'),
-            'html_id': element.get('id'),
-            'name': element.get('name')
-        })
-    return elements
-
-def extract_buttons(soup):
-    return [{'text': btn.text.strip(), 'type': btn.get('type')} for btn in soup.find_all('button')]
-
-def extract_headings(soup):
-    return [{'level': h.name, 'text': h.text.strip()} for h in soup.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])]
-
-def extract_links(soup):
-    return [{'text': a.text.strip(), 'href': a.get('href'), 'title': a.get('title')} for a in soup.find_all('a', href=True)]
-
-def extract_images(soup):
-    return [{'src': img.get('src'), 'alt': img.get('alt')} for img in soup.find_all('img')]
-
-def extract_forms(soup):
-    forms = []
-    for form in soup.find_all('form'):
-        forms.append({
-            'action': form.get('action'),
-            'method': form.get('method'),
-            'inputs': [{'type': input_tag.get('type'), 'name': input_tag.get('name'), 'placeholder': input_tag.get('placeholder')} 
-                       for input_tag in form.find_all('input')]
-        })
-    return forms
-
-def extract_structured_data(soup):
-    structured_data = {}
-    for script in soup.find_all('script', {'type': 'application/ld+json'}):
-        try:
-            data = json.loads(script.string)
-            if isinstance(data, list):
-                structured_data.update({item['@type']: item for item in data if '@type' in item})
-            elif '@type' in data:
-                structured_data[data['@type']] = data
-        except json.JSONDecodeError:
-            pass
-    return structured_data
-
-def extract_meta_tags(soup):
-    return {meta.get('name', meta.get('property', meta.get('http-equiv', ''))) : meta.get('content', '') 
-            for meta in soup.find_all('meta')}
-
-def extract_main_content(soup):
-    main = soup.find('main')
-    return main.text.strip() if main else ''
-
-def extract_text_content(soup):
-    return soup.get_text(separator=' ', strip=True)
-
-def extract_keywords(soup):
-    text_content = extract_text_content(soup)
-    words = text_content.lower().split()
-    word_freq = Counter(words)
-    return [word for word, freq in word_freq.most_common(10) if len(word) > 3]
-
 
 #################
 # ASYNC WRAPPER #
@@ -429,6 +149,7 @@ Navigation Items: Lists the first 5 navigation items.
 Keywords: Lists the first 10 keywords.
 Main Content Summary: Shows the first 200 characters of the main content.
 """
+# TODO: put into another file
 def format_descriptions(state):
     content_analysis = state.get('content_analysis', {})
     formatted_analysis = f"""
@@ -494,7 +215,7 @@ This function is designed to extract and structure the action and its arguments 
     "action": The extracted action (a string)
     "args": The extracted arguments (a list of strings, or None if no arguments)
 """
-
+# TODO: Put into another file
 def parse(text: str) -> dict:
     # Define the prefix that indicates the start of an action
     action_prefix = "Action: "
@@ -573,82 +294,12 @@ def update_scratchpad(state: AgentState):
 ##########
 # PROMPT #
 ##########
-
+# TODO: put into separate file
 # Use a vision-capable model
 llm = ChatOpenAI(model="gpt-4o-mini", max_tokens=4096)
 
-# Modify the custom_prompt to include explicit instructions for using the screenshot
-custom_prompt = ChatPromptTemplate.from_messages([
-    ("system", """You are a web navigation assistant with vision capabilities. Your task is to guide the user based on their specific query or request. 
-    In each iteration, you will receive:
-    1. HTML content analysis
-    2. The current URL
-    3. A screenshot of the webpage
-    
-    The screenshot features Numerical Labels placed in the TOP LEFT corner of each Web Element.
-    You must analyze BOTH the HTML content AND the screenshot to determine your next action.
-    
-    When reasoning about your next action, explicitly reference both the parsed data and visual elements from the screenshot.
-
-    Pay special attention to visual elements such as logos, images, and layout.
-    
-
-    Current goal: {input}
-
-    Choose one of the following actions:
-    1. Click a Web Element (use the element ID from the content analysis).
-    2. Type content into an input field.
-    3. Scroll up, down, left, or right.
-    4. Wait for page load.
-    5. Go back to the previous page.
-    6. Return to the home page to start over.
-    7. Respond with the final answer
-
-    Action should STRICTLY follow the format:
-    - Click [Element_ID] 
-    - Type [Element_ID]; [Content] 
-    - Scroll [Element_ID or WINDOW]; [up/down/left/right]
-    - Wait 
-    - GoBack
-    - Home
-    - ANSWER; [content]
-
-    Key Guidelines:
-    1) Execute only one action per iteration.
-    2) When clicking or typing, use the element ID from the content analysis.
-    3) You can interact with any element present in the HTML, regardless of its visibility on the screen.
-    4) Pay attention to the current URL and HTML structure to determine if you've reached the desired page or information.
-    5) If you find yourself in a loop, try a different approach or consider ending the task.
-    6) Analyze the screenshot to identify the Numerical Label corresponding to the Web Element that requires interaction. DO NOT MENTION THE NUMERICAL LABEL INSTRUCTION.
-
-    Your reply should strictly follow the format:
-    Thought: {{Your brief thoughts}}
-    Action: {{One Action format you choose}}"""),
-    MessagesPlaceholder(variable_name="scratchpad"),
-    ("human", """
-    Analyze the provided screenshot and HTML content. 
-    Describe what you see in the screenshot, including any logos, images, or distinctive visual elements. Never mention any element number.
-    How does the visual information compare with the parsed HTML data?
-
-    Current URL: {current_url}
-
-    Enhanced Content Analysis:
-    {content_analysis}
-
-    Action History:
-    {action_history}
-
-    Screenshot Info:
-    {screenshot_info}
-
-    Screenshot: {screenshot}
-
-    Based on this combined analysis of visual and HTML data, what is your next action?
-    Remember to explicitly mention visual elements you observe, including any logos.
-    """),
-])
-
 prompt = custom_prompt
+
 # Modify the agent definition to process HTML and image simultaneously
 agent = annotate | RunnablePassthrough.assign(
     prediction=format_descriptions | prompt | llm | StrOutputParser() | parse
@@ -724,28 +375,16 @@ graph = graph_builder.compile()
 #############
 # RUN AGENT #
 #############
-
-# handles setup of page and errors
-# works with existing page or create new one if needed
 async def run_agent(question: str, page=None, current_url=None, browserbase_instance=None):
     # Add this function to generate an initial response
     def generate_initial_response(question: str):
         llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0.7)
-        prompt = f"""
-        Confirm you got the query with "Okay!" or "Gotcha" or something similar. Restate the following user query as a friendly, concise instruction for a web navigation assistant while also guiding the user. DO NOT PROVIDE INSTRUCTION IN THIS RESPONSE. For example:
-
-        "Gotcha, lets try to [enter user request here]."
-
-        Keep it brief and engaging, as if a helpful friend is acknowledging the task.
-        No need for extra information or small talk. Avoid using emojis. Add some emotion. This is the first response, so DO NOT conclude the chat here.
-
-        User Query: {question}
-        """
-        response = llm.predict(prompt)
+        response = llm.predict(initial_response_prompt.format(question=question))
         return response.strip()
 
     # Generate and yield the initial response
     initial_response = generate_initial_response(question)
+
     yield {
         "action": "INITIAL_RESPONSE",
         "instruction": initial_response,
@@ -794,19 +433,7 @@ def prepare_image_for_llm(base64_image):
 
 def generate_personable_instruction(action, element_description, text_input):
     llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0.7)
-    prompt = f"""
-    Generate a friendly and personable instruction for a web navigation assistant.
-
-    The instruction should be based on the following action:
-
-    Action: {action}
-    Element Description: {element_description}
-    Text Input: {text_input}
-
-    Make the instruction sound natural, as if a helpful friend is guiding the user.
-    Keep it very concise but engaging. Make very short. Get to the point, no extra info or small talk at each step. No emojis.
-    """
-    response = llm.predict(prompt)
+    response = llm.predict(personable_prompt.formtat(action=action, element_description=element_description, text_input=text_input))
     return response.strip()
 
 async def _run_agent_with_page(question: str, page, start_url, browserbase_instance):
