@@ -13,7 +13,6 @@ The page's response is observed and fed back to the agent.
 This process repeats until the task is completed or an error occurs.
 The agent provides a final answer to the user.
 """
-
 import json
 import os
 import asyncio
@@ -27,41 +26,27 @@ from langgraph.graph import END
 
 from langchain_core.messages import BaseMessage, SystemMessage
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_core.runnables import RunnablePassthrough, RunnableLambda, chain as chain_decorator
 from langchain_openai import ChatOpenAI
 from langchain import hub
 from langgraph.graph import END, StateGraph
 from playwright.async_api import Page, async_playwright, Error as PlaywrightError
-from .types import BBox, Prediction, AgentState, ScreenLocation, Step, AgentResponse
-from .prompts import custom_prompt, initial_response_prompt, personable_prompt
-from .extract import parse, enhanced_content_analysis
-from .mark import annotate
-
-
-import bs4
+from browserbase import Browserbase
 from bs4 import BeautifulSoup
-from collections import Counter
+from collections import Counter 
+from .prompts import custom_prompt, initial_response_prompt, personable_prompt
+from .extract import parse, format_descriptions, parse, enhanced_content_analysis
+from .mark import annotate, mark_page
+from langchain.schema.runnable import RunnablePassthrough
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnableLambda
+import asyncio
 
 from pydantic import BaseModel
 from PIL import Image
 import io
 
-from .extract import (
-    extract_elements,
-    extract_buttons,
-    extract_headings,
-    extract_links,
-    extract_images,
-    extract_forms,
-    extract_structured_data,
-    extract_meta_tags,
-    extract_main_content,
-    extract_text_content,
-    extract_keywords
-)
+from .types import BBox, Prediction, AgentState, ScreenLocation, Step, AgentResponse
 
-from .extract import parse, format_descriptions
 
 
 from .tools import *  # This will import all functions listed in __all__

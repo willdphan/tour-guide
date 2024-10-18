@@ -35,27 +35,29 @@ from browserbase import Browserbase
 from bs4 import BeautifulSoup
 from collections import Counter 
 from .prompts import custom_prompt, initial_response_prompt, personable_prompt
-from .extract import (
-    extract_elements,
-    extract_buttons,
-    extract_headings,
-    extract_links,
-    extract_images,
-    extract_forms,
-    extract_structured_data,
-    extract_meta_tags,
-    extract_main_content,
-    extract_text_content,
-    extract_keywords
-)
 from .extract import parse, format_descriptions, parse, enhanced_content_analysis
-from .mark import annotate
+from .mark import annotate, mark_page
+from langchain.schema.runnable import RunnablePassthrough
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnableLambda
+import asyncio
 
 from pydantic import BaseModel
 from PIL import Image
 import io
 
 from .types import BBox, Prediction, AgentState, ScreenLocation, Step, AgentResponse
+
+# Or, if you prefer explicit imports:
+from .tools import (
+    click,
+    type_text,
+    scroll,
+    wait,
+    go_back,
+    to_google,
+    to_home,
+)
 
 # Load environment variables
 load_dotenv()
@@ -67,8 +69,6 @@ os.environ["LANGCHAIN_TRACING_V2"] = "true"
 os.environ["LANGCHAIN_PROJECT"] = "Web-Voyager"
 os.environ["LANGCHAIN_API_KEY"] = os.getenv("LANGCHAIN_API_KEY")
 os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
-
-
 
 """
 The update_scratchpad function manages an agent's recent actions and observations during web navigation. It appends the latest observation to a text log and adds the current action to a history list. 
@@ -120,10 +120,19 @@ llm = ChatOpenAI(model="gpt-4o-mini", max_tokens=4096)
 
 prompt = custom_prompt
 
-# Modify the agent definition to process HTML and image simultaneously
-agent = annotate | RunnablePassthrough.assign(
-    prediction=format_descriptions | prompt | llm | StrOutputParser() | parse
-) | RunnableLambda(lambda x: mark_page(x["page"], x["browserbase_instance"]))
+# Create an async wrapper for mark_page
+async def async_mark_page(state):
+    marked_page = await mark_page(state["page"])
+    return {**state, **marked_page}
+
+# Modify the agent definition
+agent = (
+    annotate 
+    | RunnablePassthrough.assign(
+        prediction=format_descriptions | prompt | llm | StrOutputParser() | parse
+    )
+    | RunnableLambda(lambda x: asyncio.get_event_loop().run_until_complete(async_mark_page(x)))
+)
 
 ####################
 # INITIALIZE GRAPH #
