@@ -3,19 +3,6 @@ import json
 import platform
 from bs4 import BeautifulSoup
 from .types import AgentState
-from .extract import (
-    extract_elements,
-    extract_buttons,
-    extract_headings,
-    extract_links,
-    extract_images,
-    extract_forms,
-    extract_structured_data,
-    extract_meta_tags,
-    extract_main_content,
-    extract_text_content,
-    extract_keywords
-)
 
 # Define tools
 async def click(state: AgentState):

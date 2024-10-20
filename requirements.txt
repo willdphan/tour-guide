@@ -1,0 +1,19 @@
+python-dotenv
+langgraph
+langchain
+langchain-openai
+playwright
+asyncio
+browserbase
+
+# Optional but recommended for better async support
+uvloop
+
+# For type checking (optional)
+mypy
+
+# For linting (optional)
+flake8
+
+# For formatting (optional)
+black

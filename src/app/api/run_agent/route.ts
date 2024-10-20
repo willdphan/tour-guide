@@ -1,7 +1,6 @@
 
 // To connect from python to typescript file.
 
-
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {

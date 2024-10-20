@@ -13,26 +13,19 @@ The page's response is observed and fed back to the agent.
 This process repeats until the task is completed or an error occurs.
 The agent provides a final answer to the user.
 """
-import json
 import os
 import asyncio
 import base64
-import platform
 import re
-from typing import List, Optional, TypedDict, Dict
 from dotenv import load_dotenv
-from urllib.parse import urlparse
 from langgraph.graph import END
 
-from langchain_core.messages import BaseMessage, SystemMessage
+from langchain_core.messages import SystemMessage
 from langchain_core.output_parsers import StrOutputParser
 from langchain_openai import ChatOpenAI
-from langchain import hub
 from langgraph.graph import END, StateGraph
-from playwright.async_api import Page, async_playwright, Error as PlaywrightError
-from browserbase import Browserbase
-from bs4 import BeautifulSoup
-from collections import Counter 
+from playwright.async_api import async_playwright, Error as PlaywrightError
+
 from .prompts import custom_prompt, initial_response_prompt, personable_prompt
 from .extract import parse, format_descriptions, parse, enhanced_content_analysis
 from .mark import annotate, mark_page
@@ -40,16 +33,7 @@ from langchain.schema.runnable import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnableLambda
 import asyncio
-
-from pydantic import BaseModel
-from PIL import Image
-import io
-
-from .types import BBox, Prediction, AgentState, ScreenLocation, Step, AgentResponse
-
-
-
-from .tools import *  # This will import all functions listed in __all__
+from .types import AgentState
 
 # Or, if you prefer explicit imports:
 from .tools import (
@@ -77,6 +61,8 @@ The update_scratchpad function manages an agent's recent actions and observation
 
 The function handles step numbering, limits the history to the last 10 entries, and updates the agent's state. This process maintains a concise record of the agent's recent activities, providing essential context for future decision-making.
 """
+
+
 def update_scratchpad(state: AgentState):
     # Get current scratchpad and action history
     old = state.get("scratchpad")
@@ -254,8 +240,6 @@ def prepare_image_for_llm(base64_image):
         "type": "image_url",
         "image_url": f"data:image/jpeg;base64,{base64_image}"
     }
-
-
 
 def generate_personable_instruction(action, element_description, text_input):
     llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0.7)
