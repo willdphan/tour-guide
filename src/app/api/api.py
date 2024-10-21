@@ -72,9 +72,6 @@ async def api_run_agent(request: AgentRequest):
                         if action == "FINAL_ANSWER":
                             logger.info("Agent finished with final answer")
                             break
-
-                        # if action == "WAIT_FOR_PERMISSION":
-                        #     logger.info("Waiting for user permission")
                         
                         await asyncio.sleep(0.1)
                     
@@ -87,18 +84,6 @@ async def api_run_agent(request: AgentRequest):
             yield f"data: {json.dumps({'error': str(e)})}\n\n"
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
-
-# class PermissionRequest(BaseModel):
-#     proceed: bool
-
-# @app.post("/api/run-agent/permission")
-# async def handle_permission(request: PermissionRequest):
-#     if request.proceed:
-#         # Implement logic to continue the agent's execution
-#         return {"message": "Permission granted, proceeding with action"}
-#     else:
-#         # Implement logic to stop the agent's execution
-#         return {"message": "Permission denied, stopping agent"}
 
 if __name__ == "__main__":
     import uvicorn

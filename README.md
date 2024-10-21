@@ -1,6 +1,6 @@
 # Navi
 
-This project is an AI-powered web navigation assistant that guides users through websites based on their queries or requests. It uses advanced language models and web interaction techniques to analyze web pages and perform actions. This is highly experimental!
+This project is an AI-powered web navigation assistant that guides users through websites based on their queries or requests. It uses advanced language models and web interaction techniques to analyze web pages and perform actions. This is highly experimental! Accuracy could/should be improved greatly.
 
 ## Project Structure
 
@@ -11,9 +11,10 @@ This project is an AI-powered web navigation assistant that guides users through
 ├── src/
 │   ├── app/
 │   │   ├── api/
+│   │   │   ├── utils/
+│   │   │   │   ├── extract.py
+│   │   │   │   └── mark.py
 │   │   │   ├── api.py
-│   │   │   ├── extract.py
-│   │   │   ├── mark.py
 │   │   │   ├── prompts.py
 │   │   │   ├── tools.py
 │   │   │   ├── types.py
@@ -37,17 +38,17 @@ One implementation is using BrowserBase, the other is without.
 
 3. `api.py`: Main entry point for the API and request handling logic.
 
-4. `extract.py`: Utility functions for web scraping and content analysis.
+4. `prompts.py`: Predefined text prompts or templates used in the application.
 
-5. `mark_page.js`: Client-side JavaScript for marking or annotating web pages.
+5. `tools.py`: Utility functions and standalone tools supporting various operations.
 
-6. `mark.py`: Server-side logic for marking or processing web pages.
+6. `types.py`: Custom type definitions and data structure declarations.
 
-7. `prompts.py`: Predefined text prompts or templates used in the application.
+7. `mark_page.js`: Client-side JavaScript for marking or annotating web pages.
 
-8. `tools.py`: Utility functions and standalone tools supporting various operations.
+8. `extract.py`: Utility functions for web scraping and content analysis.
 
-9. `types.py`: Custom type definitions and data structure declarations.
+9. `mark_page.js`: Client-side JavaScript for marking or annotating web pages.
 
 ### Frontend
 
@@ -62,7 +63,7 @@ One implementation is using BrowserBase, the other is without.
    - Integration with a popup component for displaying actions
    - Handling of agent cursor movement and actions
 
-4. `PopupHome.tsx`: A popup component specifically designed for the homepage.
+4. `PopupHome.tsx`: A popup component specifically designed for the homepage display.
 
 5. `PopupNavi.tsx`: The main popup component used during navigation assistance. It includes:
 
@@ -72,6 +73,7 @@ One implementation is using BrowserBase, the other is without.
    - Display of instructions and agent thoughts
 
 6. `SpotLightSearch.tsx`: Implements a command palette-style search interface. Key features include:
+
    - Keyboard shortcut activation (Cmd/Ctrl + K)
    - Integration with an agent for processing commands
    - Integration with the PopupNavi component for displaying actions
