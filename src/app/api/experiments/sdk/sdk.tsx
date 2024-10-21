@@ -1,6 +1,8 @@
 import * as fs from "fs";
 import { glob } from "glob";
+import { parse as parseHTML } from "node-html-parser";
 import * as path from "path";
+import { chromium } from "playwright";
 import {
   Node,
   Project,
@@ -10,8 +12,6 @@ import {
 } from "ts-morph";
 
 import * as parser from "@babel/parser";
-import { parse as parseHTML } from "node-html-parser";
-import { chromium } from "playwright";
 
 interface ComponentMetadata {
   name: string;

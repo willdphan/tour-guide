@@ -1,13 +1,15 @@
 "use client";
 // TEMPLATE HOME PAGE DESIGN
 
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { Star, ArrowUpRight } from "lucide-react";
-import PopUpDefault from "@/components/PopupHome";
-import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { stages } from "../utils/stagesData";
+import { ArrowUpRight, Star } from "lucide-react";
+
+import PopUpDefault from "@/components/PopupHome";
 import { getHomeEyeAnimation } from "@/utils/animations";
+
+import { stages } from "../utils/stagesData";
 
 export default function Component() {
   return (
@@ -48,7 +50,7 @@ export default function Component() {
               href="#"
               className="rounded-full bg-black px-4 py-2 text-sm font-[500] text-white"
             >
-              Apply Now — It's Free
+              Apply Now — It&apos;s Free
             </Link>
           </div>
         </header>
@@ -96,8 +98,8 @@ export default function Component() {
                       Read Story <ArrowUpRight className="ml-1 h-4 w-4" />
                     </Link>
                   </div>
-                  "Don't tell anyone, but I'm the best to guide you. No one else
-                  compares. Shhh."
+                  Type Cmd +K with &quot;Go to Analyze Page&quot; or &quot;Where
+                  is the Apply Now Button&quot; to try for yourself!
                 </blockquote>
                 <div className="flex items-center space-x-4 border-b-[1px] border-black pb-4 pt-4 text-xs  lg:mr-16">
                   <div className="relative h-7 w-7">
@@ -165,7 +167,7 @@ export default function Component() {
                     href="/about"
                     className="rounded-full bg-black px-6 py-3 text-sm font-medium text-white"
                   >
-                    Apply Now — It's Free
+                    Apply Now — It&apos;s Free
                   </Link>
                   <Link
                     href="#"

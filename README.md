@@ -1,29 +1,31 @@
-# Web Tour Guide
+# Navi
 
-This project is an AI-powered web navigation assistant that guides users through websites based on their queries or requests. It uses advanced language models and web interaction techniques to analyze web pages and perform actions.
+This project is an AI-powered web navigation assistant that guides users through websites based on their queries or requests. It uses advanced language models and web interaction techniques to analyze web pages and perform actions. This is highly experimental! 
 
 ## Project Structure
+
+### Backend
 
 ```
 ├── README.md
 ├── src/
-│   └── app/
-│       └── api/
-│           ├── api.py
-│           ├── extract.py
-│           ├── mark_page.js
-│           ├── mark.py
-│           ├── prompts.py
-│           ├── tools.py
-│           ├── types.py
-│           ├── web_tour_html.py
-│           └── web_tour_html_bb.py
-
+│   ├── app/
+│   │   ├── api/
+│   │   │   ├── api.py
+│   │   │   ├── extract.py
+│   │   │   ├── mark.py
+│   │   │   ├── prompts.py
+│   │   │   ├── tools.py
+│   │   │   ├── types.py
+│   │   │   ├── web_tour_html.py
+│   │   │   └── web_tour_html_bb.py
+│   │   └── mark_page.js
+└── ...
 ```
 
 One implementation is using BrowserBase, the other is without.
 
-## File Descriptions
+## Python Scripts
 
 1. `web_tour_html.py`: The main application file containing:
 
@@ -33,7 +35,7 @@ One implementation is using BrowserBase, the other is without.
 
 2. `web_tour_html_bb.py`: A variation of the main application with BrowserBase.
 
-3. `api.py`: Main entry point for the API, containing route definitions and request handling logic.
+3. `api.py`: Main entry point for the API and request handling logic.
 
 4. `extract.py`: Utility functions for web scraping and content analysis.
 
@@ -47,7 +49,32 @@ One implementation is using BrowserBase, the other is without.
 
 9. `types.py`: Custom type definitions and data structure declarations.
 
-10. `experiments/`: Directory containing experimental versions and variations of the web tour guide.
+### Frontend
+
+1. `page.tsx`: The main page, likely serving as the entry point for the application.
+
+2. `NaviWrapper.tsx`: A wrapper component that encapsulates navigation-related functionality.
+
+3. `NaviAssistant.tsx`: This component implements the navigation assistant interface. It includes:
+
+   - A cursor component for visual feedback
+   - State management for agent activity and cursor position
+   - Integration with a popup component for displaying actions
+   - Handling of agent cursor movement and actions
+
+4. `PopupHome.tsx`: A popup component specifically designed for the homepage.
+
+5. `PopupNavi.tsx`: The main popup component used during navigation assistance. It includes:
+
+   - Dynamic content based on current action and waiting state
+   - Progress bar with color-coded phases
+   - Animated eye for visual feedback
+   - Display of instructions and agent thoughts
+
+6. `SpotLightSearch.tsx`: Implements a command palette-style search interface. Key features include:
+   - Keyboard shortcut activation (Cmd/Ctrl + K)
+   - Integration with an agent for processing commands
+   - Integration with the PopupNavi component for displaying actions
 
 ## Setup and Installation
 
@@ -79,14 +106,6 @@ To run the frontend:
 ```
 npm run dev
 ```
-
-## API Usage
-
-The application exposes endpoints for web navigation. Detailed API documentation will be provided in the future.
-
-## Deployment
-
-Deployment instructions will be added in future updates.
 
 ## TODO
 

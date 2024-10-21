@@ -5,10 +5,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { ReactNode } from "react";
+
 import SpotLightSearch from "@/components/SpotLightSearch";
-import Popup from "./PopUpWrapper";
-import Cursor from "./Cursor";
 import { simulateAgent } from "@/utils/actionExecuter";
+
+import Cursor from "./Cursor";
+import Popup from "./PopUpWrapper";
 
 // SPOTLIGHT AND NAVI POPUP
 export default function NaviInterface({ children }: { children: ReactNode }) {

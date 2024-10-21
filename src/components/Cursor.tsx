@@ -1,6 +1,7 @@
 // AGENT CURSOR
-import { CursorProps } from "@/types/action-response";
 import React from "react";
+
+import { CursorProps } from "@/types/action-response";
 
 export default function Cursor({ x, y, isActive }: CursorProps) {
   return (

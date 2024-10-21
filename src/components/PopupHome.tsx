@@ -1,13 +1,14 @@
 // POPUP FOR THE HOMEPAGE DISPLAY
 // this is imported on page.tsx in the landing page video box
 
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useEffect, useMemo,useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
-import { getHomeEyeAnimation, getBlinkAnimation } from "@/utils/animations";
-import { stages } from "@/utils/stagesData";
-import { getPhaseColor } from "@/utils/animations";
+
 import { PopupProps } from "@/types/action-response";
+import { getBlinkAnimation, getHomeEyeAnimation } from "@/utils/animations";
+import { getPhaseColor } from "@/utils/animations";
+import { stages } from "@/utils/stagesData";
 
 const PopUpDefault: React.FC<PopupProps> = ({ action = {} }) => {
   const [progress, setProgress] = useState(0);
@@ -17,7 +18,7 @@ const PopUpDefault: React.FC<PopupProps> = ({ action = {} }) => {
   const [isResetting, setIsResetting] = useState(false);
   const [notifications, setNotifications] = useState<string[]>([]);
 
-  const phases = [
+  const phases = useMemo(() => [
     {
       name: "Initializing",
       description: "Okay, let us change your email.",
@@ -25,7 +26,7 @@ const PopUpDefault: React.FC<PopupProps> = ({ action = {} }) => {
     { name: "Analyzing", description: "Working on it! Just one second..." },
     { name: "Processing", description: "Alright, changing the email now." },
     { name: "Finalizing", description: "Done! Email is now changed." },
-  ];
+  ], []); // Empty dependency array means this will only be created once
 
   useEffect(() => {
     const PROGRESS_INTERVAL = 25;
@@ -74,7 +75,7 @@ const PopUpDefault: React.FC<PopupProps> = ({ action = {} }) => {
         clearInterval
       );
     };
-  }, [isResetting]);
+  }, [isResetting, phases]); // Now it's safe to include phases in the dependency array
 
   return (
     <AnimatePresence>

@@ -1,16 +1,17 @@
 // ACTUAL POPUP IMPLEMENTATION WHEN PRESSING CMD +K
 
-import React, { useEffect, useState, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useEffect, useRef,useState } from "react";
+import { AnimatePresence,motion } from "framer-motion";
 import { X } from "lucide-react";
+
+import { ExtendedPopupProps } from "@/types/action-response";
 import {
+  getBlinkAnimation,
   getNaviEyeAnimation,
   getPhaseColor,
-  getBlinkAnimation,
 } from "@/utils/animations";
-import { ExtendedPopupProps } from "@/types/action-response";
-import { getCurrentPhase } from "@/utils/phase";
 import { formatPercentage } from "@/utils/percentage";
+import { getCurrentPhase } from "@/utils/phase";
 
 export const PopupContent: React.FC<
   ExtendedPopupProps & { onClose: () => void }

@@ -1,8 +1,8 @@
 // APPLE-STYLED POPUPS - OPTIONAL
 // component pop-up with apple styling. just different styling
 
+import { useEffect,useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
-import { useState, useEffect } from "react"
 import { X } from "lucide-react"  // Add this import
 
 export default function PopUpApple() {
@@ -103,7 +103,7 @@ export default function PopUpApple() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
             >
-              We're enhancing your system. Your device will restart automatically once complete.
+              We&apos;re enhancing your system. Your device will restart automatically once complete.
             </motion.p>
           </div>
         </motion.div>

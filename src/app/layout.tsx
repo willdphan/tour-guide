@@ -4,10 +4,12 @@
 import { PropsWithChildren } from "react";
 import dynamic from "next/dynamic";
 import { Montserrat, Montserrat_Alternates } from "next/font/google";
+
+import NaviWrapper from "@/components/NaviWrapper";
 import { Toaster } from "@/components/ui/toaster";
 import { cn } from "@/utils/cn";
+
 import "public/globals.css";
-import NaviWrapper from "@/components/NaviWrapper";
 
 const Analytics = dynamic(
   () => import("@vercel/analytics/react").then((mod) => mod.Analytics),
