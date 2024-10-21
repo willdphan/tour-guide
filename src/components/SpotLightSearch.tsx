@@ -1,5 +1,7 @@
 "use client";
 
+// CMD + K SEARCH
+
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import {
   Command,
@@ -9,24 +11,17 @@ import {
   CommandItem,
 } from "@/components/ui/command";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import Popup from "./Popup";
+import Popup from "./PopUpWrapper";
 import { getPhaseColor } from "@/utils/animations";
 
 export const sleep = (ms: number) =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
 interface SpotLightSearchProps {
-  onSelect: (selectedItem: { title: string; description: string }) => void;
-  updateMyPresenceFn: (presence: {
-    cursor: { x: number; y: number };
-    isAgent: boolean;
-  }) => void;
   simulateAgentAction: (action: any) => void;
 }
 
 const SpotLightSearch: React.FC<SpotLightSearchProps> = ({
-  onSelect,
-  updateMyPresenceFn,
   simulateAgentAction,
 }) => {
   const [open, setOpen] = useState(false);

@@ -6,7 +6,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { ReactNode } from "react";
 import SpotLightSearch from "@/components/SpotLightSearch";
-import Popup from "./Popup";
+import Popup from "./PopUpWrapper";
 import Cursor from "./Cursor";
 import { simulateAgent } from "@/utils/actionExecuter";
 

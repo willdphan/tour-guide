@@ -14,7 +14,7 @@ const Analytics = dynamic(
   { ssr: false }
 );
 
-// TODO: Convert to tailwind
+// Subtext font
 const montserrat = Montserrat({
   variable: "--font-montserrat",
   subsets: ["latin"],

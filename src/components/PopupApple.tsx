@@ -1,4 +1,4 @@
-// APPLE-STYLED POPUPS
+// APPLE-STYLED POPUPS - OPTIONAL
 // component pop-up with apple styling. just different styling
 
 import { AnimatePresence, motion } from "framer-motion"

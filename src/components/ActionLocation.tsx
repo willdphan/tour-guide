@@ -1,4 +1,4 @@
-// VISUAL/LOCATION OF AGENT ACTION. RED BOUNDING BOX
+// VISUAL/LOCATION OF AGENT ACTION. RED BOUNDING BOX - OPTIONAL
 // not in live implementation
 
 import React, { useEffect, useState } from "react";

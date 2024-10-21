@@ -1,3 +1,4 @@
+// Action-related types
 export type ActionResponse =
   | {
       data: any;
@@ -6,17 +7,7 @@ export type ActionResponse =
   | undefined;
 
 
-export interface Stage {
-  id: number;
-  name: string;
-  description: string;
-  emote: string;
-  color: string;
-  textColor: string;
-  borderColor: string;
-  link: string;  
-}
-
+// UI-related interfaces
 export interface PopupProps {
   action?: {
     description: string;
@@ -26,7 +17,6 @@ export interface PopupProps {
   }
 }
 
-// Define a new interface that extends PopupProps and includes isWaiting and onClose
 export interface ExtendedPopupProps extends PopupProps {
   isWaiting: boolean;
   backgroundColor: string;
@@ -37,4 +27,16 @@ export interface CursorProps {
   x: number;
   y: number;
   isActive: boolean;
+}
+
+// Game-related interfaces
+export interface Stage {
+  id: number;
+  name: string;
+  description: string;
+  emote: string;
+  color: string;
+  textColor: string;
+  borderColor: string;
+  link: string;  
 }

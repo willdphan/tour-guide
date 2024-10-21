@@ -20,9 +20,9 @@ const PopUpDefault: React.FC<PopupProps> = ({ action = {} }) => {
   const phases = [
     {
       name: "Initializing",
-      description: "Okay, let us change your email in settings",
+      description: "Okay, let us change your email.",
     },
-    { name: "Analyzing", description: "Working on it! Just one second." },
+    { name: "Analyzing", description: "Working on it! Just one second..." },
     { name: "Processing", description: "Alright, changing the email now." },
     { name: "Finalizing", description: "Done! Email is now changed." },
   ];
@@ -80,7 +80,7 @@ const PopUpDefault: React.FC<PopupProps> = ({ action = {} }) => {
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          className={`z-50 w-64 bg-white text-gray-800 shadow-md`}
+          className="z-50 w-64 bg-black/80 text-white shadow-md"
           initial={{ opacity: 0, y: 20, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 20, scale: 0.95 }}
@@ -136,24 +136,17 @@ const PopUpDefault: React.FC<PopupProps> = ({ action = {} }) => {
                   {phases[currentPhase].name}
                 </p>
               </motion.div>
-              <div className="flex items-center space-x-2">
-                <motion.button
-                  className={`text-gray-600 transition-colors duration-200 hover:text-gray-800`}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                ></motion.button>
-                <motion.button
-                  className={`text-gray-600 transition-colors duration-200 hover:text-gray-800`}
-                  aria-label="Close"
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                >
-                  <X size={14} />
-                </motion.button>
-              </div>
+              <motion.button
+                className="text-gray-400 transition-colors duration-200 hover:text-gray-200"
+                aria-label="Close"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                <X size={14} />
+              </motion.button>
             </div>
             <div className="space-y-2">
-              <div className={`h-1 w-full overflow-hidden bg-gray-200`}>
+              <div className="h-1 w-full overflow-hidden bg-gray-700">
                 <motion.div
                   className="h-full"
                   initial={{ width: 0 }}
@@ -178,7 +171,7 @@ const PopUpDefault: React.FC<PopupProps> = ({ action = {} }) => {
                   {progress.toFixed(0)}%
                 </motion.span>
                 <motion.span
-                  className={`text-xs text-gray-500`}
+                  className="text-xs text-gray-400"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.3 }}
@@ -197,7 +190,7 @@ const PopUpDefault: React.FC<PopupProps> = ({ action = {} }) => {
             </motion.p>
             {action?.thought && (
               <motion.p
-                className={`mt-1 text-xs leading-relaxed text-gray-500`}
+                className="mt-1 text-xs leading-relaxed text-gray-400"
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}

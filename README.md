@@ -18,6 +18,7 @@ This project is an AI-powered web navigation assistant that guides users through
 │           ├── types.py
 │           ├── web_tour_html.py
 │           └── web_tour_html_bb.py
+
 ```
 
 One implementation is using BrowserBase, the other is without.

@@ -1,3 +1,5 @@
+// DATA STRUCTURE REPRESENTING DIFFERENT STAGES OF USER JOURNEY
+
 import { Stage } from "@/types/action-response";
   
  export const stages: Stage[] = [
