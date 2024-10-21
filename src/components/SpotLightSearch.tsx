@@ -2,7 +2,7 @@
 
 // CMD + K SEARCH
 
-import React, { useCallback, useEffect, useRef,useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   Command,
@@ -13,15 +13,11 @@ import {
 } from "@/components/ui/command";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { getPhaseColor } from "@/utils/animations";
-
+import { SpotLightSearchProps } from "@/utils/search";
 import Popup from "./PopUpWrapper";
 
 export const sleep = (ms: number) =>
   new Promise((resolve) => setTimeout(resolve, ms));
-
-interface SpotLightSearchProps {
-  simulateAgentAction: (action: any) => void;
-}
 
 const SpotLightSearch: React.FC<SpotLightSearchProps> = ({
   simulateAgentAction,
@@ -37,6 +33,9 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({
     "Initializing" | "Analyzing" | "Processing" | "Finalizing"
   >("Initializing");
   const [initialResponse, setInitialResponse] = useState("");
+  const [shouldAbort, setShouldAbort] = useState(false);
+  const [abortController, setAbortController] =
+    useState<AbortController | null>(null);
   const [actionQueue, setActionQueue] = useState<any[]>([]);
   const [isProcessingQueue, setIsProcessingQueue] = useState(false);
 
@@ -116,6 +115,10 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({
         setIsWaiting(true);
         setIsAgentProcessing(true);
         setOpen(false);
+        setShouldAbort(false);
+
+        const controller = new AbortController();
+        setAbortController(controller);
 
         try {
           const currentUrl = window.location.href;
@@ -131,6 +134,7 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({
               question: search,
               currentUrl: currentUrl,
             }),
+            signal: controller.signal,
           });
 
           if (!response.ok) {
@@ -141,6 +145,11 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({
           const decoder = new TextDecoder();
           let isFirstResponse = true;
           while (true) {
+            if (shouldAbort) {
+              console.log("Aborting process");
+              reader?.cancel();
+              break;
+            }
             const { value, done } = await reader!.read();
             if (done) break;
 
@@ -159,6 +168,11 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({
                 try {
                   const parsedData = JSON.parse(jsonData);
                   console.log("Received data:", parsedData);
+
+                  if (shouldAbort) {
+                    console.log("Aborting process");
+                    break;
+                  }
 
                   handleNewAction(parsedData);
 
@@ -186,21 +200,33 @@ const SpotLightSearch: React.FC<SpotLightSearchProps> = ({
             }
           }
         } catch (error) {
-          console.error("Error fetching search results:", error);
+          if (error.name === "AbortError") {
+            console.log("Fetch aborted");
+          } else {
+            console.error("Error fetching search results:", error);
+          }
+        } finally {
+          setIsAgentProcessing(false);
+          setIsWaiting(false);
+          setAbortController(null);
         }
       }
     },
-    [search, handleNewAction]
+    [search, simulateAgentAction, handleNewAction, shouldAbort, abortController]
   );
 
   const handleAbort = useCallback(() => {
+    setShouldAbort(true);
+    if (abortController) {
+      abortController.abort();
+    }
     setIsWaiting(false);
     setIsAgentProcessing(false);
     setCurrentAction(null);
     setFinalAction(null);
     setSearch(""); // Clear the search input
     console.log("Agent process aborted");
-  }, []);
+  }, [abortController]);
 
   return (
     <>

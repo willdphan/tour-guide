@@ -109,7 +109,7 @@ To run the frontend:
 npm run dev
 ```
 
-Vercel link is [here](https://tour-guide-jw46.vercel.app/)
+The frontend vercel link is [here](https://tour-guide-jw46.vercel.app/), you still have to run backend though.
 
 ## TODO
 
