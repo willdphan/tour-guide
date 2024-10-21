@@ -221,7 +221,7 @@ async def run_agent(question: str, page=None, current_url=None, browserbase_inst
             
             # Use the provided current_url or default to localhost
             # LINK CHANGE HERE!
-            start_url = current_url or "tour-guide-pn36.vercel.app"
+            start_url = current_url or "tour-guide-jw46.vercel.app"
             
             # Ignore specific console messages
             page.on("console", lambda msg: None if "message channel closed before a response was received" in msg.text.lower() else print(f"Console: {msg.text}"))
@@ -418,7 +418,8 @@ async def _run_agent_with_page(question: str, page, start_url, browserbase_insta
             elif action == "GoBack":
                 await page.go_back()
             elif action == "Home":
-                await page.goto("http://localhost:3000/")
+                # LINK CHANGE HERE
+                await page.goto("tour-guide-jw46.vercel.app")
             elif action.startswith("ANSWER"):
                 break
             
@@ -464,8 +465,8 @@ async def _run_agent_with_page(question: str, page, start_url, browserbase_insta
 
         if final_answer_sent:
             break  # Exit the loop after sending FINAL_ANSWER
-
-async def main(current_url="http://localhost:3000"):
+            # LINK CHANGE HERE
+async def main(current_url="tour-guide-jw46.vercel.app"):
     browserbase = Browserbase()
     async with async_playwright() as p:
         browser = await p.chromium.connect_over_cdp(browserbase.get_connect_url())
