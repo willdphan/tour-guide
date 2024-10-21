@@ -1,4 +1,3 @@
-
 import asyncio
 import base64
 # Define mark_page function, THIS MARKS BOUNDING BOXES.
@@ -8,7 +7,7 @@ from .extract import enhanced_content_analysis
 from langchain_core.runnables import chain as chain_decorator
 
 # Construct the path to mark_page.js relative to the current file
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..'))
 mark_page_js_path = os.path.join(project_root, 'src', 'app', 'mark_page.js')
 
 # Read mark_page.js

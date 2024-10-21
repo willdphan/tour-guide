@@ -29,7 +29,7 @@ from playwright.async_api import async_playwright, Error as PlaywrightError
 from browserbase import Browserbase
 
 from .prompts import custom_prompt, initial_response_prompt, personable_prompt
-from .utils.extract import parse, format_descriptions, parse, enhanced_content_analysis
+from .utils.extract import parse, format_descriptions, enhanced_content_analysis
 from .utils.mark import annotate, mark_page
 from langchain.schema.runnable import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser

@@ -23,7 +23,7 @@ import json
 from fastapi import FastAPI, Query
 
 # Import the run_agent function from web_tour_html.py
-from src.app.api.web_tour_html import run_agent
+from .web_tour_html import run_agent
 import logging
 
 logging.basicConfig(level=logging.INFO)
