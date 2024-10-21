@@ -115,6 +115,7 @@ The frontend vercel link is [here](https://tour-guide-jw46.vercel.app/), you sti
 
 - [ ] Improve metadata reading for components and elements
 - [ ] Enhance answer relevance
+- [ ] Better ending messages
 - [ ] Implement efficient website exploration/crawling
 - [ ] Optimize loading times for better agent exploration
 - [ ] Improve navigation between routes
