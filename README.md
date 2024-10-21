@@ -1,6 +1,6 @@
 # Navi
 
-This project is an AI-powered web navigation assistant that guides users through websites based on their queries or requests. It uses advanced language models and web interaction techniques to analyze web pages and perform actions. This is highly experimental! Accuracy could/should be improved greatly.
+This project is an AI-powered web navigation assistant that guides users through websites based on their queries or requests. It uses gpt-4o-mini to save on costs. Could/should be improved greatly.
 
 ## Project Structure
 
