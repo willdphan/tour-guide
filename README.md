@@ -1,6 +1,6 @@
 # Navi
 
-This project is an AI-powered web navigation assistant that guides users through websites based on their queries or requests. It uses advanced language models and web interaction techniques to analyze web pages and perform actions. This is highly experimental! 
+This project is an AI-powered web navigation assistant that guides users through websites based on their queries or requests. It uses advanced language models and web interaction techniques to analyze web pages and perform actions. This is highly experimental!
 
 ## Project Structure
 
@@ -107,6 +107,8 @@ To run the frontend:
 npm run dev
 ```
 
+Vercel link is [here](https://tour-guide-jw46.vercel.app/)
+
 ## TODO
 
 - [ ] Improve metadata reading for components and elements
@@ -114,7 +116,9 @@ npm run dev
 - [ ] Implement efficient website exploration/crawling
 - [ ] Optimize loading times for better agent exploration
 - [ ] Improve navigation between routes
-- [ ] Enhance context awareness of user's current location
+- [ ] Implement company knowledge base
+- [ ] Speed up loading times
+- [ ] Experiment!
 
 ## License
 
