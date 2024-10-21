@@ -220,7 +220,8 @@ async def run_agent(question: str, page=None, current_url=None, browserbase_inst
             page = await context.new_page()
             
             # Use the provided current_url or default to localhost
-            start_url = current_url or "http://localhost:3000"
+            # LINK CHANGE HERE!
+            start_url = current_url or "tour-guide-pn36.vercel.app"
             
             # Ignore specific console messages
             page.on("console", lambda msg: None if "message channel closed before a response was received" in msg.text.lower() else print(f"Console: {msg.text}"))

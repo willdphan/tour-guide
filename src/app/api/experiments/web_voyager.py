@@ -356,7 +356,8 @@ async def run_agent():
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=False)
         page = await browser.new_page()
-        await page.goto("http://localhost:3000")
+        # LINK CHANGE HERE!
+        await page.goto("tour-guide-pn36.vercel.app")
 
         async def call_agent(question: str, page, max_steps: int = 150):
             event_stream = graph.astream(
