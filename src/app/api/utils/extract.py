@@ -1,3 +1,7 @@
+"""
+Utility file that contains functions for extracting and analyzing different elements from a webpage's HTML content. It uses BeautifulSoup to parse HTML and extract various components 
+"""
+
 from collections import Counter
 import json
 from langchain_core.runnables import RunnablePassthrough, RunnableLambda, chain as chain_decorator

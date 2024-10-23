@@ -2,6 +2,8 @@
 
 This project is an AI-powered web navigation assistant that guides users through websites based on their queries or requests. It uses gpt-4o-mini to save on costs. Could/should be improved greatly.
 
+Type Cmd +K with "Go to Analyze Page" or "Where is the Apply Now Button" to try for yourself!
+
 ## Project Structure
 
 ### Backend
@@ -13,10 +15,10 @@ This project is an AI-powered web navigation assistant that guides users through
 │   │   ├── api/
 │   │   │   ├── utils/
 │   │   │   │   ├── extract.py
-│   │   │   │   └── mark.py
+│   │   │   │   ├── mark.py
+│   │   │   │   └── tools.py
 │   │   │   ├── api.py
 │   │   │   ├── prompts.py
-│   │   │   ├── tools.py
 │   │   │   ├── types.py
 │   │   │   ├── web_tour_html.py
 │   │   │   └── web_tour_html_bb.py

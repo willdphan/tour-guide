@@ -2,7 +2,6 @@
 Classes for representing web page elements, agent states, and automation steps.
 """
 
-
 from typing import List, Optional, TypedDict
 from langchain_core.messages import BaseMessage
 from playwright.async_api import Page

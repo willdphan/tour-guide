@@ -1,7 +1,8 @@
-import asyncio
-import base64
 # Define mark_page function, THIS MARKS BOUNDING BOXES.
 # done with the mark_page.js file
+
+import asyncio
+import base64
 import os
 from .extract import enhanced_content_analysis
 from langchain_core.runnables import chain as chain_decorator

@@ -1,8 +1,10 @@
+# TOOLS FOR AGENT USE
+
 import asyncio
 import json
 import platform
 from bs4 import BeautifulSoup
-from .types import AgentState
+from ..types import AgentState
 
 # Define tools
 async def click(state: AgentState):

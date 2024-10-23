@@ -38,7 +38,7 @@ import asyncio
 from .types import AgentState
 
 # Or, if you prefer explicit imports:
-from .tools import (
+from .utils.tools import (
     click,
     type_text,
     scroll,

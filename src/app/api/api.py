@@ -1,5 +1,12 @@
 """
 uvicorn src.app.api.api:app --reload --port 8000
+
+API:
+Defines a POST endpoint /api/run-agent/
+Accepts requests with a question and current URL
+Launches a headless browser using Playwright
+Runs the AI agent to interact with the webpage
+Streams the agent's actions and responses back to the frontend
 """
 
 import sys
