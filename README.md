@@ -42,9 +42,9 @@ One implementation is using BrowserBase, the other is without.
 
 4. `prompts.py`: Predefined text prompts or templates used in the application.
 
-5. `tools.py`: Utility functions and standalone tools supporting various operations.
+5. `types.py`: Custom type definitions and data structure declarations.
 
-6. `types.py`: Custom type definitions and data structure declarations.
+6. `tools.py`: Utility functions and standalone tools supporting various operations.
 
 7. `mark_page.js`: Client-side JavaScript for marking or annotating web pages.
 
