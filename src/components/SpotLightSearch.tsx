@@ -12,8 +12,9 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { getPhaseColor } from "@/utils/animations";
 import { SpotLightSearchProps } from "@/types/search";
+import { getPhaseColor } from "@/utils/animations";
+
 import Popup from "./PopUpWrapper";
 
 export const sleep = (ms: number) =>
