@@ -59,6 +59,9 @@ os.environ["LANGCHAIN_PROJECT"] = "Web-Voyager"
 os.environ["LANGCHAIN_API_KEY"] = os.getenv("LANGCHAIN_API_KEY")
 os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
 
+# At the top of the file, after the imports
+DEFAULT_URL = "tour-guide-jw46.vercel.app"
+
 """
 The update_scratchpad function manages an agent's recent actions and observations during web navigation. It appends the latest observation to a text log and adds the current action to a history list. 
 
@@ -219,9 +222,8 @@ async def run_agent(question: str, page=None, current_url=None, browserbase_inst
             context = await browser.new_context(ignore_https_errors=True)
             page = await context.new_page()
             
-            # Use the provided current_url or default to localhost
-            # LINK CHANGE HERE!
-            start_url = current_url or "tour-guide-jw46.vercel.app"
+            # Use the provided current_url or default to DEFAULT_URL
+            start_url = current_url or DEFAULT_URL
             
             # Ignore specific console messages
             page.on("console", lambda msg: None if "message channel closed before a response was received" in msg.text.lower() else print(f"Console: {msg.text}"))
@@ -249,9 +251,6 @@ def prepare_image_for_llm(base64_image):
         "type": "image_url",
         "image_url": f"data:image/jpeg;base64,{base64_image}"
     }
-
-
-
 
 def generate_personable_instruction(action, element_description, text_input):
     llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0.7)
@@ -418,8 +417,7 @@ async def _run_agent_with_page(question: str, page, start_url, browserbase_insta
             elif action == "GoBack":
                 await page.go_back()
             elif action == "Home":
-                # LINK CHANGE HERE
-                await page.goto("tour-guide-jw46.vercel.app")
+                await page.goto(DEFAULT_URL)
             elif action.startswith("ANSWER"):
                 break
             
@@ -466,7 +464,7 @@ async def _run_agent_with_page(question: str, page, start_url, browserbase_insta
         if final_answer_sent:
             break  # Exit the loop after sending FINAL_ANSWER
             # LINK CHANGE HERE
-async def main(current_url="tour-guide-jw46.vercel.app"):
+async def main(current_url=DEFAULT_URL):
     browserbase = Browserbase()
     async with async_playwright() as p:
         browser = await p.chromium.connect_over_cdp(browserbase.get_connect_url())
@@ -525,3 +523,4 @@ async def main(current_url="tour-guide-jw46.vercel.app"):
 
 if __name__ == "__main__":
     asyncio.run(main())
+
