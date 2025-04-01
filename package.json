@@ -88,6 +88,5 @@
   "main": "next.config.js",
   "keywords": [],
   "author": "",
-  "license": "ISC",
-  "type": "module"
+  "license": "ISC"
 }
